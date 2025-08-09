@@ -1,0 +1,38 @@
+DONE
+Setup a project, start with etl-service, create a venv
+
+Docker ? 
+
+Build a process for fetching all stock symbols from FMP
+Build a process for fetching stock info based on stock symbols, from FMP
+In stock_info, translate the volume to USD - done
+In stock_info rank all stocks with same name and choose the one with highest volume (relevant column) - done
+Implement fetching of historical FX rates for EUR and USD
+Implement daily fetching of latest FX rates for EUR and USD
+Implement the full historical forex table in clean schema, which holds FX rates for all calendar days
+Implement fetching of historical prices and volumes for stock symbols present in stock_info table
+Implement daily fetching of latest prices and volumes for stocks in the historical_price_volume table
+FX conversion of historical prices and volumes into EUR and USD
+Daily FX conversion of latest prices and volumes inti EUR and USD
+Implement fetching historical Market cap for all symbols existing in the historical_price_volume table
+FX conversion of historical Market cap into EUR and USD
+Daily fetching of Market Cap data for for all symbols existing in the historical_market_cap table
+Daily FX conversion of latest Market cap values into EUR and USD
+
+
+
+TODO
+1. Delete table at the beginning of Historical scripts
+2. Add Step numbering for Daily scripts
+3. Add main() to each daily and historical script, create make commands
+3. Make Status table
+
+
+
+7. Increase attempts to 7
+8. Interpolation of prices, volumes mcaps
+9. Map the old and new tickers for same stock
+10. Solve how to handle dividends
+11. Write Database tests
+12. Make a log postgres table, following the execution of individual tables
+13. Reorganize Folders and files

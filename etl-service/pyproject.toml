@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "naro-index-advisor-etl"
+version = "0.1.0"
+description = "ETL service for Naro Index Advisor"
+authors = ["Your Name <your.email@example.com>"]
+packages = [
+    { include = "src" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+aiohttp = "^3.9.1"
+python-dotenv = "^1.0.0"
+asyncio = "^3.4.3"
+pandas = "^2.2.0"
+psycopg2-binary = "^2.9.10"
+sqlalchemy = "^2.0.41"
+pydantic = "^2.11.5"
+apscheduler = "^3.10.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
