@@ -1,5 +1,35 @@
+# Dependencies
 frontend/node_modules/
 frontend/.next/
 frontend/out/
-*.log
+
+# Environment files
 .env*
+etl-service/.env
+frontend/.env.local
+frontend/env.example
+
+# Logs
+*.log
+
+# Documentation and temporary files
+TODO.txt
+architecture_setup.txt
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
