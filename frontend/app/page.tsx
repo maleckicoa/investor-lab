@@ -1,8 +1,12 @@
 'use client';
 
+
 import { useState, useEffect } from 'react';
 import { ETLSummary } from '@/types/etl';
 import { format, parseISO } from 'date-fns';
+
+export const revalidate = 0;           // or:
+export const dynamic = 'force-dynamic';
 
 export default function ETLSummaryPage() {
   const [data, setData] = useState<ETLSummary[]>([]);
@@ -16,7 +20,7 @@ export default function ETLSummaryPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/etl-summary');
+      const response = await fetch('/api/etl-summary', { cache: 'no-store' });
       if (!response.ok) {
         throw new Error('Failed to fetch data');
       }

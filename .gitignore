@@ -7,7 +7,6 @@ frontend/out/
 .env*
 etl-service/.env
 frontend/.env.local
-frontend/env.example
 
 # Logs
 *.log

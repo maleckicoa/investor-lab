@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server';
+import { unstable_noStore as noStore } from 'next/cache';
 import pool from '@/lib/db';
 import { ETLSummary } from '@/types/etl';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-export const runtime = 'nodejs';
+export const fetchCache = 'force-no-store'; // <- disable fetch cache for this segment
 
 export async function GET() {
+  noStore(); // <- opt out of Next’s caching for this request
+
   try {
     const result = await pool.query(`
       SELECT 
@@ -31,7 +34,6 @@ export async function GET() {
       { data },
       {
         headers: {
-          // prevent browser/proxy caching
           'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
           Pragma: 'no-cache',
           Expires: '0',
@@ -42,4 +44,3 @@ export async function GET() {
     return NextResponse.json({ error: e?.message ?? 'error' }, { status: 500 });
   }
 }
-
