@@ -9,7 +9,7 @@ Logging into server:
 
 Adding a new user
    - in the server: adduser aleksa
-   - password: Armadacompaso/7
+   - password: 
    - give it sudo rights: usermod -aG sudo aleksa
    - from a local machine, open new terminal, copy the ssh keys : ssh-copy-id aleksa@91.107.196.130
    - login with the new user: ssh aleksa@91.107.196.130
@@ -115,4 +115,32 @@ Run Data ETL
 
 
 
+Install Node on remote Server:
+- curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+- sudo apt install -y nodejs build-essential
+- sudo npm i -g pm2
 
+Set up the .env file
+cd into project:                                  cd /var/www/maleckicoa.com/frontend
+copy local to production  env file:       cp .env.local .env.production 2>/dev/null || true
+edit env file it if needed:               nano .env.production
+
+Install exactly the dependencies this project needs, from scratch, and then compile it into a production build
+- npm ci
+- npm run build
+
+Start the app on port 3000 with PM2
+(PM2 is a process manager for Node.js applications — basically a tool that keeps your app running in the background)
+
+- pm2 start "npm run start -- -p 3000" --name next-frontend --cwd /var/www/maleckicoa.com/frontend
+- pm2 startup systemd
+- pm2 save
+- pm2 logs next-frontend
+
+
+
+Make changes to the nginx file: sudo nano /etc/nginx/sites-available/maleckicoa
+
+Enable + Reload?
+sudo ln -sf /etc/nginx/sites-available/maleckicoa /etc/nginx/sites-enabled/maleckicoa
+sudo nginx -t && sudo systemctl reload nginx
