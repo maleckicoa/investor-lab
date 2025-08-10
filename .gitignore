@@ -16,6 +16,9 @@ frontend/env.example
 TODO.txt
 architecture_setup.txt
 
+# Sensitive files with API keys
+etl-service/src/utils/urls.py
+
 # Python cache
 __pycache__/
 *.pyc
