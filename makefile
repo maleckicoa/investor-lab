@@ -1,5 +1,6 @@
 .PHONY: daily historical daily-schedule daily-forex daily-price-volume daily-mcap daily-fx-price-volume daily-fx-mcap frontend-setup frontend-dev frontend-build frontend-start
 
+
 daily:
 	poetry run --directory etl-service python -m daily_main --run-now
 
