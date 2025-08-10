@@ -5,9 +5,6 @@ import { useState, useEffect } from 'react';
 import { ETLSummary } from '@/types/etl';
 import { format, parseISO } from 'date-fns';
 
-export const revalidate = 0;           // or:
-export const dynamic = 'force-dynamic';
-
 export default function ETLSummaryPage() {
   const [data, setData] = useState<ETLSummary[]>([]);
   const [loading, setLoading] = useState(true);
