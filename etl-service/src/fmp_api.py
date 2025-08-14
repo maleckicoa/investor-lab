@@ -123,5 +123,26 @@ class FMPAPI:
             {"symbols": symbols_str}
         )
 
+    async def get_financial_ratios(self, symbol: str, period: str = "quarterly", limit: int = 1000) -> Dict:
+        """Get financial ratios for a stock symbol.
+        
+        Args:
+            symbol (str): Stock symbol (e.g., 'AAPL')
+            period (str): Period type - 'quarterly' or 'annual' (default: 'quarterly')
+            limit (int): Number of records to return (default: 1000)
+            
+        Returns:
+            Dict: Financial ratios data including profitability, liquidity, efficiency, and valuation ratios
+        """
+        return await self._make_request(
+            "stable/ratios",
+            {
+                "symbol": symbol,
+                "period": period,
+                "limit": limit
+            }
+        )
+
+
 
 
