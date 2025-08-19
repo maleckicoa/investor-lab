@@ -7,7 +7,7 @@ from src.historical.historical_forex_full import FullForexManager
 from src.historical.stock_info import StockInfoManager
 from src.historical.stock_info_update import VolAvgManager, RelevanceManager
 from src.historical.etl_summary import ETLSummaryManager
-from src.metrics.stock_metrics import MetricsManager
+from src.metrics.stock_metrics import MetricsManager, PercentileCalculator
 from src.utils.utils import get_logger, ensure_schemas_exist
 
 # Get logger
@@ -50,8 +50,11 @@ async def main():
         # etl_summary_manager = ETLSummaryManager() # Update ETL Summary data
         # await etl_summary_manager.run_update()
 
-        metrics_manager = MetricsManager() # Get and store financial metrics data
-        await metrics_manager.save_financial_metrics()
+        #metrics_manager = MetricsManager() # Get and store financial metrics data
+        #await metrics_manager.save_financial_metrics()
+
+        percentile_calculator = PercentileCalculator()
+        percentile_calculator.run_percentile_calculation()
 
 
 

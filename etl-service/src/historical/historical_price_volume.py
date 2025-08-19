@@ -101,7 +101,7 @@ class HistoricalPriceVolumeManager:
             result = conn.execute(text("""
                 SELECT symbol, currency 
                 FROM raw.stock_info 
-                WHERE relevant = TRUE --AND is_actively_trading = TRUE
+                WHERE relevant = TRUE
             """))
             return [(row[0], row[1]) for row in result]
 

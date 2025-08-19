@@ -69,7 +69,6 @@ class FMPAPI:
             return []
     
 
-
     async def get_forex_pairs(self) -> Dict:
         """Get all available forex currency pairs."""
         return await self._make_request("stable/forex-list")

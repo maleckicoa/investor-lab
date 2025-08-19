@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from ..utils.utils import get_postgres_connection, get_database_url, get_logger
 from ..utils.models import FinancialRatiosValidator
 from typing import Dict, List, Optional
+import pandas as pd
 
 # Get logger
 logger = get_logger(__name__)
@@ -17,7 +18,7 @@ logger = get_logger(__name__)
 load_dotenv()
 
 class MetricsManager:
-    def __init__(self, max_symbols: int = 300):
+    def __init__(self, max_symbols: int = 50000):
         self.database_url = get_database_url()
         self.engine = create_engine(self.database_url)
         self.fmp = FMPAPI()
@@ -233,8 +234,6 @@ class MetricsManager:
             """))
             symbols = [(row[0], row[1]) for row in result]
             logger.info(f"Found {len(symbols)} relevant symbols in database")
-            if symbols:
-                logger.info(f"Sample symbols: {symbols[:5]}")
             return symbols
 
 
@@ -249,7 +248,7 @@ class MetricsManager:
                 if value is not None:
                     if isinstance(value, (int, float)):
                         # Handle extremely large or small numbers
-                        if abs(value) > 1e10:  # Very large numbers (more conservative)
+                        if abs(value) > 1e20:  # Very large numbers (more conservative)
                             mapped_data[db_field] = None
                         elif abs(value) < 1e-10 and value != 0:  # Very small numbers
                             mapped_data[db_field] = None
@@ -262,6 +261,7 @@ class MetricsManager:
                 else:
                     mapped_data[db_field] = None
         return mapped_data
+
 
     async def process_metrics_batch(self, symbols_with_currency: list):
         """Process a batch of symbols to fetch and store financial metrics."""
@@ -673,6 +673,26 @@ class MetricsManager:
         except Exception as e:
             logger.error(f"Error in process_metrics_batch: {e}", exc_info=True)
 
+    def get_missing_symbols(self, symbols_with_currency):
+        """Get symbols that are missing from the financial metrics table."""
+        conn = get_postgres_connection()
+        try:
+            with conn.cursor() as cur:
+                # Get distinct symbols that already exist in the table
+                cur.execute("SELECT DISTINCT symbol FROM raw.financial_metrics")
+                present = set(r[0] for r in cur.fetchall())
+                
+                # Return symbols that are NOT in the present set
+                missing_symbols = [s for s in symbols_with_currency if s[0] not in present]
+                logger.info(f"Found {len(present)} symbols with data, {len(missing_symbols)} symbols missing")
+                
+        finally:
+            conn.close()
+            
+        return missing_symbols
+
+
+
     async def save_financial_metrics(self):
         """Main method to fetch and store financial metrics for all relevant stocks."""
         print("\n")
@@ -689,46 +709,348 @@ class MetricsManager:
         symbols_to_process = random.sample(symbols_with_currency, min(self.max_symbols, len(symbols_with_currency)))
         logger.info(f"Selected {len(symbols_to_process)} symbols for metrics processing.")
 
-        batch_size = 50  # Smaller batch size for metrics API
-        total_batches = (len(symbols_to_process) + batch_size - 1) // batch_size
+        batch_size = 250  # Increased batch size as requested
+        total_reps = 750 / batch_size
+        time_per_rep = 60 / total_reps
 
-        for i in range(0, len(symbols_to_process), batch_size):
-            batch = symbols_to_process[i:i + batch_size]
-            logger.info(f"Processing metrics batch {i//batch_size + 1}/{total_batches}")
+        max_retries = 7  # Implement 7 retries as requested
+        attempt = 1
+        
+        while attempt <= max_retries and symbols_to_process:
+            logger.info(f"Download attempt {attempt} for {len(symbols_to_process)} symbols")
+            
+            # Process symbols in batches
+            total_batches = (len(symbols_to_process) + batch_size - 1) // batch_size
+            
+            for i in range(0, len(symbols_to_process), batch_size):
+                batch = symbols_to_process[i:i + batch_size]
+                logger.info(f"Processing batch {i//batch_size + 1}/{total_batches} (attempt {attempt})")
 
-            start_time = datetime.now().timestamp()
-            await self.process_metrics_batch(batch)
-            end_time = datetime.now().timestamp()
-            duration = end_time - start_time
+                start_time = datetime.now().timestamp()
+                await self.process_metrics_batch(batch)
+                end_time = datetime.now().timestamp()
+                duration = end_time - start_time
 
-            logger.info(f"Batch {i//batch_size + 1} took {duration:.2f}s")
+                logger.info(f"Batch {i//batch_size + 1} took {duration:.2f}s")
 
-            # Rate limiting - wait between batches to avoid API limits
-            if i + batch_size < len(symbols_to_process):
-                sleep_time = 2  # 2 second delay between batches
-                logger.info(f"Sleeping for {sleep_time}s before next batch")
-                await asyncio.sleep(sleep_time)
+                # Dynamic sleep time based on duration as requested
+                if i + batch_size < len(symbols_to_process) and duration < time_per_rep:
+                    sleep_time = 7 + time_per_rep - duration
+                    logger.info(f"Sleeping for {sleep_time:.2f}s")
+                    await asyncio.sleep(sleep_time)
 
+            # Check for missing symbols and update symbols_to_process for next attempt
+            missing = self.get_missing_symbols(symbols_to_process)
+            if not missing:
+                logger.info("All symbols processed successfully.")
+                break
+
+            logger.warning(f"{len(missing)} symbols missing after attempt {attempt}. Retrying...")
+            # Update symbols_to_process to only include missing symbols for next attempt
+            symbols_to_process = missing
+            attempt += 1
+
+        if symbols_to_process:
+            logger.error(f"Failed to download {len(symbols_to_process)} symbols after {max_retries} attempts.")
+        
         logger.info("Financial metrics ingestion complete.")
         return True
 
-async def test_api_connection(self):
-    """Test the API connection with a simple call."""
-    try:
-        logger.info("Testing API connection...")
-        result = await self.fmp.get_financial_ratios("AAPL", "quarterly", 5)
-        logger.info(f"API test successful for AAPL: got {len(result) if isinstance(result, list) else 0} records")
-        if result and isinstance(result, list) and len(result) > 0:
-            logger.info(f"Sample record keys: {list(result[0].keys())}")
-        return True
-    except Exception as e:
-        logger.error(f"API test failed: {e}")
-        return False
+
+
+
+
+
+
+
+
+class PercentileCalculator:
+    """Calculate percentiles for financial metrics and store in clean schema."""
+    
+    RAW_SCHEMA, RAW_TABLE = "raw", "financial_metrics"
+    CLEAN_SCHEMA, CLEAN_TABLE = "clean", "stock_metrics_percentiles"
+    EXCLUDE_COLUMNS = {"symbol", "date", "fiscal_year", "period", "reported_currency", "created_at"}
+    PERCENTILES = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99]
+
+    def __init__(self):
+        self.database_url = get_database_url()
+
+    def create_percentiles_table(self):
+        """Create the stock_metrics_percentiles table in clean schema."""
+        try:
+            conn = get_postgres_connection()
+            try:
+                with conn.cursor() as cur:
+                    # Get all metric columns from the raw table
+                    cur.execute("""
+                        SELECT column_name
+                        FROM information_schema.columns
+                        WHERE table_schema=%s AND table_name=%s
+                        ORDER BY ordinal_position
+                    """, (self.RAW_SCHEMA, self.RAW_TABLE))
+                    
+                    all_columns = [row[0] for row in cur.fetchall()]
+                    metric_columns = [col for col in all_columns if col not in self.EXCLUDE_COLUMNS]
+                    
+                    logger.info(f"Found {len(metric_columns)} metric columns for percentile calculation")
+                    
+                    # Drop existing table
+                    cur.execute(f"DROP TABLE IF EXISTS {self.CLEAN_SCHEMA}.{self.CLEAN_TABLE} CASCADE")
+                    logger.info("Dropped existing stock_metrics_percentiles table")
+                    
+                    # Build column definitions for percentile columns
+                    percentile_cols = []
+                    for col in metric_columns:
+                        percentile_cols.append(f'"{col}_perc" JSONB')
+                    
+                    percentile_cols_str = ",\n                        ".join(percentile_cols)
+                    
+                    # Create the percentiles table
+                    create_table_sql = f"""
+                        CREATE TABLE {self.CLEAN_SCHEMA}.{self.CLEAN_TABLE} (
+                            symbol VARCHAR(20),
+                            date DATE,
+                            fiscal_year VARCHAR(10),
+                            period VARCHAR(10),
+                            reported_currency VARCHAR(10),
+                            {percentile_cols_str}
+                        )
+                    """
+                    
+                    cur.execute(create_table_sql)
+                    conn.commit()
+                    logger.info(f"Created stock_metrics_percentiles table with {len(metric_columns)} percentile columns")
+                    
+            finally:
+                conn.close()
+                
+        except Exception as e:
+            logger.error(f"Error creating percentiles table: {e}")
+            raise
+
+    def calculate_percentiles_for_column(self, column_name):
+        """Calculate percentiles for a specific column and update the table."""
+        try:
+            conn = get_postgres_connection()
+            try:
+                with conn.cursor() as cur:
+                    logger.info(f"Calculating percentiles for column: {column_name}")
+                    
+                    # First, get all non-null values for the column to calculate percentiles
+                    cur.execute(f"""
+                        SELECT "{column_name}"
+                        FROM {self.RAW_SCHEMA}.{self.RAW_TABLE}
+                        WHERE "{column_name}" IS NOT NULL
+                        ORDER BY "{column_name}"
+                    """)
+                    
+                    values = [float(row[0]) for row in cur.fetchall()]
+                    
+                    if len(values) < 2:
+                        logger.warning(f"Not enough data for column {column_name} (only {len(values)} values)")
+                        return
+                    
+                    logger.info(f"Processing {len(values)} values for {column_name}")
+                    
+                    # Calculate percentile thresholds
+                    percentile_thresholds = {}
+                    for p in self.PERCENTILES:
+                        index = (p / 100) * (len(values) - 1)
+                        
+                        if index.is_integer():
+                            threshold = values[int(index)]
+                        else:
+                            # Interpolate between two values
+                            lower_index = int(index)
+                            upper_index = lower_index + 1
+                            lower_value = values[lower_index]
+                            upper_value = values[upper_index]
+                            weight = index - lower_index
+                            threshold = lower_value + weight * (upper_value - lower_value)
+                        
+                        percentile_thresholds[p] = threshold
+                    
+                    # Update each row with its percentile assignment
+                    cur.execute(f"""
+                        SELECT symbol, date, fiscal_year, period, reported_currency, "{column_name}"
+                        FROM {self.RAW_SCHEMA}.{self.RAW_TABLE}
+                        WHERE "{column_name}" IS NOT NULL
+                    """)
+                    
+                    rows_to_update = cur.fetchall()
+                    logger.info(f"Updating percentiles for {len(rows_to_update)} rows")
+                    
+                    for row in rows_to_update:
+                        symbol, date, fiscal_year, period, reported_currency, value = row
+                        value = float(value)  # Convert Decimal to float
+                        
+                        # Find which percentile this value belongs to
+                        assigned_percentile = None
+                        percentile_range = None
+                        
+                        for i, p in enumerate(self.PERCENTILES):
+                            if value <= percentile_thresholds[p]:
+                                assigned_percentile = p
+                                
+                                # Create the range string
+                                if p == 1:
+                                    # For 1%, show (-inf, threshold)
+                                    percentile_range = f"(-inf, {percentile_thresholds[p]:.2f})"
+                                elif p == 99:
+                                    # For 99%, show (threshold, +inf)
+                                    percentile_range = f"({percentile_thresholds[p]:.2f}, +inf)"
+                                else:
+                                    # For other percentiles, find the range
+                                    if i == 0:
+                                        min_val = values[0]
+                                    else:
+                                        min_val = percentile_thresholds[self.PERCENTILES[i-1]]
+                                    
+                                    max_val = percentile_thresholds[p]
+                                    percentile_range = f"({min_val:.2f} - {max_val:.2f})"
+                                
+                                break
+                        
+                        # If value is larger than 99th percentile, assign to 99%
+                        if assigned_percentile is None:
+                            assigned_percentile = 99
+                            percentile_range = f"({percentile_thresholds[99]:.2f}, +inf)"
+                        
+                        # Create the JSON object for this value
+                        percentile_json = {f"{assigned_percentile}%": percentile_range}
+                        
+                        # Update the existing row (since we seeded base rows earlier)
+                        cur.execute(f"""
+                            UPDATE {self.CLEAN_SCHEMA}.{self.CLEAN_TABLE}
+                            SET "{column_name}_perc" = %s
+                            WHERE symbol = %s AND date = %s AND fiscal_year = %s 
+                              AND period = %s AND reported_currency = %s
+                        """, (json.dumps(percentile_json), symbol, date, fiscal_year, period, reported_currency))
+                    
+                    conn.commit()
+                    logger.info(f"Successfully updated percentiles for column: {column_name}")
+                    
+            finally:
+                conn.close()
+                
+        except Exception as e:
+            logger.error(f"Error calculating percentiles for column {column_name}: {e}")
+            raise
+
+    def seed_base_rows(self):
+        """Create base rows with symbol, date, fiscal_year, period, reported_currency."""
+        try:
+            conn = get_postgres_connection()
+            try:
+                with conn.cursor() as cur:
+                    logger.info("Seeding base rows from raw table...")
+                    
+                    # Insert distinct key combinations
+                    cur.execute(f"""
+                        INSERT INTO {self.CLEAN_SCHEMA}.{self.CLEAN_TABLE}
+                        (symbol, date, fiscal_year, period, reported_currency)
+                        SELECT DISTINCT symbol, date, fiscal_year, period, reported_currency
+                        FROM {self.RAW_SCHEMA}.{self.RAW_TABLE}
+                    """)
+                    
+                    rows_inserted = cur.rowcount
+                    conn.commit()
+                    
+                    logger.info(f"Seeded {rows_inserted} base rows in percentiles table")
+                    
+            finally:
+                conn.close()
+                
+        except Exception as e:
+            logger.error(f"Error seeding base rows: {e}")
+            raise
+
+    def add_primary_key(self):
+        """Add primary key constraint after data is populated."""
+        try:
+            conn = get_postgres_connection()
+            try:
+                with conn.cursor() as cur:
+                    logger.info("Adding primary key constraint...")
+                    
+                    cur.execute(f"""
+                        ALTER TABLE {self.CLEAN_SCHEMA}.{self.CLEAN_TABLE}
+                        ADD CONSTRAINT {self.CLEAN_TABLE}_pk 
+                        PRIMARY KEY (symbol, date, fiscal_year, period, reported_currency)
+                    """)
+                    
+                    conn.commit()
+                    logger.info("Primary key constraint added successfully")
+                    
+            finally:
+                conn.close()
+                
+        except Exception as e:
+            logger.error(f"Error adding primary key: {e}")
+            raise
+
+    def run_percentile_calculation(self):
+        """Main method to run the complete percentile calculation process."""
+        try:
+            logger.info("Starting percentile calculation process...")
+            
+            # Step 1: Create the percentiles table
+            self.create_percentiles_table()
+            
+            # Step 2: Seed base rows
+            self.seed_base_rows()
+            
+            # Step 3: Get all metric columns
+            conn = get_postgres_connection()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        SELECT column_name
+                        FROM information_schema.columns
+                        WHERE table_schema=%s AND table_name=%s
+                        ORDER BY ordinal_position
+                    """, (self.RAW_SCHEMA, self.RAW_TABLE))
+                    
+                    all_columns = [row[0] for row in cur.fetchall()]
+                    metric_columns = [col for col in all_columns if col not in self.EXCLUDE_COLUMNS]
+                    
+            finally:
+                conn.close()
+            
+            logger.info(f"Processing {len(metric_columns)} metric columns")
+            
+            # Step 4: Calculate percentiles for each column
+            for i, column in enumerate(metric_columns, 1):
+                logger.info(f"Processing column {i}/{len(metric_columns)}: {column}")
+                self.calculate_percentiles_for_column(column)
+            
+            # Step 5: Add primary key constraint
+            self.add_primary_key()
+            
+            # Step 6: Final verification
+            conn = get_postgres_connection()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(f"SELECT COUNT(*) FROM {self.CLEAN_SCHEMA}.{self.CLEAN_TABLE}")
+                    total_rows = cur.fetchone()[0]
+                    logger.info(f"Percentile calculation completed. Total rows: {total_rows}")
+                    
+            finally:
+                conn.close()
+            
+            logger.info("Percentile calculation process completed successfully!")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Percentile calculation process failed: {e}")
+            return False
+
 
 if __name__ == "__main__":
+    # Run both metrics manager and percentile calculator
     metrics_manager = MetricsManager()
-    # Test API first
-    asyncio.run(metrics_manager.test_api_connection())
-    # Then run the main process with just a few symbols for testing
-    metrics_manager.max_symbols = 10  # Test with just 10 symbols
     asyncio.run(metrics_manager.save_financial_metrics())
+    
+    percentile_calculator = PercentileCalculator()
+    percentile_calculator.run_percentile_calculation()
+
