@@ -58,17 +58,17 @@ async def main():
     # Set up the scheduler
     scheduler = AsyncIOScheduler()
     
-    # Schedule the job to run daily at 00:30
+    # Schedule the job to run daily at 1am
     scheduler.add_job(
         run_etl_job,
-        CronTrigger( minute=0),  # hour=0, Daily at 00:30
+        CronTrigger(hour=1, minute=0),  # Daily at 01:00
         id='daily_etl_job',
         name='Daily ETL Process',
         replace_existing=True
     )
     
     logger.info("🕐 Daily ETL Scheduler started")
-    logger.info("📋 Schedule: Every day at 00:30")
+    logger.info("📋 Schedule: Every day at 01:00")
     logger.info("⏳ Waiting for scheduled time...")
     logger.info("💡 Use Ctrl+C to stop the scheduler")
     

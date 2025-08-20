@@ -1,22 +1,215 @@
-import os
-import json
+
 import random
 import asyncio
-from dotenv import load_dotenv
-from ..fmp_api import FMPAPI
-from io import StringIO
-from sqlalchemy import create_engine, text
-from datetime import datetime, timedelta
-from ..utils.utils import get_postgres_connection, get_database_url, get_logger
-from ..utils.models import FinancialRatiosValidator
-from typing import Dict, List, Optional
+import numpy as np
 import pandas as pd
+import polars as pl
+from dotenv import load_dotenv
+from typing import Dict, List, Optional
+from collections import OrderedDict
+from datetime import datetime, timedelta
+
+import io
+from io import StringIO
+import psycopg2
+from sqlalchemy import create_engine, text
+from sqlalchemy.engine import Engine
+
+from src.fmp_api import FMPAPI
+from src.utils.utils import get_postgres_connection, get_database_url, get_logger
+from src.utils.models import FinancialRatiosValidator
+
 
 # Get logger
 logger = get_logger(__name__)
-
 load_dotenv()
 
+field_mapping = OrderedDict([
+     # Basic Info
+    ('symbol', 'symbol'),
+    ('date', 'date'),
+    ('fiscalYear', 'fiscal_year'),
+    ('period', 'period'),
+    ('reportedCurrency', 'reported_currency'),
+     # Profitability Ratios
+    ('grossProfitMargin', 'gross_profit_margin'),
+    ('ebitMargin', 'ebit_margin'),
+    ('ebitdaMargin', 'ebitda_margin'),
+    ('operatingProfitMargin', 'operating_profit_margin'),
+    ('pretaxProfitMargin', 'pretax_profit_margin'),
+    ('continuousOperationsProfitMargin', 'continuous_operations_profit_margin'),
+    ('netProfitMargin', 'net_profit_margin'),
+    ('bottomLineProfitMargin', 'bottom_line_profit_margin'),
+     # Liquidity Ratios
+    ('currentRatio', 'current_ratio'),
+    ('quickRatio', 'quick_ratio'),
+    ('solvencyRatio', 'solvency_ratio'),
+    ('cashRatio', 'cash_ratio'),
+     # Efficiency Ratios
+    ('receivablesTurnover', 'receivables_turnover'),
+    ('payablesTurnover', 'payables_turnover'),
+    ('inventoryTurnover', 'inventory_turnover'),
+    ('fixedAssetTurnover', 'fixed_asset_turnover'),
+    ('assetTurnover', 'asset_turnover'),
+    ('workingCapitalTurnoverRatio', 'working_capital_turnover_ratio'),
+     # Valuation Ratios
+    ('priceToEarningsRatio', 'price_to_earnings_ratio'),
+    ('priceToEarningsGrowthRatio', 'price_to_earnings_growth_ratio'),
+    ('forwardPriceToEarningsGrowthRatio', 'forward_price_to_earnings_growth_ratio'),
+    ('priceToBookRatio', 'price_to_book_ratio'),
+    ('priceToSalesRatio', 'price_to_sales_ratio'),
+    ('priceToFreeCashFlowRatio', 'price_to_free_cash_flow_ratio'),
+    ('priceToOperatingCashFlowRatio', 'price_to_operating_cash_flow_ratio'),
+    ('priceToFairValue', 'price_to_fair_value'),
+    # Leverage Ratios 
+    ('debtToAssetsRatio', 'debt_to_assets_ratio'),
+    ('debtToEquityRatio', 'debt_to_equity_ratio'),
+    ('debtToCapitalRatio', 'debt_to_capital_ratio'),
+    ('longTermDebtToCapitalRatio', 'long_term_debt_to_capital_ratio'),
+    ('financialLeverageRatio', 'financial_leverage_ratio'),
+    ('debtToMarketCap', 'debt_to_market_cap'),
+    #  Cash Flow Ratios
+    ('operatingCashFlowRatio', 'operating_cash_flow_ratio'),
+    ('operatingCashFlowSalesRatio', 'operating_cash_flow_sales_ratio'),
+    ('freeCashFlowOperatingCashFlowRatio', 'free_cash_flow_operating_cash_flow_ratio'),
+    ('debtServiceCoverageRatio', 'debt_service_coverage_ratio'),
+    ('interestCoverageRatio', 'interest_coverage_ratio'),
+    ('shortTermOperatingCashFlowCoverageRatio', 'short_term_operating_cash_flow_coverage_ratio'),
+    ('operatingCashFlowCoverageRatio', 'operating_cash_flow_coverage_ratio'),
+    ('capitalExpenditureCoverageRatio', 'capital_expenditure_coverage_ratio'),
+    ('dividendPaidAndCapexCoverageRatio', 'dividend_paid_and_capex_coverage_ratio'),
+    # Dividend ratios
+    ('dividendPayoutRatio', 'dividend_payout_ratio'),
+    ('dividendYield', 'dividend_yield'),
+    ('dividendYieldPercentage', 'dividend_yield_percentage'),
+    ('dividendPerShare', 'dividend_per_share'),
+    # Per Share metrics
+    ('revenuePerShare', 'revenue_per_share'),
+    ('netIncomePerShare', 'net_income_per_share'),
+    ('interestDebtPerShare', 'interest_debt_per_share'),
+    ('cashPerShare', 'cash_per_share'),
+    ('bookValuePerShare', 'book_value_per_share'),
+    ('tangibleBookValuePerShare', 'tangible_book_value_per_share'),
+    ('shareholdersEquityPerShare', 'shareholders_equity_per_share'),
+    ('operatingCashFlowPerShare', 'operating_cash_flow_per_share'),
+    ('capexPerShare', 'capex_per_share'),
+    ('freeCashFlowPerShare', 'free_cash_flow_per_share'),
+    # Additional ratios
+    ('netIncomePerEBT', 'net_income_per_ebt'),
+    ('ebtPerEbit', 'ebt_per_ebit'),
+    ('effectiveTaxRate', 'effective_tax_rate'),
+    ('enterpriseValueMultiple', 'enterprise_value_multiple')
+])
+
+
+def get_create_table_sql(schema: str, table_name: str) -> str:
+    return f"""
+        CREATE TABLE {schema}.{table_name} (
+            symbol VARCHAR(20),
+            date DATE,
+            fiscal_year VARCHAR(10),
+            period VARCHAR(10),
+            reported_currency VARCHAR(10),
+            
+            -- Profitability Ratios
+            gross_profit_margin NUMERIC(30, 6),
+            ebit_margin NUMERIC(30, 6),
+            ebitda_margin NUMERIC(30, 6),
+            operating_profit_margin NUMERIC(30, 6),
+            pretax_profit_margin NUMERIC(30, 6),
+            continuous_operations_profit_margin NUMERIC(30, 6),
+            net_profit_margin NUMERIC(30, 6),
+            bottom_line_profit_margin NUMERIC(30, 6),
+            
+            -- Liquidity Ratios
+            current_ratio NUMERIC(30, 6),
+            quick_ratio NUMERIC(30, 6),
+            solvency_ratio NUMERIC(30, 6),
+            cash_ratio NUMERIC(30, 6),
+            
+            -- Efficiency Ratios
+            receivables_turnover NUMERIC(30, 6),
+            payables_turnover NUMERIC(30, 6),
+            inventory_turnover NUMERIC(30, 6),
+            fixed_asset_turnover NUMERIC(30, 6),
+            asset_turnover NUMERIC(30, 6),
+            working_capital_turnover_ratio NUMERIC(30, 6),
+            
+            -- Valuation Ratios
+            price_to_earnings_ratio NUMERIC(30, 6),
+            price_to_earnings_growth_ratio NUMERIC(30, 6),
+            forward_price_to_earnings_growth_ratio NUMERIC(30, 6),
+            price_to_book_ratio NUMERIC(30, 6),
+            price_to_sales_ratio NUMERIC(30, 6),
+            price_to_free_cash_flow_ratio NUMERIC(30, 6),
+            price_to_operating_cash_flow_ratio NUMERIC(30, 6),
+            price_to_fair_value NUMERIC(30, 6),
+            
+            -- Leverage Ratios
+            debt_to_assets_ratio NUMERIC(30, 6),
+            debt_to_equity_ratio NUMERIC(30, 6),
+            debt_to_capital_ratio NUMERIC(30, 6),
+            long_term_debt_to_capital_ratio NUMERIC(30, 6),
+            financial_leverage_ratio NUMERIC(30, 6),
+            debt_to_market_cap NUMERIC(30, 6),
+            
+            -- Cash Flow Ratios
+            operating_cash_flow_ratio NUMERIC(30, 6),
+            operating_cash_flow_sales_ratio NUMERIC(30, 6),
+            free_cash_flow_operating_cash_flow_ratio NUMERIC(30, 6),
+            debt_service_coverage_ratio NUMERIC(30, 6),
+            interest_coverage_ratio NUMERIC(30, 6),
+            short_term_operating_cash_flow_coverage_ratio NUMERIC(30, 6),
+            operating_cash_flow_coverage_ratio NUMERIC(30, 6),
+            capital_expenditure_coverage_ratio NUMERIC(30, 6),
+            dividend_paid_and_capex_coverage_ratio NUMERIC(30, 6),
+            
+            -- Dividend Ratios
+            dividend_payout_ratio NUMERIC(30, 6),
+            dividend_yield NUMERIC(30, 6),
+            dividend_yield_percentage NUMERIC(30, 6),
+            dividend_per_share NUMERIC(30, 6),
+            
+            -- Per Share Metrics
+            revenue_per_share NUMERIC(30, 6),
+            net_income_per_share NUMERIC(30, 6),
+            interest_debt_per_share NUMERIC(30, 6),
+            cash_per_share NUMERIC(30, 6),
+            book_value_per_share NUMERIC(30, 6),
+            tangible_book_value_per_share NUMERIC(30, 6),
+            shareholders_equity_per_share NUMERIC(30, 6),
+            operating_cash_flow_per_share NUMERIC(30, 6),
+            capex_per_share NUMERIC(30, 6),
+            free_cash_flow_per_share NUMERIC(30, 6),
+            
+            -- Additional Ratios
+            net_income_per_ebt NUMERIC(30, 6),
+            ebt_per_ebit NUMERIC(30, 6),
+            effective_tax_rate NUMERIC(30, 6),
+            enterprise_value_multiple NUMERIC(30, 6),
+            
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            
+            PRIMARY KEY (symbol, date, period)
+        )
+    """
+
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
 class MetricsManager:
     def __init__(self, max_symbols: int = 50000):
         self.database_url = get_database_url()
@@ -37,184 +230,10 @@ class MetricsManager:
                 logger.info("Creating fresh financial metrics tables...")
                 
                 # Create the main table in raw schema
-                conn.execute(text("""
-                    CREATE TABLE raw.financial_metrics (
-                        symbol VARCHAR(20),
-                        date DATE,
-                        fiscal_year VARCHAR(10),
-                        period VARCHAR(10),
-                        reported_currency VARCHAR(10),
-                        
-                        -- Profitability Ratios
-                        gross_profit_margin NUMERIC(20, 6),
-                        ebit_margin NUMERIC(20, 6),
-                        ebitda_margin NUMERIC(20, 6),
-                        operating_profit_margin NUMERIC(20, 6),
-                        pretax_profit_margin NUMERIC(20, 6),
-                        continuous_operations_profit_margin NUMERIC(20, 6),
-                        net_profit_margin NUMERIC(20, 6),
-                        bottom_line_profit_margin NUMERIC(20, 6),
-                        
-                        -- Liquidity Ratios
-                        current_ratio NUMERIC(20, 6),
-                        quick_ratio NUMERIC(20, 6),
-                        solvency_ratio NUMERIC(20, 6),
-                        cash_ratio NUMERIC(20, 6),
-                        
-                        -- Efficiency Ratios
-                        receivables_turnover NUMERIC(20, 6),
-                        payables_turnover NUMERIC(20, 6),
-                        inventory_turnover NUMERIC(20, 6),
-                        fixed_asset_turnover NUMERIC(20, 6),
-                        asset_turnover NUMERIC(20, 6),
-                        working_capital_turnover_ratio NUMERIC(20, 6),
-                        
-                        -- Valuation Ratios
-                        price_to_earnings_ratio NUMERIC(20, 6),
-                        price_to_earnings_growth_ratio NUMERIC(20, 6),
-                        forward_price_to_earnings_growth_ratio NUMERIC(20, 6),
-                        price_to_book_ratio NUMERIC(20, 6),
-                        price_to_sales_ratio NUMERIC(20, 6),
-                        price_to_free_cash_flow_ratio NUMERIC(20, 6),
-                        price_to_operating_cash_flow_ratio NUMERIC(20, 6),
-                        price_to_fair_value NUMERIC(20, 6),
-                        
-                        -- Leverage Ratios
-                        debt_to_assets_ratio NUMERIC(20, 6),
-                        debt_to_equity_ratio NUMERIC(20, 6),
-                        debt_to_capital_ratio NUMERIC(20, 6),
-                        long_term_debt_to_capital_ratio NUMERIC(20, 6),
-                        financial_leverage_ratio NUMERIC(20, 6),
-                        debt_to_market_cap NUMERIC(20, 6),
-                        
-                        -- Cash Flow Ratios
-                        operating_cash_flow_ratio NUMERIC(20, 6),
-                        operating_cash_flow_sales_ratio NUMERIC(20, 6),
-                        free_cash_flow_operating_cash_flow_ratio NUMERIC(20, 6),
-                        debt_service_coverage_ratio NUMERIC(20, 6),
-                        interest_coverage_ratio NUMERIC(20, 6),
-                        short_term_operating_cash_flow_coverage_ratio NUMERIC(20, 6),
-                        operating_cash_flow_coverage_ratio NUMERIC(20, 6),
-                        capital_expenditure_coverage_ratio NUMERIC(20, 6),
-                        dividend_paid_and_capex_coverage_ratio NUMERIC(20, 6),
-                        
-                        -- Dividend Ratios
-                        dividend_payout_ratio NUMERIC(20, 6),
-                        dividend_yield NUMERIC(20, 6),
-                        dividend_yield_percentage NUMERIC(20, 6),
-                        dividend_per_share NUMERIC(20, 6),
-                        
-                        -- Per Share Metrics
-                        revenue_per_share NUMERIC(20, 6),
-                        net_income_per_share NUMERIC(20, 6),
-                        interest_debt_per_share NUMERIC(20, 6),
-                        cash_per_share NUMERIC(20, 6),
-                        book_value_per_share NUMERIC(20, 6),
-                        tangible_book_value_per_share NUMERIC(20, 6),
-                        shareholders_equity_per_share NUMERIC(20, 6),
-                        operating_cash_flow_per_share NUMERIC(20, 6),
-                        capex_per_share NUMERIC(20, 6),
-                        free_cash_flow_per_share NUMERIC(20, 6),
-                        
-                        -- Additional Ratios
-                        net_income_per_ebt NUMERIC(20, 6),
-                        ebt_per_ebit NUMERIC(20, 6),
-                        effective_tax_rate NUMERIC(20, 6),
-                        enterprise_value_multiple NUMERIC(20, 6),
-                        
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        
-                        PRIMARY KEY (symbol, date, period)
-                    )
-                """))
+                conn.execute(text(get_create_table_sql('raw', 'financial_metrics')))
 
                 # Create the stage table
-                conn.execute(text("""
-                    CREATE TABLE stage.financial_metrics_stage (
-                        symbol VARCHAR(20),
-                        date DATE,
-                        fiscal_year VARCHAR(10),
-                        period VARCHAR(10),
-                        reported_currency VARCHAR(10),
-                        
-                        -- Profitability Ratios
-                        gross_profit_margin NUMERIC(20, 6),
-                        ebit_margin NUMERIC(20, 6),
-                        ebitda_margin NUMERIC(20, 6),
-                        operating_profit_margin NUMERIC(20, 6),
-                        pretax_profit_margin NUMERIC(20, 6),
-                        continuous_operations_profit_margin NUMERIC(20, 6),
-                        net_profit_margin NUMERIC(20, 6),
-                        bottom_line_profit_margin NUMERIC(20, 6),
-                        
-                        -- Liquidity Ratios
-                        current_ratio NUMERIC(20, 6),
-                        quick_ratio NUMERIC(20, 6),
-                        solvency_ratio NUMERIC(20, 6),
-                        cash_ratio NUMERIC(20, 6),
-                        
-                        -- Efficiency Ratios
-                        receivables_turnover NUMERIC(20, 6),
-                        payables_turnover NUMERIC(20, 6),
-                        inventory_turnover NUMERIC(20, 6),
-                        fixed_asset_turnover NUMERIC(20, 6),
-                        asset_turnover NUMERIC(20, 6),
-                        working_capital_turnover_ratio NUMERIC(20, 6),
-                        
-                        -- Valuation Ratios
-                        price_to_earnings_ratio NUMERIC(20, 6),
-                        price_to_earnings_growth_ratio NUMERIC(20, 6),
-                        forward_price_to_earnings_growth_ratio NUMERIC(20, 6),
-                        price_to_book_ratio NUMERIC(20, 6),
-                        price_to_sales_ratio NUMERIC(20, 6),
-                        price_to_free_cash_flow_ratio NUMERIC(20, 6),
-                        price_to_operating_cash_flow_ratio NUMERIC(20, 6),
-                        price_to_fair_value NUMERIC(20, 6),
-                        
-                        -- Leverage Ratios
-                        debt_to_assets_ratio NUMERIC(20, 6),
-                        debt_to_equity_ratio NUMERIC(20, 6),
-                        debt_to_capital_ratio NUMERIC(20, 6),
-                        long_term_debt_to_capital_ratio NUMERIC(20, 6),
-                        financial_leverage_ratio NUMERIC(20, 6),
-                        debt_to_market_cap NUMERIC(20, 6),
-                        
-                        -- Cash Flow Ratios
-                        operating_cash_flow_ratio NUMERIC(20, 6),
-                        operating_cash_flow_sales_ratio NUMERIC(20, 6),
-                        free_cash_flow_operating_cash_flow_ratio NUMERIC(20, 6),
-                        debt_service_coverage_ratio NUMERIC(20, 6),
-                        interest_coverage_ratio NUMERIC(20, 6),
-                        short_term_operating_cash_flow_coverage_ratio NUMERIC(20, 6),
-                        operating_cash_flow_coverage_ratio NUMERIC(20, 6),
-                        capital_expenditure_coverage_ratio NUMERIC(20, 6),
-                        dividend_paid_and_capex_coverage_ratio NUMERIC(20, 6),
-                        
-                        -- Dividend Ratios
-                        dividend_payout_ratio NUMERIC(20, 6),
-                        dividend_yield NUMERIC(20, 6),
-                        dividend_yield_percentage NUMERIC(20, 6),
-                        dividend_per_share NUMERIC(20, 6),
-                        
-                        -- Per Share Metrics
-                        revenue_per_share NUMERIC(20, 6),
-                        net_income_per_share NUMERIC(20, 6),
-                        interest_debt_per_share NUMERIC(20, 6),
-                        cash_per_share NUMERIC(20, 6),
-                        book_value_per_share NUMERIC(20, 6),
-                        tangible_book_value_per_share NUMERIC(20, 6),
-                        shareholders_equity_per_share NUMERIC(20, 6),
-                        operating_cash_flow_per_share NUMERIC(20, 6),
-                        capex_per_share NUMERIC(20, 6),
-                        free_cash_flow_per_share NUMERIC(20, 6),
-                        
-                        -- Additional Ratios
-                        net_income_per_ebt NUMERIC(20, 6),
-                        ebt_per_ebit NUMERIC(20, 6),
-                        effective_tax_rate NUMERIC(20, 6),
-                        enterprise_value_multiple NUMERIC(20, 6)
-                    )
-                """))
+                conn.execute(text(get_create_table_sql('stage', 'financial_metrics_stage')))
 
                 conn.commit()
                 logger.info("Financial metrics tables created in raw and stage schemas.")
@@ -287,90 +306,7 @@ class MetricsManager:
                 for ratio_data in res:
                     try:
                         # Map API fields to database columns
-                        field_mapping = {
-                            'symbol': 'symbol',
-                            'date': 'date',
-                            'fiscalYear': 'fiscal_year',
-                            'period': 'period',
-                            'reportedCurrency': 'reported_currency',
-                            
-                            # Profitability Ratios
-                            'grossProfitMargin': 'gross_profit_margin',
-                            'ebitMargin': 'ebit_margin',
-                            'ebitdaMargin': 'ebitda_margin',
-                            'operatingProfitMargin': 'operating_profit_margin',
-                            'pretaxProfitMargin': 'pretax_profit_margin',
-                            'continuousOperationsProfitMargin': 'continuous_operations_profit_margin',
-                            'netProfitMargin': 'net_profit_margin',
-                            'bottomLineProfitMargin': 'bottom_line_profit_margin',
-                            
-                            # Liquidity Ratios
-                            'currentRatio': 'current_ratio',
-                            'quickRatio': 'quick_ratio',
-                            'solvencyRatio': 'solvency_ratio',
-                            'cashRatio': 'cash_ratio',
-                            
-                            # Efficiency Ratios
-                            'receivablesTurnover': 'receivables_turnover',
-                            'payablesTurnover': 'payables_turnover',
-                            'inventoryTurnover': 'inventory_turnover',
-                            'fixedAssetTurnover': 'fixed_asset_turnover',
-                            'assetTurnover': 'asset_turnover',
-                            'workingCapitalTurnoverRatio': 'working_capital_turnover_ratio',
-                            
-                            # Valuation Ratios
-                            'priceToEarningsRatio': 'price_to_earnings_ratio',
-                            'priceToEarningsGrowthRatio': 'price_to_earnings_growth_ratio',
-                            'forwardPriceToEarningsGrowthRatio': 'forward_price_to_earnings_growth_ratio',
-                            'priceToBookRatio': 'price_to_book_ratio',
-                            'priceToSalesRatio': 'price_to_sales_ratio',
-                            'priceToFreeCashFlowRatio': 'price_to_free_cash_flow_ratio',
-                            'priceToOperatingCashFlowRatio': 'price_to_operating_cash_flow_ratio',
-                            'priceToFairValue': 'price_to_fair_value',
-                            
-                            # Leverage Ratios
-                            'debtToAssetsRatio': 'debt_to_assets_ratio',
-                            'debtToEquityRatio': 'debt_to_equity_ratio',
-                            'debtToCapitalRatio': 'debt_to_capital_ratio',
-                            'longTermDebtToCapitalRatio': 'long_term_debt_to_capital_ratio',
-                            'financialLeverageRatio': 'financial_leverage_ratio',
-                            'debtToMarketCap': 'debt_to_market_cap',
-                            
-                            # Cash Flow Ratios
-                            'operatingCashFlowRatio': 'operating_cash_flow_ratio',
-                            'operatingCashFlowSalesRatio': 'operating_cash_flow_sales_ratio',
-                            'freeCashFlowOperatingCashFlowRatio': 'free_cash_flow_operating_cash_flow_ratio',
-                            'debtServiceCoverageRatio': 'debt_service_coverage_ratio',
-                            'interestCoverageRatio': 'interest_coverage_ratio',
-                            'shortTermOperatingCashFlowCoverageRatio': 'short_term_operating_cash_flow_coverage_ratio',
-                            'operatingCashFlowCoverageRatio': 'operating_cash_flow_coverage_ratio',
-                            'capitalExpenditureCoverageRatio': 'capital_expenditure_coverage_ratio',
-                            'dividendPaidAndCapexCoverageRatio': 'dividend_paid_and_capex_coverage_ratio',
-                            
-                            # Dividend Ratios
-                            'dividendPayoutRatio': 'dividend_payout_ratio',
-                            'dividendYield': 'dividend_yield',
-                            'dividendYieldPercentage': 'dividend_yield_percentage',
-                            'dividendPerShare': 'dividend_per_share',
-                            
-                            # Per Share Metrics
-                            'revenuePerShare': 'revenue_per_share',
-                            'netIncomePerShare': 'net_income_per_share',
-                            'interestDebtPerShare': 'interest_debt_per_share',
-                            'cashPerShare': 'cash_per_share',
-                            'bookValuePerShare': 'book_value_per_share',
-                            'tangibleBookValuePerShare': 'tangible_book_value_per_share',
-                            'shareholdersEquityPerShare': 'shareholders_equity_per_share',
-                            'operatingCashFlowPerShare': 'operating_cash_flow_per_share',
-                            'capexPerShare': 'capex_per_share',
-                            'freeCashFlowPerShare': 'free_cash_flow_per_share',
-                            
-                            # Additional Ratios
-                            'netIncomePerEBT': 'net_income_per_ebt',
-                            'ebtPerEbit': 'ebt_per_ebit',
-                            'effectiveTaxRate': 'effective_tax_rate',
-                            'enterpriseValueMultiple': 'enterprise_value_multiple'
-                        }
+                        
                         
                         mapped_data = self._map_api_field_to_db(ratio_data, field_mapping)
                         
@@ -405,88 +341,7 @@ class MetricsManager:
                 try:
                     # Format the data for COPY command
                     line_parts = [
-                        str(record.get('symbol', '')),
-                        str(record.get('date', '')),
-                        str(record.get('fiscal_year', '')),
-                        str(record.get('period', '')),
-                        str(record.get('reported_currency', '')),
-                        
-                        # Profitability Ratios
-                        str(record.get('gross_profit_margin', '')),
-                        str(record.get('ebit_margin', '')),
-                        str(record.get('ebitda_margin', '')),
-                        str(record.get('operating_profit_margin', '')),
-                        str(record.get('pretax_profit_margin', '')),
-                        str(record.get('continuous_operations_profit_margin', '')),
-                        str(record.get('net_profit_margin', '')),
-                        str(record.get('bottom_line_profit_margin', '')),
-                        
-                        # Liquidity Ratios
-                        str(record.get('current_ratio', '')),
-                        str(record.get('quick_ratio', '')),
-                        str(record.get('solvency_ratio', '')),
-                        str(record.get('cash_ratio', '')),
-                        
-                        # Efficiency Ratios
-                        str(record.get('receivables_turnover', '')),
-                        str(record.get('payables_turnover', '')),
-                        str(record.get('inventory_turnover', '')),
-                        str(record.get('fixed_asset_turnover', '')),
-                        str(record.get('asset_turnover', '')),
-                        str(record.get('working_capital_turnover_ratio', '')),
-                        
-                        # Valuation Ratios
-                        str(record.get('price_to_earnings_ratio', '')),
-                        str(record.get('price_to_earnings_growth_ratio', '')),
-                        str(record.get('forward_price_to_earnings_growth_ratio', '')),
-                        str(record.get('price_to_book_ratio', '')),
-                        str(record.get('price_to_sales_ratio', '')),
-                        str(record.get('price_to_free_cash_flow_ratio', '')),
-                        str(record.get('price_to_operating_cash_flow_ratio', '')),
-                        str(record.get('price_to_fair_value', '')),
-                        
-                        # Leverage Ratios
-                        str(record.get('debt_to_assets_ratio', '')),
-                        str(record.get('debt_to_equity_ratio', '')),
-                        str(record.get('debt_to_capital_ratio', '')),
-                        str(record.get('long_term_debt_to_capital_ratio', '')),
-                        str(record.get('financial_leverage_ratio', '')),
-                        str(record.get('debt_to_market_cap', '')),
-                        
-                        # Cash Flow Ratios
-                        str(record.get('operating_cash_flow_ratio', '')),
-                        str(record.get('operating_cash_flow_sales_ratio', '')),
-                        str(record.get('free_cash_flow_operating_cash_flow_ratio', '')),
-                        str(record.get('debt_service_coverage_ratio', '')),
-                        str(record.get('interest_coverage_ratio', '')),
-                        str(record.get('short_term_operating_cash_flow_coverage_ratio', '')),
-                        str(record.get('operating_cash_flow_coverage_ratio', '')),
-                        str(record.get('capital_expenditure_coverage_ratio', '')),
-                        str(record.get('dividend_paid_and_capex_coverage_ratio', '')),
-                        
-                        # Dividend Ratios
-                        str(record.get('dividend_payout_ratio', '')),
-                        str(record.get('dividend_yield', '')),
-                        str(record.get('dividend_yield_percentage', '')),
-                        str(record.get('dividend_per_share', '')),
-                        
-                        # Per Share Metrics
-                        str(record.get('revenue_per_share', '')),
-                        str(record.get('net_income_per_share', '')),
-                        str(record.get('interest_debt_per_share', '')),
-                        str(record.get('cash_per_share', '')),
-                        str(record.get('book_value_per_share', '')),
-                        str(record.get('tangible_book_value_per_share', '')),
-                        str(record.get('shareholders_equity_per_share', '')),
-                        str(record.get('operating_cash_flow_per_share', '')),
-                        str(record.get('capex_per_share', '')),
-                        str(record.get('free_cash_flow_per_share', '')),
-                        
-                        # Additional Ratios
-                        str(record.get('net_income_per_ebt', '')),
-                        str(record.get('ebt_per_ebit', '')),
-                        str(record.get('effective_tax_rate', '')),
-                        str(record.get('enterprise_value_multiple', ''))
+                        str(record.get(db_field, '')) for db_field in field_mapping.values()
                     ]
                     
                     # Replace None values and handle empty strings for COPY
@@ -513,146 +368,17 @@ class MetricsManager:
                     logger.info(f"Copying {len(all_data)} records to stage table...")
                     
                     # Copy to stage table
-                    cur.copy_from(buffer, "financial_metrics_stage", columns=(
-                        'symbol', 'date', 'fiscal_year', 'period', 'reported_currency',
-                        
-                        # Profitability Ratios
-                        'gross_profit_margin', 'ebit_margin', 'ebitda_margin', 'operating_profit_margin',
-                        'pretax_profit_margin', 'continuous_operations_profit_margin', 'net_profit_margin',
-                        'bottom_line_profit_margin',
-                        
-                        # Liquidity Ratios
-                        'current_ratio', 'quick_ratio', 'solvency_ratio', 'cash_ratio',
-                        
-                        # Efficiency Ratios
-                        'receivables_turnover', 'payables_turnover', 'inventory_turnover',
-                        'fixed_asset_turnover', 'asset_turnover', 'working_capital_turnover_ratio',
-                        
-                        # Valuation Ratios
-                        'price_to_earnings_ratio', 'price_to_earnings_growth_ratio',
-                        'forward_price_to_earnings_growth_ratio', 'price_to_book_ratio',
-                        'price_to_sales_ratio', 'price_to_free_cash_flow_ratio',
-                        'price_to_operating_cash_flow_ratio', 'price_to_fair_value',
-                        
-                        # Leverage Ratios
-                        'debt_to_assets_ratio', 'debt_to_equity_ratio', 'debt_to_capital_ratio',
-                        'long_term_debt_to_capital_ratio', 'financial_leverage_ratio', 'debt_to_market_cap',
-                        
-                        # Cash Flow Ratios
-                        'operating_cash_flow_ratio', 'operating_cash_flow_sales_ratio',
-                        'free_cash_flow_operating_cash_flow_ratio', 'debt_service_coverage_ratio',
-                        'interest_coverage_ratio', 'short_term_operating_cash_flow_coverage_ratio',
-                        'operating_cash_flow_coverage_ratio', 'capital_expenditure_coverage_ratio',
-                        'dividend_paid_and_capex_coverage_ratio',
-                        
-                        # Dividend Ratios
-                        'dividend_payout_ratio', 'dividend_yield', 'dividend_yield_percentage',
-                        'dividend_per_share',
-                        
-                        # Per Share Metrics
-                        'revenue_per_share', 'net_income_per_share', 'interest_debt_per_share',
-                        'cash_per_share', 'book_value_per_share', 'tangible_book_value_per_share',
-                        'shareholders_equity_per_share', 'operating_cash_flow_per_share',
-                        'capex_per_share', 'free_cash_flow_per_share',
-                        
-                        # Additional Ratios
-                        'net_income_per_ebt', 'ebt_per_ebit', 'effective_tax_rate',
-                        'enterprise_value_multiple'
-                    ))
+                    columns = list(field_mapping.values())
+                    cur.copy_from(buffer, "financial_metrics_stage", columns=columns)
 
                     # Simple insert from stage to main table (no duplicate checks)
-                    cur.execute("""
+                    fields = ', '.join(field_mapping.values())
+                    cur.execute(f"""
                         INSERT INTO raw.financial_metrics (
-                            symbol, date, fiscal_year, period, reported_currency,
-                            
-                            -- Profitability Ratios
-                            gross_profit_margin, ebit_margin, ebitda_margin, operating_profit_margin,
-                            pretax_profit_margin, continuous_operations_profit_margin, net_profit_margin,
-                            bottom_line_profit_margin,
-                            
-                            -- Liquidity Ratios
-                            current_ratio, quick_ratio, solvency_ratio, cash_ratio,
-                            
-                            -- Efficiency Ratios
-                            receivables_turnover, payables_turnover, inventory_turnover,
-                            fixed_asset_turnover, asset_turnover, working_capital_turnover_ratio,
-                            
-                            -- Valuation Ratios
-                            price_to_earnings_ratio, price_to_earnings_growth_ratio,
-                            forward_price_to_earnings_growth_ratio, price_to_book_ratio,
-                            price_to_sales_ratio, price_to_free_cash_flow_ratio,
-                            price_to_operating_cash_flow_ratio, price_to_fair_value,
-                            
-                            -- Leverage Ratios
-                            debt_to_assets_ratio, debt_to_equity_ratio, debt_to_capital_ratio,
-                            long_term_debt_to_capital_ratio, financial_leverage_ratio, debt_to_market_cap,
-                            
-                            -- Cash Flow Ratios
-                            operating_cash_flow_ratio, operating_cash_flow_sales_ratio,
-                            free_cash_flow_operating_cash_flow_ratio, debt_service_coverage_ratio,
-                            interest_coverage_ratio, short_term_operating_cash_flow_coverage_ratio,
-                            operating_cash_flow_coverage_ratio, capital_expenditure_coverage_ratio,
-                            dividend_paid_and_capex_coverage_ratio,
-                            
-                            -- Dividend Ratios
-                            dividend_payout_ratio, dividend_yield, dividend_yield_percentage,
-                            dividend_per_share,
-                            
-                            -- Per Share Metrics
-                            revenue_per_share, net_income_per_share, interest_debt_per_share,
-                            cash_per_share, book_value_per_share, tangible_book_value_per_share,
-                            shareholders_equity_per_share, operating_cash_flow_per_share,
-                            capex_per_share, free_cash_flow_per_share,
-                            
-                            -- Additional Ratios
-                            net_income_per_ebt, ebt_per_ebit, effective_tax_rate,
-                            enterprise_value_multiple
+                            {fields}
                         )
                         SELECT 
-                            symbol, date, fiscal_year, period, reported_currency,
-                            
-                            -- Profitability Ratios
-                            gross_profit_margin, ebit_margin, ebitda_margin, operating_profit_margin,
-                            pretax_profit_margin, continuous_operations_profit_margin, net_profit_margin,
-                            bottom_line_profit_margin,
-                            
-                            -- Liquidity Ratios
-                            current_ratio, quick_ratio, solvency_ratio, cash_ratio,
-                            
-                            -- Efficiency Ratios
-                            receivables_turnover, payables_turnover, inventory_turnover,
-                            fixed_asset_turnover, asset_turnover, working_capital_turnover_ratio,
-                            
-                            -- Valuation Ratios
-                            price_to_earnings_ratio, price_to_earnings_growth_ratio,
-                            forward_price_to_earnings_growth_ratio, price_to_book_ratio,
-                            price_to_sales_ratio, price_to_free_cash_flow_ratio,
-                            price_to_operating_cash_flow_ratio, price_to_fair_value,
-                            
-                            -- Leverage Ratios
-                            debt_to_assets_ratio, debt_to_equity_ratio, debt_to_capital_ratio,
-                            long_term_debt_to_capital_ratio, financial_leverage_ratio, debt_to_market_cap,
-                            
-                            -- Cash Flow Ratios
-                            operating_cash_flow_ratio, operating_cash_flow_sales_ratio,
-                            free_cash_flow_operating_cash_flow_ratio, debt_service_coverage_ratio,
-                            interest_coverage_ratio, short_term_operating_cash_flow_coverage_ratio,
-                            operating_cash_flow_coverage_ratio, capital_expenditure_coverage_ratio,
-                            dividend_paid_and_capex_coverage_ratio,
-                            
-                            -- Dividend Ratios
-                            dividend_payout_ratio, dividend_yield, dividend_yield_percentage,
-                            dividend_per_share,
-                            
-                            -- Per Share Metrics
-                            revenue_per_share, net_income_per_share, interest_debt_per_share,
-                            cash_per_share, book_value_per_share, tangible_book_value_per_share,
-                            shareholders_equity_per_share, operating_cash_flow_per_share,
-                            capex_per_share, free_cash_flow_per_share,
-                            
-                            -- Additional Ratios
-                            net_income_per_ebt, ebt_per_ebit, effective_tax_rate,
-                            enterprise_value_multiple
+                            {fields}
                         FROM stage.financial_metrics_stage
                     """)
 
@@ -696,7 +422,7 @@ class MetricsManager:
     async def save_financial_metrics(self):
         """Main method to fetch and store financial metrics for all relevant stocks."""
         print("\n")
-        logger.info(f"######################### Step - MetricsManager initialized with max_symbols={self.max_symbols}")
+        logger.info(f"######################### Step 12 - MetricsManager initialized with max_symbols={self.max_symbols}")
 
         self.create_metrics_table()
 
@@ -757,300 +483,180 @@ class MetricsManager:
         return True
 
 
-
-
-
-
-
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
+########################################################################################
 
 
 class PercentileCalculator:
-    """Calculate percentiles for financial metrics and store in clean schema."""
-    
-    RAW_SCHEMA, RAW_TABLE = "raw", "financial_metrics"
-    CLEAN_SCHEMA, CLEAN_TABLE = "clean", "stock_metrics_percentiles"
-    EXCLUDE_COLUMNS = {"symbol", "date", "fiscal_year", "period", "reported_currency", "created_at"}
-    PERCENTILES = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99]
+
+    DATABASE_URL = get_database_url()
+    engine: Engine = create_engine(DATABASE_URL)
+    target_table = "clean.financial_metrics_perc"
+    staging_schema = "stage"
+    BATCH_SIZE = 10
 
     def __init__(self):
-        self.database_url = get_database_url()
+        self.identity_columns = ["symbol", "date", "fiscal_year", "period", "reported_currency"]
+        self.percentile_levels = [0.01, 0.10, 0.20, 0.30, 0.40, 0.50,0.60, 0.70, 0.80, 0.90, 0.99]
+        self.labels = ["<1%", "10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "99%", ">99%"]
+        self.metrics = [m for m in field_mapping.values() if m not in self.identity_columns]
 
-    def create_percentiles_table(self):
-        """Create the stock_metrics_percentiles table in clean schema."""
-        try:
-            conn = get_postgres_connection()
-            try:
-                with conn.cursor() as cur:
-                    # Get all metric columns from the raw table
-                    cur.execute("""
-                        SELECT column_name
-                        FROM information_schema.columns
-                        WHERE table_schema=%s AND table_name=%s
-                        ORDER BY ordinal_position
-                    """, (self.RAW_SCHEMA, self.RAW_TABLE))
-                    
-                    all_columns = [row[0] for row in cur.fetchall()]
-                    metric_columns = [col for col in all_columns if col not in self.EXCLUDE_COLUMNS]
-                    
-                    logger.info(f"Found {len(metric_columns)} metric columns for percentile calculation")
-                    
-                    # Drop existing table
-                    cur.execute(f"DROP TABLE IF EXISTS {self.CLEAN_SCHEMA}.{self.CLEAN_TABLE} CASCADE")
-                    logger.info("Dropped existing stock_metrics_percentiles table")
-                    
-                    # Build column definitions for percentile columns
-                    percentile_cols = []
-                    for col in metric_columns:
-                        percentile_cols.append(f'"{col}_perc" JSONB')
-                    
-                    percentile_cols_str = ",\n                        ".join(percentile_cols)
-                    
-                    # Create the percentiles table
-                    create_table_sql = f"""
-                        CREATE TABLE {self.CLEAN_SCHEMA}.{self.CLEAN_TABLE} (
-                            symbol VARCHAR(20),
-                            date DATE,
-                            fiscal_year VARCHAR(10),
-                            period VARCHAR(10),
-                            reported_currency VARCHAR(10),
-                            {percentile_cols_str}
-                        )
-                    """
-                    
-                    cur.execute(create_table_sql)
-                    conn.commit()
-                    logger.info(f"Created stock_metrics_percentiles table with {len(metric_columns)} percentile columns")
-                    
-            finally:
-                conn.close()
-                
-        except Exception as e:
-            logger.error(f"Error creating percentiles table: {e}")
-            raise
+    def read_financial_metrics(self) -> pl.DataFrame:
+        conn = get_postgres_connection()
+        cur = conn.cursor()
+        buf = io.BytesIO()
+        cur.copy_expert("COPY raw.financial_metrics TO STDOUT WITH CSV HEADER", buf)
+        buf.seek(0)
+        df = pl.read_csv(buf, infer_schema_length=10000)
+        cur.close()
+        conn.close()
+        return df.with_columns([
+            pl.col("symbol").cast(pl.Utf8),
+            pl.col("date").str.strptime(pl.Date, strict=False),
+            pl.col("fiscal_year").cast(pl.Int64),
+            pl.col("period").cast(pl.Utf8),
+            pl.col("reported_currency").cast(pl.Utf8),
+        ])
 
-    def calculate_percentiles_for_column(self, column_name):
-        """Calculate percentiles for a specific column and update the table."""
-        try:
-            conn = get_postgres_connection()
-            try:
-                with conn.cursor() as cur:
-                    logger.info(f"Calculating percentiles for column: {column_name}")
-                    
-                    # First, get all non-null values for the column to calculate percentiles
-                    cur.execute(f"""
-                        SELECT "{column_name}"
-                        FROM {self.RAW_SCHEMA}.{self.RAW_TABLE}
-                        WHERE "{column_name}" IS NOT NULL
-                        ORDER BY "{column_name}"
-                    """)
-                    
-                    values = [float(row[0]) for row in cur.fetchall()]
-                    
-                    if len(values) < 2:
-                        logger.warning(f"Not enough data for column {column_name} (only {len(values)} values)")
-                        return
-                    
-                    logger.info(f"Processing {len(values)} values for {column_name}")
-                    
-                    # Calculate percentile thresholds
-                    percentile_thresholds = {}
-                    for p in self.PERCENTILES:
-                        index = (p / 100) * (len(values) - 1)
-                        
-                        if index.is_integer():
-                            threshold = values[int(index)]
-                        else:
-                            # Interpolate between two values
-                            lower_index = int(index)
-                            upper_index = lower_index + 1
-                            lower_value = values[lower_index]
-                            upper_value = values[upper_index]
-                            weight = index - lower_index
-                            threshold = lower_value + weight * (upper_value - lower_value)
-                        
-                        percentile_thresholds[p] = threshold
-                    
-                    # Update each row with its percentile assignment
-                    cur.execute(f"""
-                        SELECT symbol, date, fiscal_year, period, reported_currency, "{column_name}"
-                        FROM {self.RAW_SCHEMA}.{self.RAW_TABLE}
-                        WHERE "{column_name}" IS NOT NULL
-                    """)
-                    
-                    rows_to_update = cur.fetchall()
-                    logger.info(f"Updating percentiles for {len(rows_to_update)} rows")
-                    
-                    for row in rows_to_update:
-                        symbol, date, fiscal_year, period, reported_currency, value = row
-                        value = float(value)  # Convert Decimal to float
-                        
-                        # Find which percentile this value belongs to
-                        assigned_percentile = None
-                        percentile_range = None
-                        
-                        for i, p in enumerate(self.PERCENTILES):
-                            if value <= percentile_thresholds[p]:
-                                assigned_percentile = p
-                                
-                                # Create the range string
-                                if p == 1:
-                                    # For 1%, show (-inf, threshold)
-                                    percentile_range = f"(-inf, {percentile_thresholds[p]:.2f})"
-                                elif p == 99:
-                                    # For 99%, show (threshold, +inf)
-                                    percentile_range = f"({percentile_thresholds[p]:.2f}, +inf)"
-                                else:
-                                    # For other percentiles, find the range
-                                    if i == 0:
-                                        min_val = values[0]
-                                    else:
-                                        min_val = percentile_thresholds[self.PERCENTILES[i-1]]
-                                    
-                                    max_val = percentile_thresholds[p]
-                                    percentile_range = f"({min_val:.2f} - {max_val:.2f})"
-                                
-                                break
-                        
-                        # If value is larger than 99th percentile, assign to 99%
-                        if assigned_percentile is None:
-                            assigned_percentile = 99
-                            percentile_range = f"({percentile_thresholds[99]:.2f}, +inf)"
-                        
-                        # Create the JSON object for this value
-                        percentile_json = {f"{assigned_percentile}%": percentile_range}
-                        
-                        # Update the existing row (since we seeded base rows earlier)
-                        cur.execute(f"""
-                            UPDATE {self.CLEAN_SCHEMA}.{self.CLEAN_TABLE}
-                            SET "{column_name}_perc" = %s
-                            WHERE symbol = %s AND date = %s AND fiscal_year = %s 
-                              AND period = %s AND reported_currency = %s
-                        """, (json.dumps(percentile_json), symbol, date, fiscal_year, period, reported_currency))
-                    
-                    conn.commit()
-                    logger.info(f"Successfully updated percentiles for column: {column_name}")
-                    
-            finally:
-                conn.close()
-                
-        except Exception as e:
-            logger.error(f"Error calculating percentiles for column {column_name}: {e}")
-            raise
+    def bucketize_metric(self, df: pl.DataFrame, metric: str) -> pl.DataFrame:
+        non_null = df.select(self.identity_columns + [metric]).filter(pl.col(metric).is_not_null())
+        if non_null.height == 0:
+            return pl.DataFrame({"symbol": [], "date": [], f"{metric}_perc": []})
+        qs = non_null.select([
+            pl.col(metric).quantile(q, "nearest").alias(f"p{int(q*100):02d}")
+            for q in self.percentile_levels
+        ]).row(0)
+        bins = [-np.inf] + list(qs) + [np.inf]
+        lows, highs = bins[:-1], bins[1:]
 
-    def seed_base_rows(self):
-        """Create base rows with symbol, date, fiscal_year, period, reported_currency."""
-        try:
-            conn = get_postgres_connection()
-            try:
-                with conn.cursor() as cur:
-                    logger.info("Seeding base rows from raw table...")
-                    
-                    # Insert distinct key combinations
-                    cur.execute(f"""
-                        INSERT INTO {self.CLEAN_SCHEMA}.{self.CLEAN_TABLE}
-                        (symbol, date, fiscal_year, period, reported_currency)
-                        SELECT DISTINCT symbol, date, fiscal_year, period, reported_currency
-                        FROM {self.RAW_SCHEMA}.{self.RAW_TABLE}
-                    """)
-                    
-                    rows_inserted = cur.rowcount
-                    conn.commit()
-                    
-                    logger.info(f"Seeded {rows_inserted} base rows in percentiles table")
-                    
-            finally:
-                conn.close()
-                
-        except Exception as e:
-            logger.error(f"Error seeding base rows: {e}")
-            raise
+        def fmt(x): return "-∞" if x == float("-inf") else "+∞" if x == float("inf") else f"{x:.2f}"
+        bracket_display = [f"{lab} ({fmt(lo)} – {fmt(hi)})" for lab, lo, hi in zip(self.labels, lows, highs)]
+        mapping_df = pl.DataFrame({"_low": lows, "_high": highs, "_label": bracket_display})
 
-    def add_primary_key(self):
-        """Add primary key constraint after data is populated."""
-        try:
-            conn = get_postgres_connection()
-            try:
-                with conn.cursor() as cur:
-                    logger.info("Adding primary key constraint...")
-                    
-                    cur.execute(f"""
-                        ALTER TABLE {self.CLEAN_SCHEMA}.{self.CLEAN_TABLE}
-                        ADD CONSTRAINT {self.CLEAN_TABLE}_pk 
-                        PRIMARY KEY (symbol, date, fiscal_year, period, reported_currency)
-                    """)
-                    
-                    conn.commit()
-                    logger.info("Primary key constraint added successfully")
-                    
-            finally:
-                conn.close()
-                
-        except Exception as e:
-            logger.error(f"Error adding primary key: {e}")
-            raise
+        return (
+            non_null.lazy()
+            .join(mapping_df.lazy(), how="cross")
+            .filter((pl.col(metric) >= pl.col("_low")) & (pl.col(metric) < pl.col("_high")))
+            .select(["symbol", "date", pl.col("_label").alias(f"{metric}_perc")])
+            .collect()
+        )
 
     def run_percentile_calculation(self):
-        """Main method to run the complete percentile calculation process."""
-        try:
-            logger.info("Starting percentile calculation process...")
-            
-            # Step 1: Create the percentiles table
-            self.create_percentiles_table()
-            
-            # Step 2: Seed base rows
-            self.seed_base_rows()
-            
-            # Step 3: Get all metric columns
-            conn = get_postgres_connection()
-            try:
-                with conn.cursor() as cur:
-                    cur.execute("""
-                        SELECT column_name
-                        FROM information_schema.columns
-                        WHERE table_schema=%s AND table_name=%s
-                        ORDER BY ordinal_position
-                    """, (self.RAW_SCHEMA, self.RAW_TABLE))
-                    
-                    all_columns = [row[0] for row in cur.fetchall()]
-                    metric_columns = [col for col in all_columns if col not in self.EXCLUDE_COLUMNS]
-                    
-            finally:
-                conn.close()
-            
-            logger.info(f"Processing {len(metric_columns)} metric columns")
-            
-            # Step 4: Calculate percentiles for each column
-            for i, column in enumerate(metric_columns, 1):
-                logger.info(f"Processing column {i}/{len(metric_columns)}: {column}")
-                self.calculate_percentiles_for_column(column)
-            
-            # Step 5: Add primary key constraint
-            self.add_primary_key()
-            
-            # Step 6: Final verification
-            conn = get_postgres_connection()
-            try:
-                with conn.cursor() as cur:
-                    cur.execute(f"SELECT COUNT(*) FROM {self.CLEAN_SCHEMA}.{self.CLEAN_TABLE}")
-                    total_rows = cur.fetchone()[0]
-                    logger.info(f"Percentile calculation completed. Total rows: {total_rows}")
-                    
-            finally:
-                conn.close()
-            
-            logger.info("Percentile calculation process completed successfully!")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Percentile calculation process failed: {e}")
-            return False
+        print("\n")
+        logger.info("######################### Step 13 - PercentileCalculator initialized")
+        logger.info("Reading raw.financial_metrics")
+        df_raw = self.read_financial_metrics()
+        df_base = df_raw.select(self.identity_columns).unique()
+
+        logger.info("Dropping + recreating target table")
+        with self.engine.begin() as conn:
+            conn.execute(text(f"DROP TABLE IF EXISTS {self.target_table}"))
+            ddl = f"""
+                CREATE TABLE {self.target_table} (
+                    symbol TEXT,
+                    date DATE,
+                    fiscal_year INTEGER,
+                    period TEXT,
+                    reported_currency TEXT
+                ) WITH (fillfactor=100);
+            """
+            conn.execute(text(ddl))
+
+        # Insert identities once
+        pg_conn = psycopg2.connect(self.DATABASE_URL.replace("postgresql+psycopg2", "postgresql"))
+        cur = pg_conn.cursor()
+        buf = io.StringIO()
+        df_base.to_pandas().to_csv(buf, sep="\t", index=False, header=False, na_rep="\\N")
+        buf.seek(0)
+        cols_sql = ", ".join([f'"{c}"' for c in self.identity_columns])
+        cur.copy_expert(
+            f"COPY {self.target_table} ({cols_sql}) FROM STDIN WITH (FORMAT text, DELIMITER E'\\t', NULL '\\N')", buf
+        )
+        pg_conn.commit()
+
+        # Process metrics in batches
+        for i in range(0, len(self.metrics), self.BATCH_SIZE):
+            batch = self.metrics[i:i + self.BATCH_SIZE]
+            logger.info(f"Processing batch {i // self.BATCH_SIZE + 1}: {batch}")
+            batch_df = df_base
+
+            for m in batch:
+                df_m = self.bucketize_metric(df_raw, m)
+                if df_m.height > 0:
+                    batch_df = batch_df.join(df_m, on=["symbol", "date"], how="left")
+
+            pdf = batch_df.to_pandas()
+            pdf["date"] = pd.to_datetime(pdf["date"]).dt.date
+
+            # Create staging table
+            staging = f"{self.staging_schema}.tmp_batch_{i}"
+            cur.execute(f"DROP TABLE IF EXISTS {staging}")
+            cur.execute(f'CREATE TABLE {staging} (symbol TEXT, date DATE, ' +
+                        ", ".join([f'"{m}_perc" TEXT' for m in batch]) + ")")
+            pg_conn.commit()
+
+            # COPY batch into staging
+            buf = io.StringIO()
+            pdf[["symbol", "date"] + [f"{m}_perc" for m in batch]].to_csv(
+                buf, sep="\t", index=False, header=False, na_rep="\\N"
+            )
+            buf.seek(0)
+            cols = ["symbol", "date"] + [f"{m}_perc" for m in batch]
+            cols_sql = ", ".join([f'"{c}"' for c in cols])
+            cur.copy_expert(
+                f"COPY {staging} ({cols_sql}) FROM STDIN WITH (FORMAT text, DELIMITER E'\\t', NULL '\\N')", buf
+            )
+            pg_conn.commit()
+
+            # Add target columns if needed
+            with self.engine.begin() as conn:
+                for m in batch:
+                    conn.execute(text(f'ALTER TABLE {self.target_table} ADD COLUMN IF NOT EXISTS "{m}_perc" TEXT'))
+
+                set_clause = ", ".join([f'"{m}_perc" = s."{m}_perc"' for m in batch])
+                conn.execute(text(f"""
+                    UPDATE {self.target_table} t
+                    SET {set_clause}
+                    FROM {staging} s
+                    WHERE t.symbol = s.symbol
+                      AND t.date = s.date
+                """))
+
+            cur.execute(f"DROP TABLE IF EXISTS {staging}")
+            pg_conn.commit()
+            logger.info(f"Batch {i // self.BATCH_SIZE + 1} merged.")
+
+        cur.close()
+        pg_conn.close()
+        logger.info("All batches merged in Financial Metrics Table.")
+
+        logger.info("Running VACUUM FULL ANALYZE on Financial Metrics Table")
+        raw_conn = psycopg2.connect(self.DATABASE_URL.replace("postgresql+psycopg2", "postgresql"))
+        raw_conn.set_session(autocommit=True)
+        raw_cur = raw_conn.cursor()
+        raw_cur.execute(f"VACUUM FULL ANALYZE {self.target_table}")
+        raw_cur.close()
+        raw_conn.close()
+
 
 
 if __name__ == "__main__":
-    # Run both metrics manager and percentile calculator
     metrics_manager = MetricsManager()
     asyncio.run(metrics_manager.save_financial_metrics())
-    
-    percentile_calculator = PercentileCalculator()
-    percentile_calculator.run_percentile_calculation()
 
+    percentile_calculator = PercentileCalculator()
+    asyncio.run(percentile_calculator.run_percentile_calculation())

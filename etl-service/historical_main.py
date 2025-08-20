@@ -50,8 +50,8 @@ async def main():
         # etl_summary_manager = ETLSummaryManager() # Update ETL Summary data
         # await etl_summary_manager.run_update()
 
-        #metrics_manager = MetricsManager() # Get and store financial metrics data
-        #await metrics_manager.save_financial_metrics()
+        metrics_manager = MetricsManager() # Get and store financial metrics data
+        await metrics_manager.save_financial_metrics()
 
         percentile_calculator = PercentileCalculator()
         percentile_calculator.run_percentile_calculation()
