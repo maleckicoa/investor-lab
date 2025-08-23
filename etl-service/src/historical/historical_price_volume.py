@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from ..utils.utils import get_postgres_connection, get_database_url, get_logger
 from ..utils.models import PriceVolumeValidator, PriceVolumeFxValidator
 from typing import Dict, List, Optional
+from collections import defaultdict
 
 # Get logger
 logger = get_logger(__name__)
@@ -17,7 +18,7 @@ logger = get_logger(__name__)
 load_dotenv()
 
 class HistoricalPriceVolumeManager:
-    def __init__(self, start_date: str = "2014-01-01", max_symbols: int = 60000):
+    def __init__(self, start_date: str = "2013-12-01", max_symbols: int = 60000):
         self.database_url = get_database_url()
         self.engine = create_engine(self.database_url)
         self.fmp = FMPAPI()
@@ -55,7 +56,10 @@ class HistoricalPriceVolumeManager:
                         symbol VARCHAR(100),
                         currency VARCHAR(10),
                         close DECIMAL(20, 4),
-                        volume NUMERIC(30, 4)
+                        volume NUMERIC(30, 4),
+                        year INT,
+                        quarter VARCHAR(2),
+                        last_quarter_date BOOLEAN
                     )
                 """))
                 #,
@@ -66,7 +70,10 @@ class HistoricalPriceVolumeManager:
                         symbol VARCHAR(100),
                         currency VARCHAR(10),
                         close DECIMAL(20, 4),
-                        volume NUMERIC(30, 4)
+                        volume NUMERIC(30, 4),
+                        year INT,
+                        quarter VARCHAR(2),
+                        last_quarter_date BOOLEAN
                     )
                 """))
 
@@ -122,20 +129,55 @@ class HistoricalPriceVolumeManager:
                 if isinstance(res, Exception) or not res:
                     continue
                 price_list = res if isinstance(res, list) else res.get("historical", [])
+                # Normalize all dates
+                for p in price_list:
+                    raw_date = p.get("date")
+                    if isinstance(raw_date, str):
+                        p["date"] = datetime.strptime(raw_date, "%Y-%m-%d")
+                    elif not isinstance(raw_date, datetime):
+                        continue  # skip if invalid format
+
+                # Compute max date per (year, quarter)
+                max_date_by_quarter = defaultdict(lambda: None)
+                for p in price_list:
+                    date = p["date"]
+                    year = date.year
+                    quarter = ((date.month - 1) // 3) + 1
+                    # Ensure the last month of the quarter is considered
+                    if date.month % 3 == 0:
+                        key = (year, quarter)
+                        max_date_by_quarter[key] = (
+                            max(max_date_by_quarter[key], date) if max_date_by_quarter[key] else date
+                        )
+
+                # Validate and tag each row
+                today = datetime.today()
+                current_year = today.year
+                current_quarter = ((today.month - 1) // 3) + 1
+                current_q_key = (current_year, current_quarter)
+
                 for p in price_list:
                     try:
-                        if isinstance(p.get("date"), str):
-                            p["date"] = datetime.strptime(p["date"], "%Y-%m-%d")
+                        date = p["date"]
+                        year = date.year
+                        quarter = ((date.month - 1) // 3) + 1
+                        key = (year, quarter)
+                        is_last_quarter_date = (
+                            False if key == current_q_key else date == max_date_by_quarter[key]
+                        )
                         validated = PriceVolumeValidator(
                             date=p["date"],
                             symbol=symbol,
                             currency=currency_map.get(symbol),
                             close=p["close"],
-                            volume=p["volume"]
+                            volume=p["volume"],
+                            year=year,
+                            quarter=f"Q{quarter}",
+                            last_quarter_date=is_last_quarter_date
                         )
                         all_data.append(validated.model_dump())
                     except Exception:
-                        continue
+                         logger.error(f"Validation error for symbol {symbol} on {p.get('date')}: {e}")
 
             if not all_data:
                 return
@@ -147,7 +189,7 @@ class HistoricalPriceVolumeManager:
                     volume = float(record['volume']) if record['volume'] else 0
                     if abs(close) >= 1e16: close = 0
                     if abs(volume) >= 1e24: volume = 0
-                    buffer.write(f"{record['date']}\t{record['symbol']}\t{record['currency']}\t{close}\t{volume}\n")
+                    buffer.write(f"{record['date']}\t{record['symbol']}\t{record['currency']}\t{close}\t{volume}\t{record['year']}\t{record['quarter']}\t{record['last_quarter_date']}\n")
                 except Exception:
                     continue
             buffer.seek(0)
@@ -156,11 +198,11 @@ class HistoricalPriceVolumeManager:
             try:
                 with conn.cursor() as cur:
                     cur.execute("SET search_path TO stage")
-                    cur.copy_from(buffer, "historical_price_volume_stage", columns=("date", "symbol", "currency", "close", "volume"))
+                    cur.copy_from(buffer, "historical_price_volume_stage", columns=("date", "symbol", "currency", "close", "volume", "year", "quarter", "last_quarter_date"))
 
                     cur.execute("""
-                        INSERT INTO raw.historical_price_volume (date, symbol, currency, close, volume)
-                        SELECT date, symbol, currency, close, volume
+                        INSERT INTO raw.historical_price_volume (date, symbol, currency, close, volume, year, quarter, last_quarter_date)
+                        SELECT date, symbol, currency, close, volume, year, quarter, last_quarter_date
                         FROM stage.historical_price_volume_stage
                     """)
                         # ON CONFLICT (date, symbol) DO UPDATE
@@ -247,6 +289,7 @@ class HistoricalPriceVolumeManager:
 
 
 
+###########################################################################################################
 ###########################################################################################################
 ###########################################################################################################
 ###########################################################################################################
@@ -380,7 +423,7 @@ class HistoricalPriceVolumeFxConverter:
             # Drop secondary index before conversion
             self.drop_indexes()
 
-            d_start = datetime(2014, 1, 1).date()
+            d_start = datetime(2013, 12, 1).date()
             d_end = datetime.now().date()
             from dateutil.relativedelta import relativedelta
             batch_size = relativedelta(months=1)

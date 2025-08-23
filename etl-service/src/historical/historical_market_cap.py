@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from ..utils.utils import get_postgres_connection, get_database_url, get_logger
 from ..utils.models import MarketCapValidator, McapFxValidator
 from typing import Dict, List, Optional
+from collections import defaultdict
 
 # Get logger
 logger = get_logger(__name__)
@@ -17,7 +18,7 @@ logger = get_logger(__name__)
 load_dotenv()
 
 class HistoricalMcapManager:
-    def __init__(self, start_date: str = "2014-01-01"):
+    def __init__(self, start_date: str = "2013-12-01"):
         """Initialize the HistoricalMcapManager with database connection and configuration parameters."""
         self.database_url = get_database_url()
         self.engine = create_engine(self.database_url)
@@ -57,7 +58,10 @@ class HistoricalMcapManager:
                         date DATE,
                         symbol VARCHAR(100),
                         currency VARCHAR(10),
-                        market_cap NUMERIC(30, 0)
+                        market_cap NUMERIC(30, 0),
+                        year INT,
+                        quarter VARCHAR(2),
+                        last_quarter_date BOOLEAN
                     )
                 """))
                 #,
@@ -68,7 +72,10 @@ class HistoricalMcapManager:
                         date DATE,
                         symbol VARCHAR(100),
                         currency VARCHAR(10),
-                        market_cap NUMERIC(30, 0)
+                        market_cap NUMERIC(30, 0),
+                        year INT,
+                        quarter VARCHAR(2),
+                        last_quarter_date BOOLEAN
                     )
                 """))
                 conn.commit()
@@ -146,28 +153,59 @@ class HistoricalMcapManager:
                 if not mcap_data_list:
                     logger.warning(f"No historical market cap data found for {symbol}")
                     continue
+                # Normalize all dates
+                for mcap_data in mcap_data_list:
+                    date_value = mcap_data.get('date')
+                    if isinstance(date_value, str):
+                        mcap_data['date'] = datetime.strptime(date_value, '%Y-%m-%d')
+                    elif not isinstance(date_value, datetime):
+                        continue  # skip if invalid format
+                # Compute max date per (year, quarter)
+                max_date_by_quarter = defaultdict(lambda: None)
+                for mcap_data in mcap_data_list:
+                    date = mcap_data['date']
+                    year = date.year
+                    quarter = ((date.month - 1) // 3) + 1
+                    # Ensure the last month of the quarter is considered
+                    if date.month % 3 == 0:
+                        key = (year, quarter)
+                        max_date_by_quarter[key] = (
+                            max(max_date_by_quarter[key], date) if max_date_by_quarter[key] else date
+                        )
+                # Validate and tag each row
+                today = datetime.today()
+                current_year = today.year
+                current_quarter = ((today.month - 1) // 3) + 1
+                current_q_key = (current_year, current_quarter)
                 for mcap_data in mcap_data_list:
                     try:
-                        date_value = mcap_data.get('date')
-                        if isinstance(date_value, str):
-                            date_value = datetime.strptime(date_value, '%Y-%m-%d')
+                        date = mcap_data['date']  # Ensure this is a datetime object
+                        year = date.year
+                        quarter = ((date.month - 1) // 3) + 1
+                        key = (year, quarter)
+                        is_last_quarter_date = (
+                            False if key == current_q_key else date == max_date_by_quarter[key]
+                        )
                         market_cap = mcap_data.get('marketCap')
                         if market_cap is None:
-                            logger.warning(f"Missing marketCap for {symbol} on {date_value}")
+                            logger.warning(f"Missing marketCap for {symbol} on {date}")
                             continue
                         try:
                             market_cap_val = float(market_cap)
                             if abs(market_cap_val) >= 1e24:
-                                logger.error(f"Numeric field overflow (market_cap): symbol={symbol}, date={date_value}, market_cap={market_cap}. Setting market_cap=0.")
+                                logger.error(f"Numeric field overflow (market_cap): symbol={symbol}, date={date}, market_cap={market_cap}. Setting market_cap=0.")
                                 market_cap_val = 0
                         except Exception as e:
-                            logger.error(f"Error validating market_cap for symbol={symbol}, date={date_value}: {e}. Setting market_cap=0.")
+                            logger.error(f"Error validating market_cap for symbol={symbol}, date={date}: {e}. Setting market_cap=0.")
                             market_cap_val = 0
                         validated_record = MarketCapValidator(
-                            date=date_value,
+                            date=date,
                             symbol=symbol,
                             currency=currency_map.get(symbol),
-                            market_cap=int(market_cap_val)
+                            market_cap=int(market_cap_val),
+                            year=year,
+                            quarter=f"Q{quarter}",
+                            last_quarter_date=is_last_quarter_date
                         )
                         all_mcap_data.append(validated_record.model_dump())
                     except Exception as e:
@@ -181,7 +219,7 @@ class HistoricalMcapManager:
                         if abs(market_cap_val) >= 1e24:
                             logger.error(f"Numeric field overflow (market_cap): symbol={record['symbol']}, date={record['date']}, market_cap={record['market_cap']}. Setting market_cap=0.")
                             record['market_cap'] = 0
-                        buffer.write(f"{record['date'].date()}\t{record['symbol']}\t{record['currency']}\t{record['market_cap']}\n")
+                        buffer.write(f"{record['date'].date()}\t{record['symbol']}\t{record['currency']}\t{record['market_cap']}\t{record['year']}\t{record['quarter']}\t{record['last_quarter_date']}\n")
                     except Exception as e:
                         logger.error(f"Error validating market_cap value for symbol={record['symbol']}, date={record['date']}: {e}")
                         continue
@@ -190,10 +228,10 @@ class HistoricalMcapManager:
                 try:
                     with conn.cursor() as cur:
                         cur.execute("SET search_path TO stage")
-                        cur.copy_from(buffer, 'historical_market_cap_stage', columns=('date', 'symbol', 'currency', 'market_cap'))
+                        cur.copy_from(buffer, 'historical_market_cap_stage', columns=('date', 'symbol', 'currency', 'market_cap', 'year', 'quarter', 'last_quarter_date'))
                         cur.execute("""
-                            INSERT INTO raw.historical_market_cap (date, symbol, currency, market_cap)
-                            SELECT date, symbol, currency, market_cap
+                            INSERT INTO raw.historical_market_cap (date, symbol, currency, market_cap, year, quarter, last_quarter_date)
+                            SELECT date, symbol, currency, market_cap, year, quarter, last_quarter_date
                             FROM stage.historical_market_cap_stage
                         """)
                         cur.execute("TRUNCATE stage.historical_market_cap_stage")
@@ -270,6 +308,8 @@ class HistoricalMcapManager:
         return True
 
 
+###########################################################################################################
+###########################################################################################################
 ###########################################################################################################
 ###########################################################################################################
 ###########################################################################################################
@@ -390,7 +430,7 @@ WHERE
             # Drop secondary index before conversion
             self.drop_indexes()
 
-            d_start = datetime(2014, 1, 1).date()
+            d_start = datetime(2013, 12, 1).date()
             d_end = datetime.now().date()
             from dateutil.relativedelta import relativedelta
             batch_size = relativedelta(months=1)

@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 load_dotenv()
 
 class HistoricalForexManager:
-    def __init__(self, start_date: str = "2014-01-01"):
+    def __init__(self, start_date: str = "2013-12-01"):
         self.database_url = get_database_url()
         self.engine = create_engine(self.database_url)
         self.fmp = FMPAPI()
@@ -60,7 +60,7 @@ class HistoricalForexManager:
                 
                 if result:
                     logger.info("Historical forex table exists, clearing all data...")
-                    conn.execute(text("DELETE FROM raw.historical_forex"))
+                    conn.execute(text("DROP TABLE IF EXISTS raw.historical_forex"))
                     conn.commit()
                     logger.info("All data cleared from raw.historical_forex table")
                 else:

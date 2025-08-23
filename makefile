@@ -26,6 +26,9 @@ daily-fx-mcap: daily-forex daily-mcap
 historical:
 	poetry run --directory etl-service python -m historical_main
 
+historical-forex-full:
+	poetry run --directory etl-service python -m src.historical.historical_forex_full
+
 # Frontend targets
 frontend-setup:
 	cd frontend && ./setup.sh

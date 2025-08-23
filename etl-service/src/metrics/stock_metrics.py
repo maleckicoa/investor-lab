@@ -104,7 +104,7 @@ field_mapping = OrderedDict([
 
 def get_create_table_sql(schema: str, table_name: str) -> str:
     return f"""
-        CREATE TABLE {schema}.{table_name} (
+        CREATE TABLE IF NOT EXISTS {schema}.{table_name} (
             symbol VARCHAR(20),
             date DATE,
             fiscal_year VARCHAR(10),
@@ -221,11 +221,10 @@ class MetricsManager:
         """Create the financial metrics tables in raw and stage schemas."""
         try:
             with self.engine.connect() as conn:
-                # Drop existing tables to ensure clean slate
+                # Drop table to ensure a clean slate
                 conn.execute(text("DROP TABLE IF EXISTS raw.financial_metrics"))
-                conn.execute(text("DROP TABLE IF EXISTS stage.financial_metrics_stage"))
                 conn.commit()
-                logger.info("Dropped existing financial metrics tables")
+                logger.info("Dropped financial_metrics table")
                 
                 logger.info("Creating fresh financial metrics tables...")
                 
@@ -243,16 +242,15 @@ class MetricsManager:
 
     # Index management removed - no indexes needed for simple data writing
 
-    async def get_symbols_from_db(self):
-        """Get relevant stock symbols from the database."""
+    def get_symbols_from_db(self):
+        """Get relevant stock symbols from the historical_price_volume table."""
         with self.engine.connect() as conn:
             result = conn.execute(text("""
-                SELECT symbol, currency 
-                FROM raw.stock_info 
-                WHERE relevant = TRUE
+                SELECT DISTINCT symbol, currency 
+                FROM raw.historical_price_volume
             """))
             symbols = [(row[0], row[1]) for row in result]
-            logger.info(f"Found {len(symbols)} relevant symbols in database")
+            logger.info(f"Found {len(symbols)} relevant symbols in historical_price_volume table")
             return symbols
 
 
@@ -422,11 +420,11 @@ class MetricsManager:
     async def save_financial_metrics(self):
         """Main method to fetch and store financial metrics for all relevant stocks."""
         print("\n")
-        logger.info(f"######################### Step 12 - MetricsManager initialized with max_symbols={self.max_symbols}")
+        logger.info(f"######################### Step 11 - MetricsManager initialized with max_symbols={self.max_symbols}")
 
         self.create_metrics_table()
 
-        symbols_with_currency = await self.get_symbols_from_db()
+        symbols_with_currency = self.get_symbols_from_db()
         if not symbols_with_currency:
             logger.error("No symbols found in database.")
             return False
@@ -499,6 +497,7 @@ class MetricsManager:
 ########################################################################################
 ########################################################################################
 ########################################################################################
+########################################################################################
 
 
 class PercentileCalculator:
@@ -507,13 +506,14 @@ class PercentileCalculator:
     engine: Engine = create_engine(DATABASE_URL)
     target_table = "clean.financial_metrics_perc"
     staging_schema = "stage"
-    BATCH_SIZE = 10
+    BATCH_SIZE = 4
 
     def __init__(self):
         self.identity_columns = ["symbol", "date", "fiscal_year", "period", "reported_currency"]
         self.percentile_levels = [0.01, 0.10, 0.20, 0.30, 0.40, 0.50,0.60, 0.70, 0.80, 0.90, 0.99]
         self.labels = ["<1%", "10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "99%", ">99%"]
         self.metrics = [m for m in field_mapping.values() if m not in self.identity_columns]
+        self.perc_values = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99, 100]
 
     def read_financial_metrics(self) -> pl.DataFrame:
         conn = get_postgres_connection()
@@ -535,7 +535,7 @@ class PercentileCalculator:
     def bucketize_metric(self, df: pl.DataFrame, metric: str) -> pl.DataFrame:
         non_null = df.select(self.identity_columns + [metric]).filter(pl.col(metric).is_not_null())
         if non_null.height == 0:
-            return pl.DataFrame({"symbol": [], "date": [], f"{metric}_perc": []})
+            return pl.DataFrame({"symbol": [], "date": [], f"{metric}_bound": [], f"{metric}_perc": []})
         qs = non_null.select([
             pl.col(metric).quantile(q, "nearest").alias(f"p{int(q*100):02d}")
             for q in self.percentile_levels
@@ -543,21 +543,27 @@ class PercentileCalculator:
         bins = [-np.inf] + list(qs) + [np.inf]
         lows, highs = bins[:-1], bins[1:]
 
+
         def fmt(x): return "-∞" if x == float("-inf") else "+∞" if x == float("inf") else f"{x:.2f}"
         bracket_display = [f"{lab} ({fmt(lo)} – {fmt(hi)})" for lab, lo, hi in zip(self.labels, lows, highs)]
-        mapping_df = pl.DataFrame({"_low": lows, "_high": highs, "_label": bracket_display})
+        mapping_df = pl.DataFrame({"_low": lows, "_high": highs, "_label": bracket_display, "_perc": self.perc_values})
 
         return (
             non_null.lazy()
             .join(mapping_df.lazy(), how="cross")
             .filter((pl.col(metric) >= pl.col("_low")) & (pl.col(metric) < pl.col("_high")))
-            .select(["symbol", "date", pl.col("_label").alias(f"{metric}_perc")])
+            .select(["symbol", "date", pl.col("_label").alias(f"{metric}_bound"), pl.col("_perc").alias(f"{metric}_perc")])
             .collect()
         )
 
     def run_percentile_calculation(self):
         print("\n")
-        logger.info("######################### Step 13 - PercentileCalculator initialized")
+        logger.info("######################### Step 12 - PercentileCalculator initialized")
+        with self.engine.connect() as conn:
+            # Drop table to ensure a clean slate
+            conn.execute(text("DROP TABLE IF EXISTS clean.financial_metrics_perc"))
+            conn.commit()
+            logger.info("Dropped financial_metrics_perc table")
         logger.info("Reading raw.financial_metrics")
         df_raw = self.read_financial_metrics()
         df_base = df_raw.select(self.identity_columns).unique()
@@ -584,7 +590,7 @@ class PercentileCalculator:
         buf.seek(0)
         cols_sql = ", ".join([f'"{c}"' for c in self.identity_columns])
         cur.copy_expert(
-            f"COPY {self.target_table} ({cols_sql}) FROM STDIN WITH (FORMAT text, DELIMITER E'\\t', NULL '\\N')", buf
+            f"COPY {self.target_table} ({cols_sql}) FROM STDIN WITH (FORMAT text, DELIMITER E'\t', NULL '\\N')", buf
         )
         pg_conn.commit()
 
@@ -601,33 +607,38 @@ class PercentileCalculator:
 
             pdf = batch_df.to_pandas()
             pdf["date"] = pd.to_datetime(pdf["date"]).dt.date
+            
+            # Ensure _perc columns are integers
+            for m in batch:
+                pdf[f"{m}_perc"] = pdf[f"{m}_perc"].astype('Int64')
 
             # Create staging table
             staging = f"{self.staging_schema}.tmp_batch_{i}"
             cur.execute(f"DROP TABLE IF EXISTS {staging}")
             cur.execute(f'CREATE TABLE {staging} (symbol TEXT, date DATE, ' +
-                        ", ".join([f'"{m}_perc" TEXT' for m in batch]) + ")")
+                        ", ".join([f'"{m}_bound" TEXT, "{m}_perc" INTEGER' for m in batch]) + ")")
             pg_conn.commit()
 
             # COPY batch into staging
             buf = io.StringIO()
-            pdf[["symbol", "date"] + [f"{m}_perc" for m in batch]].to_csv(
+            pdf[["symbol", "date"] + [f"{m}_bound" for m in batch] + [f"{m}_perc" for m in batch]].to_csv(
                 buf, sep="\t", index=False, header=False, na_rep="\\N"
             )
             buf.seek(0)
-            cols = ["symbol", "date"] + [f"{m}_perc" for m in batch]
+            cols = ["symbol", "date"] + [f"{m}_bound" for m in batch] + [f"{m}_perc" for m in batch]
             cols_sql = ", ".join([f'"{c}"' for c in cols])
             cur.copy_expert(
-                f"COPY {staging} ({cols_sql}) FROM STDIN WITH (FORMAT text, DELIMITER E'\\t', NULL '\\N')", buf
+                f"COPY {staging} ({cols_sql}) FROM STDIN WITH (FORMAT text, DELIMITER E'\t', NULL '\\N')", buf
             )
             pg_conn.commit()
 
             # Add target columns if needed
             with self.engine.begin() as conn:
                 for m in batch:
-                    conn.execute(text(f'ALTER TABLE {self.target_table} ADD COLUMN IF NOT EXISTS "{m}_perc" TEXT'))
+                    conn.execute(text(f'ALTER TABLE {self.target_table} ADD COLUMN IF NOT EXISTS "{m}_bound" TEXT'))
+                    conn.execute(text(f'ALTER TABLE {self.target_table} ADD COLUMN IF NOT EXISTS "{m}_perc" INTEGER'))
 
-                set_clause = ", ".join([f'"{m}_perc" = s."{m}_perc"' for m in batch])
+                set_clause = ", ".join([f'"{m}_bound" = s."{m}_bound", "{m}_perc" = s."{m}_perc"' for m in batch])
                 conn.execute(text(f"""
                     UPDATE {self.target_table} t
                     SET {set_clause}
@@ -659,4 +670,4 @@ if __name__ == "__main__":
     asyncio.run(metrics_manager.save_financial_metrics())
 
     percentile_calculator = PercentileCalculator()
-    asyncio.run(percentile_calculator.run_percentile_calculation())
+    percentile_calculator.run_percentile_calculation()

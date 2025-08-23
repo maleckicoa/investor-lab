@@ -38,8 +38,8 @@ async def main():
         # price_manager = HistoricalPriceVolumeManager() # Then, get and store historical prices
         # await price_manager.save_historical_price_volume()
 
-        # fx_converter = HistoricalPriceVolumeFxConverter() #Convert prices to EUR and USD
-        # await fx_converter.run_conversion()
+        fx_converter = HistoricalPriceVolumeFxConverter() #Convert prices to EUR and USD
+        await fx_converter.run_conversion()
 
         # mcap_manager = HistoricalMcapManager() # Get and store historical market cap data
         # await mcap_manager.save_historical_market_cap()
@@ -47,14 +47,14 @@ async def main():
         # mcap_fx_converter = HistoricalMcapFxConverter()  # Convert market cap to EUR and USD
         # await mcap_fx_converter.run_conversion()
 
+        # metrics_manager = MetricsManager() # Get and store financial metrics data
+        # await metrics_manager.save_financial_metrics()
+
+        # percentile_calculator = PercentileCalculator()
+        # percentile_calculator.run_percentile_calculation()
+
         # etl_summary_manager = ETLSummaryManager() # Update ETL Summary data
         # await etl_summary_manager.run_update()
-
-        metrics_manager = MetricsManager() # Get and store financial metrics data
-        await metrics_manager.save_financial_metrics()
-
-        percentile_calculator = PercentileCalculator()
-        percentile_calculator.run_percentile_calculation()
 
 
 

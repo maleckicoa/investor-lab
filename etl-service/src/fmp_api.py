@@ -25,10 +25,6 @@ class FMPAPI:
         params['apikey'] = self.api_key
         url = f"{self.base_url}/{endpoint}"
         
-        # Log the full URL with parameters
-        # full_url = f"{url}?{'&'.join(f'{k}={v}' for k, v in params.items())}"
-        # print(f"Making request to: {full_url}")
-        # print(params)
 
         async with aiohttp.ClientSession() as session:
             async with session.get(url, params=params) as response:
@@ -84,8 +80,6 @@ class FMPAPI:
             }
         )
 
-
-
     async def get_historical_price(self, symbol: str, from_date: str, to_date: str) -> Dict:
         """Get historical price data for a symbol."""
         return await self._make_request(
@@ -99,8 +93,6 @@ class FMPAPI:
         endpoint = "stable/eod-bulk"
         params = {"date": date}
         return await self._make_text_request(endpoint, params)
-
-
 
     async def get_historical_mcap(self, symbol: str, from_date: str, to_date: str, limit: int = 10000) -> Dict:
         """Get historical market capitalization data for a symbol."""

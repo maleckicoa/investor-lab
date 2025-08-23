@@ -8,6 +8,9 @@ class PriceVolumeValidator(BaseModel):
     currency: str = Field(max_length=10, description="Currency of the price")
     close: float = Field(ge=0, description="Closing price")
     volume: int = Field(ge=0, description="Trading volume")
+    year: int = Field(description="Year of the price record")
+    quarter: str = Field(description="Quarter of the price record, e.g., Q1")
+    last_quarter_date: bool = Field(description="Indicates if the date is the last date of the quarter")
     created_at: datetime = Field(default_factory=datetime.now, description="Record creation timestamp")
 
 class PriceVolumeFxValidator(PriceVolumeValidator):
@@ -21,6 +24,9 @@ class MarketCapValidator(BaseModel):
     symbol: str = Field(description="Stock symbol")
     currency: str = Field(max_length=10, description="Currency of the market cap")
     market_cap: int = Field(ge=0, description="Market capitalization value")
+    year: int = Field(description="Year of the market cap record")
+    quarter: str = Field(description="Quarter of the market cap record, e.g., Q1")
+    last_quarter_date: bool = Field(description="Indicates if the date is the last date of the quarter")
     created_at: datetime = Field(default_factory=datetime.now, description="Record creation timestamp")
 
 class McapFxValidator(MarketCapValidator):

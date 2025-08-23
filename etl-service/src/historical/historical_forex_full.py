@@ -1,4 +1,5 @@
 import pandas as pd
+import asyncio
 from datetime import datetime
 from sqlalchemy import create_engine, text
 from ..utils.utils import get_logger, get_postgres_connection, get_database_url
@@ -18,31 +19,25 @@ class FullForexManager:
             with self.engine.connect() as conn:
                 # Ensure schema exists
                 conn.execute(text("CREATE SCHEMA IF NOT EXISTS clean"))
-                conn.commit()
                 
-                # Ensure table exists
-                exists = conn.execute(text("""
-                    SELECT EXISTS (
-                        SELECT FROM information_schema.tables 
-                        WHERE table_schema = 'clean' 
-                          AND table_name = 'historical_forex_full'
+                # Drop table if it exists
+                conn.execute(text("DROP TABLE IF EXISTS clean.historical_forex_full"))
+                conn.commit()
+                logger.info("Dropped existing table clean.historical_forex_full")
+                
+                # Create fresh table
+                conn.execute(text("""
+                    CREATE TABLE clean.historical_forex_full (
+                        date DATE,
+                        forex_pair VARCHAR(20),
+                        ccy_left VARCHAR(3),
+                        ccy_right VARCHAR(3),
+                        price NUMERIC(20, 6),
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
-                """)).scalar()
-                if not exists:
-                    conn.execute(text("""
-                        CREATE TABLE clean.historical_forex_full (
-                            date DATE,
-                            forex_pair VARCHAR(20),
-                            ccy_left VARCHAR(3),
-                            ccy_right VARCHAR(3),
-                            price NUMERIC(20, 6),
-                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                        )
-                    """))
-                    conn.commit()
-                    logger.info("Created table clean.historical_forex_full")
-                else:
-                    logger.info("Table clean.historical_forex_full exists")
+                """))
+                conn.commit()
+                logger.info("Created fresh table clean.historical_forex_full")
         except Exception as e:
             logger.error(f"Error ensuring clean.historical_forex_full: {str(e)}")
             raise
@@ -142,4 +137,4 @@ class FullForexManager:
 
 if __name__ == "__main__":
     manager = FullForexManager()
-    manager.run()
+    asyncio.run(manager.run())
