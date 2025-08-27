@@ -6,6 +6,7 @@ from src.historical.historical_forex import HistoricalForexManager
 from src.historical.historical_forex_full import FullForexManager
 from src.historical.stock_info import StockInfoManager
 from src.historical.stock_info_update import VolAvgManager, RelevanceManager
+from src.historical.indexer import IndexManager
 from src.historical.etl_summary import ETLSummaryManager
 from src.metrics.stock_metrics import MetricsManager, PercentileCalculator
 from src.utils.utils import get_logger, ensure_schemas_exist
@@ -52,6 +53,9 @@ async def main():
 
         # percentile_calculator = PercentileCalculator()
         # percentile_calculator.run_percentile_calculation()
+
+        indexer = IndexManager()
+        await indexer.create_all_indexes()
 
         # etl_summary_manager = ETLSummaryManager() # Update ETL Summary data
         # await etl_summary_manager.run_update()

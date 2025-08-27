@@ -158,7 +158,7 @@ class DailyMcapManager:
             # Create a string buffer for COPY
             buffer = StringIO()
             for record in filtered_mcap_data:
-                buffer.write(f"{record['date'].date()}\t{record['symbol']}\t{record['currency']}\t{record['market_cap']}\n")
+                buffer.write(f"{record['date'].date()}\t{record['symbol']}\t{record['currency']}\t{record['market_cap']}\t{record['year']}\t{record['quarter']}\t{record['last_quarter_date']}\n")
             buffer.seek(0)
 
             conn = get_postgres_connection()
@@ -166,7 +166,7 @@ class DailyMcapManager:
             try:
                 with conn.cursor() as cur:
                     cur.execute("SET search_path TO raw")
-                    cur.copy_from(buffer, 'historical_market_cap', columns=('date', 'symbol', 'currency', 'market_cap'))
+                    cur.copy_from(buffer, 'historical_market_cap', columns=('date', 'symbol', 'currency', 'market_cap', 'year', 'quarter', 'last_quarter_date'))
                     conn.commit()
                     logger.info(f"Successfully stored {len(filtered_mcap_data)} market cap records for date {most_frequent_date.date()}")
             finally:
@@ -202,12 +202,19 @@ class DailyMcapManager:
                     if not symbol or market_cap is None:
                         continue
                     
+                    # Calculate quarter and year
+                    year = date_obj.year
+                    quarter = f"Q{((date_obj.month - 1) // 3) + 1}"
+                    
                     # Validate the record using Pydantic model
                     validated_record = MarketCapValidator(
                         date=date_obj,
                         symbol=symbol,
                         currency=currency_map.get(symbol),
-                        market_cap=int(market_cap)
+                        market_cap=int(market_cap),
+                        year=year,
+                        quarter=quarter,
+                        last_quarter_date=False
                     )
                     batch_mcap_data.append(validated_record.model_dump())
                     
@@ -327,7 +334,8 @@ class DailyMcapFxConverter:
                 # Get records for the date that have FX data
                 result = conn.execute(text("""
                     SELECT date, symbol, currency, market_cap, 
-                           market_cap_eur, market_cap_usd
+                           market_cap_eur, market_cap_usd,
+                           year, quarter, last_quarter_date
                     FROM raw.historical_market_cap
                     WHERE date = :date 
                       AND market_cap_eur IS NOT NULL 
@@ -347,7 +355,10 @@ class DailyMcapFxConverter:
                             currency=record[2],
                             market_cap=int(record[3]),
                             market_cap_eur=int(record[4]),
-                            market_cap_usd=int(record[5])
+                            market_cap_usd=int(record[5]),
+                            year=int(record[6]),
+                            quarter=str(record[7]),
+                            last_quarter_date=bool(record[8])
                         )
                         validated_count += 1
                     except Exception as e:

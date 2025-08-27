@@ -156,13 +156,20 @@ class DailyPriceVolumeManager:
                     # Convert date string to datetime
                     price_date = datetime.strptime(date, '%Y-%m-%d')
                     
+                    # Calculate quarter and year
+                    year = price_date.year
+                    quarter = f"Q{((price_date.month - 1) // 3) + 1}"
+                    
                     # Create and validate record using Pydantic model
                     validated_record = PriceVolumeValidator(
                         date=price_date,
                         symbol=symbol,
                         currency=currency_map.get(symbol),
                         close=float(prices[symbol]['close']),
-                        volume=int(float(prices[symbol]['volume']))
+                        volume=int(float(prices[symbol]['volume'])),
+                        year=year,
+                        quarter=quarter,
+                        last_quarter_date=False
                     )
                     validated_prices.append(validated_record.model_dump())
                 except Exception as e:
@@ -176,8 +183,8 @@ class DailyPriceVolumeManager:
             # Bulk insert into database
             with self.engine.connect() as conn:
                 conn.execute(text("""
-                    INSERT INTO raw.historical_price_volume (date, symbol, currency, close, volume)
-                    VALUES (:date, :symbol, :currency, :close, :volume)
+                    INSERT INTO raw.historical_price_volume (date, symbol, currency, close, volume, year, quarter, last_quarter_date)
+                    VALUES (:date, :symbol, :currency, :close, :volume, :year, :quarter, :last_quarter_date)
                     --ON CONFLICT (date, symbol) DO UPDATE
                     --SET close = EXCLUDED.close,
                     --     volume = EXCLUDED.volume,
@@ -329,7 +336,8 @@ class DailyPriceVolumeFxConverter:
                 # Get records for the date that have FX data
                 result = conn.execute(text("""
                     SELECT date, symbol, currency, close, volume, 
-                           close_eur, close_usd, volume_eur, volume_usd
+                           close_eur, close_usd, volume_eur, volume_usd,
+                           year, quarter, last_quarter_date
                     FROM raw.historical_price_volume
                     WHERE date = :date 
                       AND close_eur IS NOT NULL 
@@ -354,7 +362,10 @@ class DailyPriceVolumeFxConverter:
                             close_eur=float(record[5]),
                             close_usd=float(record[6]),
                             volume_eur=int(record[7]),
-                            volume_usd=int(record[8])
+                            volume_usd=int(record[8]),
+                            year=int(record[9]),
+                            quarter=str(record[10]),
+                            last_quarter_date=bool(record[11])
                         )
                         validated_count += 1
                     except Exception as e:

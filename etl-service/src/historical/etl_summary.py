@@ -186,7 +186,7 @@ ON CONFLICT (date) DO UPDATE SET
         """Main method to run the ETL summary update process."""
 
         print("\n")
-        logger.info("######################### Step 7 - ETLSummaryManager initialized")
+        logger.info("######################### Step 7 (14) - ETLSummaryManager initialized")
 
         try:
             logger.info("Starting ETL summary process...")
