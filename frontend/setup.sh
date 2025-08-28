@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Setting up Naro Index Advisor Frontend..."
+echo "🚀 Setting up Index Advisor Frontend..."
 
 # Check if Node.js is installed
 if ! command -v node &> /dev/null; then

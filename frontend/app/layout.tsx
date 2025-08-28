@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Naro Index Advisor - ETL Dashboard',
+  title: 'Index Advisor - ETL Dashboard',
   description: 'ETL Summary Dashboard for Financial Data',
 }
 
@@ -36,7 +36,7 @@ export default function RootLayout({
                   fontWeight: 'bold', 
                   color: '#111827' 
                 }}>
-                  Naro Index Advisor
+                  Index Advisor
                 </h1>
                 <nav style={{ display: 'flex', gap: '2rem' }}>
                   <a href="/" style={{ 

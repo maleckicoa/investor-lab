@@ -1,5 +1,5 @@
 """
-Naro Index Advisor ETL Service
+Index Advisor ETL Service
 """
 
 from .fmp_api import FMPAPI

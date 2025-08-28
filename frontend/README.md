@@ -1,4 +1,4 @@
-# Naro Index Advisor Frontend
+# Frontend
 
 A Next.js frontend application for visualizing ETL summary data from the financial data pipeline.
 
