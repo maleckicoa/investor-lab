@@ -65,118 +65,94 @@ class ETLSummaryManager:
             raise
 
     async def update_etl_summary(self):
-        """Update the etl_summary table with current data counts."""
+        """Update the ETL summary table by dropping and recreating it with fresh data."""
         try:
             logger.info("Starting ETL summary update...")
             
-            # Create table if it doesn't exist
-            await self.create_etl_summary_table()
-            
-            # SQL query to get summary data
-            summary_sql = """
-            INSERT INTO raw.etl_summary (
-    date,
-    day,
-    fx_cnt,
-    close_cnt,
-    vol_cnt,
-    close_eur_cnt,
-    close_usd_cnt,
-    vol_eur_cnt,
-    vol_usd_cnt,
-    mcap_cnt,
-    mcap_eur_cnt,
-    mcap_usd_cnt
-)
-WITH recent_fx_dates AS (
-  SELECT date
-  FROM raw.historical_forex
-  WHERE price IS NOT NULL AND price <> 0
-  GROUP BY date
-  ORDER BY date DESC
-  LIMIT 10
-),
-fx AS (
-  SELECT d.date,
-         COUNT(DISTINCT hf.forex_pair) AS fx_cnt
-  FROM recent_fx_dates d
-  JOIN raw.historical_forex hf
-    ON hf.date = d.date
-  WHERE hf.price IS NOT NULL AND hf.price <> 0
-  GROUP BY d.date
-),
-hpv_cnts AS (
-  SELECT d.date,
-         COUNT(DISTINCT symbol) FILTER (WHERE close       IS NOT NULL AND close       <> 0) AS close_cnt,
-         COUNT(DISTINCT symbol) FILTER (WHERE volume      IS NOT NULL AND volume      <> 0) AS vol_cnt,
-         COUNT(DISTINCT symbol) FILTER (WHERE close_eur   IS NOT NULL AND close_eur   <> 0) AS close_eur_cnt,
-         COUNT(DISTINCT symbol) FILTER (WHERE close_usd   IS NOT NULL AND close_usd   <> 0) AS close_usd_cnt,
-         COUNT(DISTINCT symbol) FILTER (WHERE volume_eur  IS NOT NULL AND volume_eur  <> 0) AS vol_eur_cnt,
-         COUNT(DISTINCT symbol) FILTER (WHERE volume_usd  IS NOT NULL AND volume_usd  <> 0) AS vol_usd_cnt
-  FROM raw.historical_price_volume hpv
-  JOIN recent_fx_dates d ON hpv.date = d.date
-  GROUP BY d.date
-),
-mcap_cnts AS (
-  SELECT d.date,
-         COUNT(DISTINCT symbol) FILTER (WHERE market_cap      IS NOT NULL AND market_cap      <> 0) AS mcap_cnt,
-         COUNT(DISTINCT symbol) FILTER (WHERE market_cap_eur  IS NOT NULL AND market_cap_eur  <> 0) AS mcap_eur_cnt,
-         COUNT(DISTINCT symbol) FILTER (WHERE market_cap_usd  IS NOT NULL AND market_cap_usd  <> 0) AS mcap_usd_cnt
-  FROM raw.historical_market_cap mc
-  JOIN recent_fx_dates d ON mc.date = d.date
-  GROUP BY d.date
-),
-joined AS (
-  SELECT
-    COALESCE(fx.date, mc.date) AS date_key,
-    fx.fx_cnt,
-    hpv.close_cnt,
-    hpv.vol_cnt,
-    hpv.close_eur_cnt,
-    hpv.close_usd_cnt,
-    hpv.vol_eur_cnt,
-    hpv.vol_usd_cnt,
-    mc.mcap_cnt,
-    mc.mcap_eur_cnt,
-    mc.mcap_usd_cnt
-  FROM fx
-  FULL OUTER JOIN mcap_cnts mc USING (date)
-  LEFT JOIN hpv_cnts hpv ON hpv.date = COALESCE(fx.date, mc.date)
-)
-SELECT
-  date_key AS date,
-  TO_CHAR(date_key, 'FMDay') AS day,
-  fx_cnt,
-  close_cnt,
-  vol_cnt,
-  close_eur_cnt,
-  close_usd_cnt,
-  vol_eur_cnt,
-  vol_usd_cnt,
-  mcap_cnt,
-  mcap_eur_cnt,
-  mcap_usd_cnt
-FROM joined
-ORDER BY date_key DESC
-ON CONFLICT (date) DO UPDATE SET
-  day           = EXCLUDED.day,
-  fx_cnt        = EXCLUDED.fx_cnt,
-  close_cnt     = EXCLUDED.close_cnt,
-  vol_cnt       = EXCLUDED.vol_cnt,
-  close_eur_cnt = EXCLUDED.close_eur_cnt,
-  close_usd_cnt = EXCLUDED.close_usd_cnt,
-  vol_eur_cnt   = EXCLUDED.vol_eur_cnt,
-  vol_usd_cnt   = EXCLUDED.vol_usd_cnt,
-  mcap_cnt      = EXCLUDED.mcap_cnt,
-  mcap_eur_cnt  = EXCLUDED.mcap_eur_cnt,
-  mcap_usd_cnt  = EXCLUDED.mcap_usd_cnt,
-  created_at    = CURRENT_TIMESTAMP;
-            """
-            
+            # Drop and recreate the table completely
             with self.engine.connect() as conn:
+                # Drop existing table
+                conn.execute(text("DROP TABLE IF EXISTS raw.etl_summary"))
+                conn.commit()
+                logger.info("Dropped existing ETL summary table")
+                
+                # Create fresh table
+                await self.create_etl_summary_table()
+                
+                # Insert fresh data with the new query
+                summary_sql = """
+                WITH forex AS (
+                    SELECT 
+                        date, 
+                        COUNT(price) AS fx_cnt
+                    FROM clean.historical_forex_full 
+                    WHERE date >= CURRENT_DATE - INTERVAL '10 days'
+                    AND price IS NOT NULL AND price <> 0
+                    GROUP BY date
+                    ORDER BY date DESC
+                    LIMIT 10
+                ),
+                price AS (
+                    SELECT 
+                        date, 
+                        COUNT(close)      AS close_cnt,
+                        COUNT(close_eur)  AS close_eur_cnt, 
+                        COUNT(close_usd)  AS close_usd_cnt
+                    FROM raw.historical_price_volume 
+                    WHERE date >= CURRENT_DATE - INTERVAL '10 days'
+                    AND close IS NOT NULL AND close <> 0
+                    GROUP BY date
+                    ORDER BY date DESC
+                    LIMIT 10
+                ),
+                volume AS (
+                    SELECT 
+                        date, 
+                        COUNT(volume)      AS vol_cnt,
+                        COUNT(volume_eur)  AS vol_eur_cnt, 
+                        COUNT(volume_usd)  AS vol_usd_cnt
+                    FROM raw.historical_price_volume 
+                    WHERE date >= CURRENT_DATE - INTERVAL '10 days'
+                    AND volume IS NOT NULL AND volume <> 0
+                    GROUP BY date
+                    ORDER BY date DESC
+                    LIMIT 10
+                ),
+                mcap AS (
+                    SELECT 
+                        date, 
+                        COUNT(market_cap)      AS mcap_cnt,
+                        COUNT(market_cap_eur)  AS mcap_eur_cnt, 
+                        COUNT(market_cap_usd)  AS mcap_usd_cnt
+                    FROM raw.historical_market_cap 
+                    WHERE date >= CURRENT_DATE - INTERVAL '10 days'
+                    AND market_cap IS NOT NULL AND market_cap <> 0
+                    GROUP BY date
+                    ORDER BY date DESC
+                    LIMIT 10
+                )
+                INSERT INTO raw.etl_summary (
+                    date, day, fx_cnt, close_cnt, close_eur_cnt, close_usd_cnt,
+                    vol_cnt, vol_eur_cnt, vol_usd_cnt, mcap_cnt, mcap_eur_cnt, mcap_usd_cnt, created_at
+                )
+                SELECT 
+                    COALESCE(f.date, p.date, v.date, m.date) AS date,
+                    TO_CHAR(COALESCE(f.date, p.date, v.date, m.date), 'FMDay') AS day,
+                    f.fx_cnt,
+                    p.close_cnt, p.close_eur_cnt, p.close_usd_cnt,
+                    v.vol_cnt, v.vol_eur_cnt, v.vol_usd_cnt,
+                    m.mcap_cnt, m.mcap_eur_cnt, m.mcap_usd_cnt,
+                    CURRENT_TIMESTAMP AS created_at
+                FROM forex f
+                FULL OUTER JOIN price  p ON f.date = p.date
+                FULL OUTER JOIN volume v ON COALESCE(f.date, p.date) = v.date
+                FULL OUTER JOIN mcap   m ON COALESCE(f.date, p.date, v.date) = m.date
+                ORDER BY date DESC;
+                """
+                
                 result = conn.execute(text(summary_sql))
                 conn.commit()
-                logger.info("ETL summary table updated successfully")
+                logger.info("ETL summary table updated successfully with fresh data")
                 
         except Exception as e:
             logger.error(f"Error updating ETL summary: {str(e)}")

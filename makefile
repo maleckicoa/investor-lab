@@ -16,10 +16,14 @@ daily-price-volume:
 daily-mcap:
 	poetry run --directory etl-service python -m src.daily.daily_market_cap
 
+daily-etl-summary:
+	poetry run --directory etl-service python -m src.historical.etl_summary
+
 
 daily-fx-price-volume: daily-forex daily-price-volume
 
 daily-fx-mcap: daily-forex daily-mcap
+
 
 
 
@@ -28,6 +32,7 @@ historical:
 
 historical-forex-full:
 	poetry run --directory etl-service python -m src.historical.historical_forex_full
+
 
 # Frontend targets
 frontend-setup:
