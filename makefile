@@ -1,4 +1,4 @@
-.PHONY: daily historical daily-schedule daily-forex daily-price-volume daily-mcap daily-fx-price-volume daily-fx-mcap frontend-setup frontend-dev frontend-build frontend-start
+.PHONY: daily historical daily-schedule daily-forex daily-price-volume daily-mcap daily-fx-price-volume daily-fx-mcap daily-etl-summary fields frontend-setup frontend-dev frontend-build frontend-start
 
 
 daily:
@@ -32,6 +32,13 @@ historical:
 
 historical-forex-full:
 	poetry run --directory etl-service python -m src.historical.historical_forex_full
+
+
+
+
+fields:
+	poetry run --directory stock-service python -m src.utils.field_maker
+
 
 
 # Frontend targets

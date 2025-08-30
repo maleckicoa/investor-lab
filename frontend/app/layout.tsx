@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Index Advisor - ETL Dashboard',
-  description: 'ETL Summary Dashboard for Financial Data',
+  title: 'Index Advisor',
+  description: 'Financial Data Analysis and Index Creation Platform',
 }
 
 export default function RootLayout({
@@ -47,7 +47,27 @@ export default function RootLayout({
                     fontSize: '0.875rem',
                     fontWeight: '500'
                   }}>
+                    Home
+                  </a>
+                  <a href="/etl-summary" style={{ 
+                    color: '#111827', 
+                    textDecoration: 'none',
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: '0.375rem',
+                    fontSize: '0.875rem',
+                    fontWeight: '500'
+                  }}>
                     ETL Summary
+                  </a>
+                  <a href="/index-maker" style={{ 
+                    color: '#111827', 
+                    textDecoration: 'none',
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: '0.375rem',
+                    fontSize: '0.875rem',
+                    fontWeight: '500'
+                  }}>
+                    Index Maker
                   </a>
                 </nav>
               </div>

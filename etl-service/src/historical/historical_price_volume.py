@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 load_dotenv()
 
 class HistoricalPriceVolumeManager:
-    def __init__(self, start_date: str = "2013-12-01", max_symbols: int = 60000):
+    def __init__(self, start_date: str = "2013-12-01", max_symbols: int = 50000):
         self.database_url = get_database_url()
         self.engine = create_engine(self.database_url)
         self.fmp = FMPAPI()
@@ -85,21 +85,16 @@ class HistoricalPriceVolumeManager:
 
     def drop_indexes(self):
         with self.engine.connect() as conn:
-            conn.execute(text("DROP INDEX IF EXISTS idx_historical_price_volume_symbol"))
-            conn.execute(text("DROP INDEX IF EXISTS idx_historical_price_volume_symbol_date_desc"))
+            conn.execute(text("DROP INDEX IF EXISTS raw.idx_hpv_symbol_date_currency"))
             conn.commit()
             logger.info("Dropped indexes.")
 
     def create_indexes(self):
         with self.engine.connect() as conn:
             conn.execute(text("""
-                              CREATE INDEX IF NOT EXISTS idx_historical_price_volume_symbol
-                              ON raw.historical_price_volume (symbol);
+                              CREATE INDEX IF NOT EXISTS idx_hpv_symbol_date_currency
+                              ON raw.historical_price_volume (symbol, date, currency);
                               """))    
-            conn.execute(text("""
-                              CREATE INDEX IF NOT EXISTS idx_historical_price_volume_symbol_date_desc
-                              ON raw.historical_price_volume (symbol, date DESC);
-                              """))
             conn.commit()
             logger.info("Recreated indexes.")
 
@@ -309,29 +304,29 @@ class HistoricalPriceVolumeFxConverter:
         self.database_url = get_database_url()
         self.engine = create_engine(self.database_url)
 
-    def drop_indexes(self):
-        """Drop non-essential indexes before conversion."""
-        with self.engine.connect() as conn:
-            logger.info("Dropping indexes before conversion...")
-            conn.execute(text("DROP INDEX IF EXISTS idx_historical_price_volume_symbol"))
-            conn.execute(text("DROP INDEX IF EXISTS idx_historical_price_volume_symbol_date_desc"))
-            conn.commit()
-            logger.info("Indexes dropped.")
+    # def drop_indexes(self):
+    #     """Drop non-essential indexes before conversion."""
+    #     with self.engine.connect() as conn:
+    #         logger.info("Dropping indexes before conversion...")
+    #         conn.execute(text("DROP INDEX IF EXISTS idx_historical_price_volume_symbol"))
+    #         conn.execute(text("DROP INDEX IF EXISTS idx_historical_price_volume_symbol_date_desc"))
+    #         conn.commit()
+    #         logger.info("Indexes dropped.")
 
-    def create_indexes(self):
-        """Recreate non-essential indexes after conversion."""
-        with self.engine.connect() as conn:
-            logger.info("Recreating indexes after conversion...")
-            conn.execute(text("""
-                    CREATE INDEX IF NOT EXISTS idx_historical_price_volume_symbol
-                    ON raw.historical_price_volume (symbol);
-                    """))    
-            conn.execute(text("""
-                    CREATE INDEX IF NOT EXISTS idx_historical_price_volume_symbol_date_desc
-                    ON raw.historical_price_volume (symbol, date DESC);
-                    """))
-            conn.commit()
-            logger.info("Indexes recreated.")
+    # def create_indexes(self):
+    #     """Recreate non-essential indexes after conversion."""
+    #     with self.engine.connect() as conn:
+    #         logger.info("Recreating indexes after conversion...")
+    #         conn.execute(text("""
+    #                 CREATE INDEX IF NOT EXISTS idx_historical_price_volume_symbol
+    #                 ON raw.historical_price_volume (symbol);
+    #                 """))    
+    #         conn.execute(text("""
+    #                 CREATE INDEX IF NOT EXISTS idx_historical_price_volume_symbol_date_currency
+    #                 ON raw.historical_price_volume (symbol, date, currency);
+    #                 """))
+    #         conn.commit()
+    #         logger.info("Indexes recreated.")
 
     def _get_fx_conversion_sql(self):
         """Get the SQL query for FX conversion."""
@@ -421,7 +416,7 @@ class HistoricalPriceVolumeFxConverter:
                 conn.commit()
 
             # Drop secondary index before conversion
-            self.drop_indexes()
+            #self.drop_indexes()
 
             d_start = datetime(2013, 12, 1).date()
             d_end = datetime.now().date()
@@ -440,7 +435,7 @@ class HistoricalPriceVolumeFxConverter:
                 batch_num += 1
 
             # Recreate secondary index after conversion
-            self.create_indexes()
+            #self.create_indexes()
             logger.info("Historical price volume currency conversion completed successfully (batched SQL-based, Python loop)")
             return True
         except Exception as e:

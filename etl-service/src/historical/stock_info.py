@@ -230,8 +230,8 @@ class StockInfoManager:
                         elif isinstance(value, (datetime)):
                             values.append(value.strftime('%Y-%m-%d'))
                         else:
-                            # Escape any special characters in strings
-                            values.append(str(value).replace('\t', '\\t').replace('\n', '\\n'))
+                            # Escape any special characters in strings including carriage returns
+                            values.append(str(value).replace('\t', '\\t').replace('\n', '\\n').replace('\r', '\\r'))
                     
                     buffer.write('\t'.join(values) + '\n')
                 buffer.seek(0)

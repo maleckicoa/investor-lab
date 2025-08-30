@@ -114,9 +114,12 @@ class FullForexManager:
 
             df_validated.to_sql('historical_forex_full', self.engine, schema='clean', index=False, if_exists='replace')
             
-            # Create index on date, ccy_left, ccy_right
+            # Create index
             with self.engine.connect() as conn:
-                conn.execute(text('CREATE INDEX IF NOT EXISTS idx_historical_forex_full_date_ccyleft_ccyright ON clean.historical_forex_full (date, ccy_left, ccy_right)'))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_forex_eur_lookup ON clean.historical_forex_full (ccy_left, date, ccy_right)WHERE ccy_left = 'EUR'"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_forex_usd_lookup ON clean.historical_forex_full (ccy_left, date, ccy_right)WHERE ccy_left = 'USD'"))
+                
+                
                 conn.commit()
             logger.info(f"Successfully processed and validated {len(df_validated)} records, saved to clean.historical_forex_full")
             return df_validated

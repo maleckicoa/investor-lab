@@ -88,8 +88,7 @@ class HistoricalMcapManager:
 
         with self.engine.connect() as conn:
             logger.info("Dropping indexes...")
-            conn.execute(text("DROP INDEX IF EXISTS idx_historical_market_cap_symbol"))
-            conn.execute(text("DROP INDEX IF EXISTS idx_historical_market_cap_symbol_date_desc"))
+            conn.execute(text("DROP INDEX IF EXISTS idx_hmc_symbol_date_currency"))
             conn.commit()
             logger.info("Indexes dropped.")
 
@@ -99,13 +98,8 @@ class HistoricalMcapManager:
             logger.info("Recreating indexes...")
             
             conn.execute(text("""
-                              CREATE INDEX IF NOT EXISTS idx_historical_market_cap_symbol
-                              ON raw.historical_market_cap (symbol)
-                              """))
-
-            conn.execute(text("""
-                              CREATE INDEX IF NOT EXISTS idx_historical_market_cap_symbol_date_desc
-                              ON raw.historical_market_cap (symbol, date DESC);
+                              CREATE INDEX IF NOT EXISTS idx_hmc_symbol_date_currency
+                              ON raw.historical_market_cap (symbol, date, currency);
                               """))
             conn.commit()
             logger.info("Indexes recreated.")

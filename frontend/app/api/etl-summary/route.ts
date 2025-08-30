@@ -23,13 +23,7 @@ export async function GET() {
       ORDER BY date DESC
     `);
 
-    console.log('🔍 ETL Summary API Debug:');
-    console.log('Raw database result:', result.rows);
-    console.log('Number of rows:', result.rows.length);
-    if (result.rows.length > 0) {
-      console.log('First row (latest):', result.rows[0]);
-      console.log('Last row (oldest):', result.rows[result.rows.length - 1]);
-    }
+
 
     const data: ETLSummary[] = result.rows.map((row: any) => ({
       ...row,
@@ -37,8 +31,6 @@ export async function GET() {
       date: row.date,
       created_at: new Date(row.created_at).toISOString(),
     }));
-
-    console.log('Processed data:', data);
 
     return NextResponse.json(
       { data },

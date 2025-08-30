@@ -52,46 +52,53 @@ class IndexManager:
         try:
             logger.info("Starting index creation process...")
             
+            successful_indexes = 0
+            failed_indexes = 0
+            
             for index_name, sql in self.indexes.items():
                 try:
                     logger.info(f"Creating index: {index_name}")
+                    # Use connection with autocommit isolation level for CONCURRENTLY indexes
                     with self.engine.connect() as conn:
+                        conn.execution_options(isolation_level="AUTOCOMMIT")
                         conn.execute(text(sql))
-                        conn.commit()
                     logger.info(f"Successfully created index: {index_name}")
+                    successful_indexes += 1
                     
                 except Exception as e:
                     logger.error(f"Error creating index {index_name}: {str(e)}")
+                    failed_indexes += 1
                     # Continue with other indexes even if one fails
                     continue
             
-            logger.info("Index creation process completed")
+            logger.info(f"Index creation process completed. {successful_indexes} successful, {failed_indexes} failed")
             
         except Exception as e:
             logger.error(f"Error in index creation process: {str(e)}")
             raise
     
-    # async def create_specific_index(self, index_name: str) -> bool:
-    #     """Create a specific index by name."""
-    #     try:
-    #         if index_name not in self.indexes:
-    #             logger.error(f"Index '{index_name}' not found in defined indexes")
-    #             return False
+    async def create_specific_index(self, index_name: str) -> bool:
+        """Create a specific index by name."""
+        try:
+            if index_name not in self.indexes:
+                logger.error(f"Index '{index_name}' not found in defined indexes")
+                return False
             
-    #         logger.info(f"Creating specific index: {index_name}")
-    #         with self.engine.connect() as conn:
-    #             conn.execute(text(self.indexes[index_name]))
-    #             conn.commit()
-    #         logger.info(f"Successfully created index: {index_name}")
-    #         return True
+            logger.info(f"Creating specific index: {index_name}")
+            # Use connection with autocommit isolation level for CONCURRENTLY indexes
+            with self.engine.connect() as conn:
+                conn.execution_options(isolation_level="AUTOCOMMIT")
+                conn.execute(text(self.indexes[index_name]))
+            logger.info(f"Successfully created index: {index_name}")
+            return True
             
-    #     except Exception as e:
-    #         logger.error(f"Error creating index {index_name}: {str(e)}")
-    #         return False
+        except Exception as e:
+            logger.error(f"Error creating index {index_name}: {str(e)}")
+            return False
     
-    # def get_index_sql(self, index_name: str) -> str:
-    #     """Get the SQL statement for a specific index."""
-    #     return self.indexes.get(index_name, "")
+    def get_index_sql(self, index_name: str) -> str:
+        """Get the SQL statement for a specific index."""
+        return self.indexes.get(index_name, "")
 
 
 if __name__ == "__main__":
