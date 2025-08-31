@@ -35,12 +35,15 @@ export async function GET() {
     const fieldsDir = join(process.cwd(), '..', 'stock-service', 'src', 'utils', 'fields');
     
     // Read countries from CSV
-    let countries: string[] = [];
+    let countries: Array<{country_code: string, country_name: string}> = [];
     try {
       const countriesPath = join(fieldsDir, 'countries.csv');
       const countriesContent = readFileSync(countriesPath, 'utf-8');
       const countriesData = parseCSV(countriesContent);
-      countries = countriesData.map(row => row.country).filter(Boolean);
+      countries = countriesData.map(row => ({
+        country_code: row.country_code || '',
+        country_name: row.country_name || ''
+      })).filter(country => country.country_code && country.country_name);
     } catch (error) {
       console.warn('Could not read countries.csv:', error);
     }
@@ -99,12 +102,28 @@ export async function GET() {
       console.warn('Could not read kpis.csv:', error);
     }
 
+    // Read companies from CSV
+    let companies: Array<{company_name: string, symbol: string}> = [];
+    try {
+      const companiesPath = join(fieldsDir, 'companies.csv');
+      const companiesContent = readFileSync(companiesPath, 'utf-8');
+      const companiesData = parseCSV(companiesContent);
+      
+      companies = companiesData.map((row: any) => ({
+        company_name: row.company_name || '',
+        symbol: row.symbol || ''
+      })).filter(company => company.company_name && company.symbol);
+    } catch (error) {
+      console.warn('Could not read companies.csv:', error);
+    }
+
     return NextResponse.json(
       { 
         countries,
         sectors,
         industries,
-        kpis
+        kpis,
+        companies
       },
       {
         headers: {

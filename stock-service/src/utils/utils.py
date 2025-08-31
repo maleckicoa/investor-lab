@@ -17,9 +17,6 @@ POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 POSTGRES_HOST = os.getenv("POSTGRES_HOST")
 POSTGRES_PORT = os.getenv("POSTGRES_PORT")
 
-# Debug print to verify loading
-print(f"Loaded DB config: {POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}")
-
 def get_remote_postgres_connection():
     """Get a direct PostgreSQL connection to the remote database"""
     return psycopg2.connect(

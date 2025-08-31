@@ -1,13 +1,31 @@
 import logging
 import os
 import pandas as pd
+import sys
 
-from .utils import run_query
+from src.utils.fields_utils import kpi_query, country_codes
+from src.utils.utils import run_query
 
 def get_countries():
+    
     country_query = "SELECT DISTINCT country FROM raw.stock_info WHERE COUNTRY IS NOT NULL"
     country_df = run_query(country_query)
-    return country_df
+    
+    # Map country codes to country names
+    if not country_df.empty:
+        # Create a new dataframe with the mapped data
+        mapped_countries = []
+        for _, row in country_df.iterrows():
+            country_code = row['country']
+            country_name = country_codes.get(country_code, country_code)  # fallback to code if no mapping
+            mapped_countries.append({
+                'country_name': country_name,
+                'country_code': country_code
+                
+            })
+        result_df = pd.DataFrame(mapped_countries).sort_values(by='country_name')
+    
+    return result_df
 
 def get_sectors():
     sector_query = "SELECT DISTINCT sector FROM raw.stock_info WHERE SECTOR IS NOT NULL"
@@ -30,17 +48,18 @@ def get_industries():
 
 def get_kpis():
     # Import the query from the existing file
-    import sys
-    import os
-    sys.path.append(os.path.join(os.path.dirname(__file__), 'fields'))
-    from kpi_query import kpi_query
-    
+
     kpi_df = run_query(kpi_query)
     return kpi_df
 
 def get_companies():
     company_query = "select distinct company_name, symbol from raw.stock_info WHERE relevant = true"
     company_df = run_query(company_query)
+    
+    # Clean up company names by removing quotes and commas
+    if not company_df.empty:
+        company_df['company_name'] = company_df['company_name'].astype(str).str.replace('"', '', regex=False).str.replace(',', '', regex=False)
+    
     return company_df
 
 def update_fields_file(countries_df, sectors_df, industries_df, kpis_df, companies_df):
@@ -51,8 +70,13 @@ def update_fields_file(countries_df, sectors_df, industries_df, kpis_df, compani
     # Write countries to CSV
     if not countries_df.empty:
         countries_csv_path = os.path.join(fields_dir, 'countries.csv')
-        countries_df.to_csv(countries_csv_path, index=False)
-        print(f"✅ Wrote {len(countries_df)} countries to {countries_csv_path}")
+        # Ensure we have the correct column structure
+        if 'country_code' in countries_df.columns and 'country_name' in countries_df.columns:
+            countries_df.to_csv(countries_csv_path, index=False)
+            print(f"✅ Wrote {len(countries_df)} countries to {countries_csv_path}")
+        else:
+            print("❌ Countries dataframe missing required columns: country_code, country_name")
+            print(f"Available columns: {list(countries_df.columns)}")
     
     # Write sectors to CSV
     if not sectors_df.empty:
@@ -88,7 +112,5 @@ def main():
     kpis = get_kpis()
     companies = get_companies()
     update_fields_file(countries, sectors, industries, kpis, companies)
-    print("✅ Field generation complete!")
-
 if __name__ == "__main__":
     main()
