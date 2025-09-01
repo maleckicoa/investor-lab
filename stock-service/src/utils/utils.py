@@ -8,7 +8,14 @@ import logging
 from dotenv import load_dotenv
 
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-load_dotenv(os.path.join(project_root, ".env.local"))
+# Try production env first, fall back to local if it doesn't exist
+env_prod = os.path.join(project_root, ".env.production")
+env_local = os.path.join(project_root, ".env.local")
+
+if os.path.exists(env_prod):
+    load_dotenv(env_prod)
+else:
+    load_dotenv(env_local)
 
 
 POSTGRES_DB = os.getenv("POSTGRES_DB")
@@ -51,12 +58,16 @@ def run_query(query: str) -> pd.DataFrame:
 
 
 def run_query_to_polars_simple(query):
-    print("start")
+    print(f"QUERY: {query}")
+
+    print(f"STARTING QUERY at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+
     conn = get_remote_postgres_connection()
     cur = conn.cursor()  # ❌ no server-side name
     cur.execute(query)
 
-    print("execute")
+    print(f"QUERY EXECUTED at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+
     if cur.description is None:
         print("⚠️ Query ran, but returned no result set.")
         cur.close()

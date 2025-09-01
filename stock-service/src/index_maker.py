@@ -7,22 +7,22 @@ from utils.utils import run_query, run_query_to_polars_simple
 #pl.Config.set_tbl_cols(-1) 
 
 ######################################################## EXAMPLE VALUES
-max_constituents = 100
-min_volume_eur = 100000
-selected_countries = ['US', 'CN']
-selected_sectors = ['Technology']
-selected_industries = ['Software - Application','Media & Entertainment','Semiconductors', 'Information Technology Services']
-selected_stocks = ['']
+# max_constituents = 100
+# min_volume_eur = 100000
+# selected_countries = ['US', 'CN']
+# selected_sectors = ['Technology']
+# selected_industries = ['Software - Application','Media & Entertainment','Semiconductors', 'Information Technology Services']
+# selected_stocks = ['']
 
-kpis = {
-    'price_to_earnings_ratio_perc': [60, 70, 80, 90, 99, 100],
-    'gross_profit_margin_perc': [],
-    'net_profit_margin_perc': [],
-}
+# kpis = {
+#     'price_to_earnings_ratio_perc': [60, 70, 80, 90, 99, 100],
+#     'gross_profit_margin_perc': [],
+#     'net_profit_margin_perc': [],
+# }
 
-index_start_date = "2015-03-15"
-index_end_date = "2025-08-31"
-index_currency = "EUR"
+# index_start_date = "2015-03-15"
+# index_end_date = "2025-08-31"
+# index_currency = "EUR"
 ########################################################
 
 
@@ -62,8 +62,7 @@ def make_query(max_constituents,
     #prep6_kpi_cols  = ", ".join(f"prep6.{kpi}" for kpi in active_kpis)
     prep6_kpi_cols = ", ".join(f"CAST(prep6.{kpi} AS FLOAT8) AS {kpi}" for kpi in active_kpis)
 
-
-
+    import time
 
     query = f"""
     WITH prep1 AS (
@@ -148,7 +147,6 @@ def make_query(max_constituents,
     FROM prep8
     WHERE (EXTRACT(DOW FROM date) = 1 OR last_quarter_date = TRUE)
     """
-
     df = run_query_to_polars_simple(query)
     return df
 
@@ -282,11 +280,14 @@ def calculate_index_values(df: pl.DataFrame,
     return pl.DataFrame(index_values, schema=["date", "index_value"], orient="row").sort("date")
 
 
-
+import time
 
 def create_custom_index(index_size, currency, start_date, end_date, countries, sectors, industries, kpis, stocks):
 
     try:
+
+        print(f"STARTING INDEX CREATION at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+
         # Log the received parameters for debugging
         print(f"DEBUG: Received parameters:")
         print(f"  - index_size: {index_size}")
@@ -312,13 +313,16 @@ def create_custom_index(index_size, currency, start_date, end_date, countries, s
             selected_stocks=stocks,
             kpis=kpis
         )
-        
+
+        print(f"INDEX DATA LOADED at {time.strftime('%Y-%m-%d %H:%M:%S')}")
         # Calculate index values
         index_df = calculate_index_values(
             df, 
             index_start_date=start_date,
             index_currency=currency
         )
+
+        print(f"INDEX VALUES CALCULATED at {time.strftime('%Y-%m-%d %H:%M:%S')}")
         
         # Print the output of calculate_index_values function
         print(f"\n📈 INDEX CALCULATION OUTPUT:")

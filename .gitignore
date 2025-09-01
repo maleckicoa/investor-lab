@@ -4,9 +4,8 @@ frontend/.next/
 frontend/out/
 
 # Environment files
-.env*
-etl-service/.env
-frontend/.env.local
+**/.env*
+
 
 # Logs
 *.log
