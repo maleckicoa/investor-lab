@@ -39,14 +39,21 @@ def make_query(max_constituents,
     industries = "(" + ", ".join(f"'{i}'" for i in selected_industries) + ")"
     sectors = "(" + ", ".join(f"'{s}'" for s in selected_sectors) + ")"
     countries = "(" + ", ".join(f"'{c}'" for c in selected_countries) + ")"
-    selected_stocks = "(" + ", ".join(f"'{c}'" for c in selected_stocks) + ")"
+    
+    # Handle empty selected_stocks list to avoid SQL syntax error
+    if selected_stocks and len(selected_stocks) > 0:
+        selected_stocks_sql = "(" + ", ".join(f"'{c}'" for c in selected_stocks) + ")"
+        stocks_condition = f"OR symbol IN {selected_stocks_sql}"
+    else:
+        stocks_condition = ""
 
 
 
-    kpi_filters = [
-        f"AND {kpi} IN ({', '.join(map(str, values))})"
-        for kpi, values in kpis.items() if values
-    ]
+    kpi_filters = []
+    for kpi, values in kpis.items():
+        if values:
+            quoted_values = [f"'{v}'" for v in values]
+            kpi_filters.append(f"AND {kpi} IN ({', '.join(quoted_values)})")
 
     kpi_sql = "\n".join(kpi_filters)
     active_kpis = [kpi for kpi, values in kpis.items() if values]
@@ -65,7 +72,7 @@ def make_query(max_constituents,
         WHERE (country IN {countries}
         AND industry IN {industries}
         AND sector IN {sectors})
-        OR symbol IN {selected_stocks}
+        {stocks_condition}
     ),
     prep2 AS (
         SELECT *
@@ -107,13 +114,13 @@ def make_query(max_constituents,
         SELECT *
         FROM prep5
         WHERE mcap_rank <= {max_constituents}
-        OR symbol IN {selected_stocks}
+        {f"OR symbol IN {selected_stocks_sql}" if selected_stocks and len(selected_stocks) > 0 else ""}
     ),
     prep7 AS (
         SELECT *
         FROM raw.historical_price_volume
         WHERE volume_eur > 100000--{min_volume_eur}
-        OR symbol IN {selected_stocks}
+        {f"OR symbol IN {selected_stocks_sql}" if selected_stocks and len(selected_stocks) > 0 else ""}
     ),
     prep8 AS (
         SELECT 
@@ -348,41 +355,8 @@ def create_custom_index(index_size, currency, start_date, end_date, countries, s
         
         print(f"\n✅ Index creation completed successfully!")
         
-        return {
-            "success": True,
-            "message": f"Index created successfully with {len(index_data)} data points",
-            "index_size": index_size,
-            "currency": currency,
-            "start_date": start_date,
-            "end_date": end_date,
-            "countries_count": len(countries),
-            "sectors_count": len(sectors),
-            "industries_count": len(industries),
-            "kpis_count": len([k for k, v in kpis.items() if v]),
-            "stocks_count": len(stocks),
-            "index_data": index_data[:100],  # Limit to first 100 points for response size
-            "total_data_points": len(index_data)
-        }
-        
+        # Return the full dataframe instead of limited data
+        return index_df
     except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "message": "Failed to create index"
-        }
-
-
-if __name__ == "__main__":
-    df = make_query(max_constituents, 
-                min_volume_eur, 
-                selected_countries, 
-                selected_sectors, 
-                selected_industries, 
-                selected_stocks,
-                kpis)
-    
-    index_df = calculate_index_values(df, index_start_date="2014-01-13")
-    index_df = calculate_index_values(df, 
-                                    index_start_date="2014-01-13",
-                                    index_end_date=index_end_date,
-                                    index_currency=index_currency)
+        print(f"❌ Error creating index: {e}")
+        raise e

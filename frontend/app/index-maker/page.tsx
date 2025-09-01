@@ -52,9 +52,28 @@ export default function IndexMakerPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
+  // Spinner state for index creation
+  const [isCreatingIndex, setIsCreatingIndex] = useState(false);
+  const [creationSeconds, setCreationSeconds] = useState(0);
+  
+    // Index results state
+  const [indexResult, setIndexResult] = useState<any>(null);
   
 
-  // Function to calculate dropdown position
+  // Timer effect for index creation
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isCreatingIndex) {
+      interval = setInterval(() => {
+        setCreationSeconds(prev => prev + 1);
+      }, 1000);
+    }
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isCreatingIndex]);
   const getDropdownPosition = (buttonElement: HTMLElement) => {
     const rect = buttonElement.getBoundingClientRect();
     return {
@@ -1902,31 +1921,45 @@ export default function IndexMakerPage() {
             <button
               onClick={async () => {
                 try {
-                  // Show loading state
-                  const button = event?.currentTarget as HTMLButtonElement;
-                  if (button) {
-                    button.disabled = true;
-                    button.innerHTML = `
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" class="animate-spin">
-                        <path d="M21 12a9 9 0 11-6.219-8.56"/>
-                      </svg>
-                      CREATING INDEX...
-                    `;
+                  // Validation check - ensure at least 1 of each required field is selected
+                  if (selectedCountries.length === 0) {
+                    alert('Please select at least 1 country before creating an index.');
+                    return;
+                  }
+                  
+                  if (selectedSectors.length === 0) {
+                    alert('Please select at least 1 sector before creating an index.');
+                    return;
+                  }
+                  
+                  if (selectedIndustries.length === 0) {
+                    alert('Please select at least 1 industry before creating an index.');
+                    return;
+                  }
+                  
+                  if (Object.keys(selectedKPIs).length === 0) {
+                    alert('Please select at least 1 KPI before creating an index.');
+                    return;
                   }
 
-                  // Parse KPI values to extract first 2 characters (percentile numbers)
+                  // Start spinner and timer
+                  setIsCreatingIndex(true);
+                  setCreationSeconds(0);
+
+                  // Parse KPI values to extract first 4 characters and keep only numbers
                   // and append "_perc" to field names for database querying
-                  const parsedKPIs: Record<string, number[]> = {};
+                  const parsedKPIs: Record<string, string[]> = {};
                   Object.entries(selectedKPIs).forEach(([kpiName, kpiValues]) => {
                     if (kpiValues && kpiValues.length > 0) {
                       // Append "_perc" to the KPI field name
                       const dbFieldName = `${kpiName}_perc`;
                       
                       parsedKPIs[dbFieldName] = kpiValues.map(value => {
-                        // Extract first 2 characters and convert to number
-                        const percentile = parseInt(value.toString().substring(0, 2));
-                        return isNaN(percentile) ? 0 : percentile;
-                      }).filter(percentile => percentile > 0); // Remove invalid values
+                        // Take first 4 characters and extract only numbers
+                        const firstFour = value.toString().substring(0, 4);
+                        const numbersOnly = firstFour.replace(/[^0-9]/g, '');
+                        return numbersOnly;
+                      }).filter(numbersOnly => numbersOnly.length > 0); // Remove empty values
                     }
                   });
 
@@ -1972,7 +2005,8 @@ export default function IndexMakerPage() {
                   const result = await response.json();
 
                   if (response.ok) {
-                    alert(`Index created successfully!\n\nResult: ${JSON.stringify(result.result, null, 2)}`);
+                    console.log('✅ Index created successfully:', result.result);
+                    setIndexResult(result.result);
                   } else {
                     alert(`Failed to create index: ${result.error}`);
                   }
@@ -1981,31 +2015,22 @@ export default function IndexMakerPage() {
                   console.error('Index creation error:', error);
                   alert(`Error creating index: ${error instanceof Error ? error.message : 'Unknown error'}`);
                 } finally {
-                  // Reset button state
-                  const button = event?.currentTarget as HTMLButtonElement;
-                  if (button) {
-                    button.disabled = false;
-                    button.innerHTML = `
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                        <path d="M2 17l10 5 10-5"/>
-                        <path d="M2 12l10 5 10-5"/>
-                      </svg>
-                      MAKE INDEX
-                    `;
-                  }
+                  // Stop spinner and reset timer
+                  setIsCreatingIndex(false);
+                  setCreationSeconds(0);
                 }
               }}
+              disabled={isCreatingIndex}
               style={{
                 width: '100%',
                 padding: '16px 24px',
                 fontSize: '16px',
                 fontWeight: '700',
-                backgroundColor: '#059669',
+                backgroundColor: isCreatingIndex ? '#6b7280' : '#059669',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                cursor: 'pointer',
+                cursor: isCreatingIndex ? 'not-allowed' : 'pointer',
                 transition: 'all 0.2s',
                 boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                 display: 'flex',
@@ -2014,29 +2039,52 @@ export default function IndexMakerPage() {
                 gap: '12px'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#047857';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 6px 12px -1px rgba(0, 0, 0, 0.15)';
+                if (!isCreatingIndex) {
+                  e.currentTarget.style.backgroundColor = '#047857';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 6px 12px -1px rgba(0, 0, 0, 0.15)';
+                }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#059669';
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+                if (!isCreatingIndex) {
+                  e.currentTarget.style.backgroundColor = '#059669';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+                }
               }}
             >
-              <svg 
-                width="20" 
-                height="20" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2"
-              >
-                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                <path d="M2 17l10 5 10-5"/>
-                <path d="M2 12l10 5 10-5"/>
-              </svg>
-              MAKE INDEX
+              {isCreatingIndex ? (
+                <>
+                  <svg 
+                    width="20" 
+                    height="20" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2"
+                    style={{ animation: 'spin 1s linear infinite' }}
+                  >
+                    <path d="M21 12a9 9 0 11-6.219-8.56"/>
+                  </svg>
+                  CREATING INDEX... ({creationSeconds}s)
+                </>
+              ) : (
+                <>
+                  <svg 
+                    width="20" 
+                    height="20" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2"
+                  >
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                  </svg>
+                  MAKE INDEX
+                </>
+              )}
             </button>
             
             {/* Index Creation Summary */}
@@ -2088,33 +2136,137 @@ export default function IndexMakerPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        borderLeft: '1px solid #e5e7eb'
+        borderLeft: '1px solid #e5e7eb',
+        overflowY: 'auto'
       }}>
-        <div style={{ 
-          textAlign: 'center',
-          color: '#6b7280'
-        }}>
-          <svg 
-            width="64" 
-            height="64" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="1.5"
-            style={{ marginBottom: '16px' }}
-          >
-            <path d="M3 3v18h18"/>
-            <path d="m9 9 3 3 3-3"/>
-            <path d="M9 12h6"/>
-            <path d="M9 16h6"/>
-          </svg>
-          <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>
-            Graph Area
-          </h3>
-          <p style={{ fontSize: '14px', margin: '0' }}>
-            Interactive charts and visualizations will appear here
-          </p>
-        </div>
+        {indexResult ? (
+          <div style={{ width: '100%', maxWidth: '800px' }}>
+            {/* Index Results Header */}
+            <div style={{ 
+              marginBottom: '24px',
+              padding: '20px',
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              border: '1px solid #e5e7eb',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+            }}>
+                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                   <path d="M3 3v18h18"/>
+                   <path d="m9 9 3 3 3-3"/>
+                   <path d="M9 12h6"/>
+                   <path d="M9 16h6"/>
+                 </svg>
+                 <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', margin: '0' }}>
+                   Index Results
+                 </h2>
+                 <button
+                   onClick={() => setIndexResult(null)}
+                   style={{
+                     marginLeft: 'auto',
+                     padding: '6px 12px',
+                     backgroundColor: '#fee2e2',
+                     border: '1px solid #fecaca',
+                     borderRadius: '4px',
+                     color: '#dc2626',
+                     fontSize: '12px',
+                     cursor: 'pointer',
+                     fontWeight: '500'
+                   }}
+                   onMouseEnter={(e) => {
+                     e.currentTarget.style.backgroundColor = '#fecaca';
+                   }}
+                   onMouseLeave={(e) => {
+                     e.currentTarget.style.backgroundColor = '#fee2e2';
+                   }}
+                 >
+                   Clear Results
+                 </button>
+               </div>
+              
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+                gap: '16px',
+                fontSize: '14px'
+              }}>
+                <div style={{ padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '6px', border: '1px solid #0ea5e9' }}>
+                  <div style={{ fontWeight: '600', color: '#0c4a6e', marginBottom: '4px' }}>Total Data Points</div>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#0ea5e9' }}>{indexResult.total_data_points}</div>
+                </div>
+                <div style={{ padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '6px', border: '1px solid #22c55e' }}>
+                  <div style={{ fontWeight: '600', color: '#166534', marginBottom: '4px' }}>DataFrame Shape</div>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#22c55e' }}>{indexResult.dataframe_shape[0]} × {indexResult.dataframe_shape[1]}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Index Data Display */}
+            <div style={{ 
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              border: '1px solid #e5e7eb',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+              overflow: 'hidden'
+            }}>
+              <div style={{ 
+                padding: '16px 20px',
+                borderBottom: '1px solid #e5e7eb',
+                backgroundColor: '#f9fafb'
+              }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#374151', margin: '0' }}>
+                  Index Data (Dictionary Format)
+                </h3>
+                <p style={{ fontSize: '12px', color: '#6b7280', margin: '8px 0 0 0' }}>
+                  Showing all index data points
+                </p>
+              </div>
+              
+              <div style={{ padding: '20px', maxHeight: '500px', overflowY: 'auto' }}>
+                <pre style={{ 
+                  fontSize: '12px',
+                  lineHeight: '1.4',
+                  color: '#374151',
+                  backgroundColor: '#f9fafb',
+                  padding: '16px',
+                  borderRadius: '6px',
+                  border: '1px solid #e5e7eb',
+                  overflow: 'auto',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word'
+                }}>
+                  {JSON.stringify(indexResult, null, 2)}
+                </pre>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div style={{ 
+            textAlign: 'center',
+            color: '#6b7280'
+          }}>
+            <svg 
+              width="64" 
+              height="64" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="1.5"
+              style={{ marginBottom: '16px' }}
+            >
+              <path d="M3 3v18h18"/>
+              <path d="m9 9 3 3 3-3"/>
+              <path d="M9 12h6"/>
+              <path d="M9 16h6"/>
+            </svg>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>
+              Graph Area
+            </h3>
+            <p style={{ fontSize: '14px', margin: '0' }}>
+              Interactive charts and visualizations will appear here after creating an index
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

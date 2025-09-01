@@ -39,6 +39,9 @@ historical-forex-full:
 fields:
 	poetry run --directory stock-service python -m src.utils.field_maker
 
+uvicorn:
+	poetry run --directory stock-service uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+
 
 
 # Frontend targets

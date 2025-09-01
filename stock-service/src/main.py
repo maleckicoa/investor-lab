@@ -80,21 +80,21 @@ async def create_index(request: IndexCreationRequest):
             industries=request.selectedIndustries,
             kpis=request.selectedKPIs,
             stocks=request.selectedStocks,
-            suppress_debug=True  # Suppress debug prints for API responses
+            
         )
         
-        if result["success"]:
-            return IndexCreationResponse(
-                success=True,
-                message="Index created successfully",
-                result=result
-            )
-        else:
-            return IndexCreationResponse(
-                success=False,
-                message="Failed to create index",
-                error=result.get("error", "Unknown error")
-            )
+        # Convert dataframe to JSON-serializable format
+        index_data = result.to_dicts()
+        
+        return IndexCreationResponse(
+            success=True,
+            message=f"Index created successfully with {len(index_data)} data points",
+            result={
+                "index_data": index_data,
+                "total_data_points": len(index_data),
+                "dataframe_shape": result.shape
+            }
+        )
             
     except Exception as e:
         return IndexCreationResponse(
