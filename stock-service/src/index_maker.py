@@ -143,7 +143,6 @@ def make_query(max_constituents,
     """
 
     df = run_query_to_polars_simple(query)
-
     return df
 
 
