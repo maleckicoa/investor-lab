@@ -78,6 +78,7 @@ def make_query(max_constituents,
         FROM clean.financial_metrics_perc
         WHERE 1=1
         {kpi_sql}
+        {stocks_condition}
     ),
     prep3 AS (
         SELECT 
@@ -88,7 +89,19 @@ def make_query(max_constituents,
     ),
     prep4 AS (
         SELECT 
-            hmc.*,
+    hmc.*,
+    'Q' || (
+        CASE 
+            WHEN EXTRACT(YEAR FROM hmc.date)::INT = 2013 THEN 4
+            WHEN EXTRACT(QUARTER FROM hmc.date)::INT = 4 THEN 1
+            ELSE EXTRACT(QUARTER FROM hmc.date)::INT + 1
+        END
+    ) AS next_quarter,
+    CASE 
+        WHEN EXTRACT(YEAR FROM hmc.date)::INT = 2013 THEN 2013
+        WHEN EXTRACT(QUARTER FROM hmc.date)::INT = 4 THEN EXTRACT(YEAR FROM hmc.date)::INT + 1
+        ELSE EXTRACT(YEAR FROM hmc.date)::INT
+    END AS next_year,
             {prep3_kpi_cols}
         FROM raw.historical_market_cap hmc
         INNER JOIN prep3 p3
@@ -96,9 +109,6 @@ def make_query(max_constituents,
         AND hmc.year = p3.fiscal_year
         AND hmc.quarter = p3.period
         WHERE hmc.last_quarter_date = TRUE
-        OR (hmc.year = EXTRACT(YEAR FROM CURRENT_DATE)
-            AND hmc.quarter = 'Q' || EXTRACT(QUARTER FROM CURRENT_DATE)::INT
-        )
     ),
     prep5 AS (
         SELECT 
@@ -113,12 +123,6 @@ def make_query(max_constituents,
         SELECT *
         FROM prep5
         WHERE mcap_rank <= {max_constituents}
-        {f"OR symbol IN {selected_stocks_sql}" if selected_stocks and len(selected_stocks) > 0 else ""}
-    ),
-    prep7 AS (
-        SELECT *
-        FROM raw.historical_price_volume
-        WHERE volume_eur > 100000--{min_volume_eur}
         {f"OR symbol IN {selected_stocks_sql}" if selected_stocks and len(selected_stocks) > 0 else ""}
     ),
     prep8 AS (
@@ -137,15 +141,16 @@ def make_query(max_constituents,
             CAST(prep6.market_cap_usd as FLOAT8) as market_cap_usd,
             {prep6_kpi_cols},
             CAST(prep6.mcap_rank as INTEGER) as mcap_rank
-        FROM prep7
+        FROM raw.historical_price_volume prep7
         INNER JOIN prep6
         ON prep7.symbol = prep6.symbol
-        AND prep7.year = prep6.year
-        AND prep7.quarter = prep6.quarter
+        AND prep7.year = prep6.next_year
+        AND prep7.quarter = prep6.next_quarter
+        WHERE volume_eur > 100000
     )
     SELECT *
     FROM prep8
-    WHERE (EXTRACT(DOW FROM date) = 1 OR last_quarter_date = TRUE)
+    --WHERE (EXTRACT(DOW FROM date) = 1 OR last_quarter_date = TRUE)
     """
     df = run_query_to_polars_simple(query)
     return df
@@ -177,6 +182,7 @@ def calculate_index_values(df: pl.DataFrame,
 
     # Step 3: Rebalance snapshots
     rebalance_df = df.filter(pl.col("last_quarter_date") == True)
+    print(f"Rebalance df: {rebalance_df}")
 
     rebalance_snapshots = (
         rebalance_df
@@ -286,7 +292,7 @@ def create_custom_index(index_size, currency, start_date, end_date, countries, s
 
     try:
 
-        print(f"STARTING INDEX CREATION at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"Starting index creation at {time.strftime('%Y-%m-%d %H:%M:%S')}")
 
         # Log the received parameters for debugging
         print(f"DEBUG: Received parameters:")
@@ -314,7 +320,7 @@ def create_custom_index(index_size, currency, start_date, end_date, countries, s
             kpis=kpis
         )
 
-        print(f"INDEX DATA LOADED at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"Index data loaded at {time.strftime('%Y-%m-%d %H:%M:%S')}")
         # Calculate index values
         index_df = calculate_index_values(
             df, 
@@ -322,7 +328,7 @@ def create_custom_index(index_size, currency, start_date, end_date, countries, s
             index_currency=currency
         )
 
-        print(f"INDEX VALUES CALCULATED at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"Index values calculated at {time.strftime('%Y-%m-%d %H:%M:%S')}")
         
         # Print the output of calculate_index_values function
         print(f"\n📈 INDEX CALCULATION OUTPUT:")
