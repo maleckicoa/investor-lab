@@ -49,16 +49,6 @@ export default function RootLayout({
                   }}>
                     Home
                   </a>
-                  <a href="/etl-summary" style={{ 
-                    color: '#111827', 
-                    textDecoration: 'none',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: '0.375rem',
-                    fontSize: '0.875rem',
-                    fontWeight: '500'
-                  }}>
-                    ETL Summary
-                  </a>
                   <a href="/index-maker" style={{ 
                     color: '#111827', 
                     textDecoration: 'none',
@@ -68,6 +58,16 @@ export default function RootLayout({
                     fontWeight: '500'
                   }}>
                     Index Maker
+                  </a>
+                  <a href="/etl-summary" style={{ 
+                    color: '#111827', 
+                    textDecoration: 'none',
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: '0.375rem',
+                    fontSize: '0.875rem',
+                    fontWeight: '500'
+                  }}>
+                    ETL Summary
                   </a>
                 </nav>
               </div>

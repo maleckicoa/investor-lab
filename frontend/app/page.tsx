@@ -51,37 +51,6 @@ export default function HomePage() {
           maxWidth: '400px',
           margin: '0 auto'
         }}>
-          <Link href="/etl-summary" style={{ textDecoration: 'none', width: '100%' }}>
-            <button style={{
-              backgroundColor: '#667eea',
-              color: 'white',
-              padding: '1rem 2rem',
-              borderRadius: '50px',
-              fontSize: '1.1rem',
-              fontWeight: '600',
-              border: 'none',
-              cursor: 'pointer',
-              width: '100%',
-              transition: 'all 0.3s ease',
-              boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)'
-            }}
-            onMouseOver={(e) => {
-              const target = e.target as HTMLButtonElement;
-              target.style.transform = 'translateY(-2px)';
-              target.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.6)';
-            }}
-            onMouseOut={(e) => {
-              const target = e.target as HTMLButtonElement;
-              target.style.transform = 'translateY(0)';
-              target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
-            }}>
-              <svg style={{ width: '28px', height: '28px', marginRight: '12px', display: 'inline-block', verticalAlign: 'middle' }} fill="none" stroke="white" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              ETL Summary Dashboard
-            </button>
-          </Link>
-          
           <Link href="/index-maker" style={{ textDecoration: 'none', width: '100%' }}>
             <button style={{
               backgroundColor: '#764ba2',
@@ -110,6 +79,37 @@ export default function HomePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
               Index Maker
+            </button>
+          </Link>
+          
+          <Link href="/etl-summary" style={{ textDecoration: 'none', width: '100%' }}>
+            <button style={{
+              backgroundColor: '#667eea',
+              color: 'white',
+              padding: '1rem 2rem',
+              borderRadius: '50px',
+              fontSize: '1.1rem',
+              fontWeight: '600',
+              border: 'none',
+              cursor: 'pointer',
+              width: '100%',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)'
+            }}
+            onMouseOver={(e) => {
+              const target = e.target as HTMLButtonElement;
+              target.style.transform = 'translateY(-2px)';
+              target.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.6)';
+            }}
+            onMouseOut={(e) => {
+              const target = e.target as HTMLButtonElement;
+              target.style.transform = 'translateY(0)';
+              target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+            }}>
+              <svg style={{ width: '28px', height: '28px', marginRight: '12px', display: 'inline-block', verticalAlign: 'middle' }} fill="none" stroke="white" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              ETL Summary Dashboard
             </button>
           </Link>
         </div>
