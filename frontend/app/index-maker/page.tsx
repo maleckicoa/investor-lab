@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import IndexSizeSlider from '../components/index-maker/IndexSizeSlider';
 
 // Types for the API response
 interface IndexFields {
@@ -18,25 +19,28 @@ interface KPISelection {
 
 export default function IndexMakerPage() {
   const [countries, setCountries] = useState<Array<{country_code: string, country_name: string}>>([]);
-  const [sectors, setSectors] = useState<string[]>([]);
+  const [sectors, setSectors] = useState<string[]>(['Technology']);
   const [industries, setIndustries] = useState<Record<string, string[]>>({});
   const [kpis, setKpis] = useState<Record<string, string[]>>({});
-  const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
-  const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
+  const [selectedCountries, setSelectedCountries] = useState<string[]>(['US']);
+  const [selectedSectors, setSelectedSectors] = useState<string[]>(['Technology']);
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
   const [selectedKPIs, setSelectedKPIs] = useState<KPISelection>({});
   const [companies, setCompanies] = useState<Array<{company_name: string, symbol: string}>>([]);
   const [selectedStocks, setSelectedStocks] = useState<string[]>([]);
   const [indexSize, setIndexSize] = useState<number>(100);
   const [indexCurrency, setIndexCurrency] = useState<'USD' | 'EUR'>('USD');
-  const [indexStartDate, setIndexStartDate] = useState<string>(() => {
-    const date = new Date();
-    date.setFullYear(date.getFullYear() - 1);
-    return date.toISOString().split('T')[0];
-  });
+  const [indexStartAmount, setIndexStartAmount] = useState<number>(1000);
+  const [indexStartDate, setIndexStartDate] = useState<string>('2014-01-01');
   const [indexEndDate, setIndexEndDate] = useState<string>(() => {
     return new Date().toISOString().split('T')[0];
   });
+  // Ensure end date is never before start date
+  useEffect(() => {
+    if (indexEndDate < indexStartDate) {
+      setIndexEndDate(indexStartDate);
+    }
+  }, [indexStartDate]);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [showSectorDropdown, setShowSectorDropdown] = useState(false);
   const [showIndustryDropdown, setShowIndustryDropdown] = useState(false);
@@ -59,6 +63,26 @@ export default function IndexMakerPage() {
     // Index results state
   const [indexResult, setIndexResult] = useState<any>(null);
   
+
+
+
+// Prefill the Sector and Industries
+  const [didPrefillSector, setDidPrefillSector] = useState<boolean>(false);
+  
+  useEffect(() => {
+    if (!didPrefillSector && industries && Object.keys(industries).length > 0) {
+      // Ensure Technology is selected
+      setSelectedSectors(prev => prev.includes('Technology') ? prev : [...prev, 'Technology']);
+      // Merge Technology industries into selectedIndustries
+      const techIndustries = industries['Technology'] || [];
+      if (techIndustries.length > 0) {
+        setSelectedIndustries(prev => Array.from(new Set([...(prev || []), ...techIndustries])));
+      }
+      setDidPrefillSector(true);
+    }
+  }, [industries, didPrefillSector]);
+  
+
 
   // Timer effect for index creation
   useEffect(() => {
@@ -252,9 +276,9 @@ export default function IndexMakerPage() {
   }
 
   return (
-    <div style={{ display: 'flex', width: '100%', height: '100vh' }}>
+    <div className="page-container" style={{ display: 'flex', width: '100%', height: '100vh' }}>
       {/* Left Panel - Index Maker Content */}
-      <div style={{ width: '30%', padding: '16px', overflowY: 'auto', borderRight: '1px solid #e5e7eb', position: 'relative' }}>
+      <div className="left-pane" style={{ width: '30%', padding: '16px', overflowY: 'auto', borderRight: '1px solid #e5e7eb', position: 'relative' }}>
         <div style={{ backgroundColor: 'white', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', borderRadius: '8px', padding: '20px' }}>
           <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', marginBottom: '12px' }}>
             Index Maker
@@ -264,187 +288,104 @@ export default function IndexMakerPage() {
           </p>
           
                     {/* Index Size Slider */}
-          <div style={{ marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>
-              Index Size
-            </h3>
-            <div style={{ 
-              padding: '16px',
-              backgroundColor: '#f8fafc',
-              borderRadius: '8px',
-              border: '1px solid #e2e8f0'
-            }}>
-              {/* Top row: Label and Slider */}
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '12px',
-                marginBottom: '12px'
-              }}>
-                <span style={{ 
-                  fontSize: '14px', 
-                  fontWeight: '500', 
-                  color: '#374151',
-                  minWidth: '60px'
-                }}>
-                  Stocks: {indexSize}
-                </span>
-                <input
-                  type="range"
-                  min="1"
-                  max="1000"
-                  value={indexSize}
-                  onChange={(e) => setIndexSize(parseInt(e.target.value))}
-                  style={{
-                    flex: '1',
-                    height: '6px',
-                    borderRadius: '3px',
-                    background: '#dbeafe',
-                    outline: 'none',
-                    cursor: 'pointer',
-                    WebkitAppearance: 'none',
-                    appearance: 'none'
-                  }}
-                  onMouseDown={(e) => {
-                    e.currentTarget.style.background = '#2563eb';
-                  }}
-                  onMouseUp={(e) => {
-                    e.currentTarget.style.background = '#dbeafe';
-                  }}
-                />
-              </div>
-              
-              {/* Bottom row: Preset buttons */}
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center',
-                gap: '8px'
-              }}>
-                <button
-                  onClick={() => setIndexSize(10)}
-                  style={{
-                    padding: '4px 8px',
-                    fontSize: '12px',
-                    backgroundColor: '#f3f4f6',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    color: '#374151'
-                  }}
-                  title="Set to 10"
-                >
-                  10
-                </button>
-                <button
-                  onClick={() => setIndexSize(50)}
-                  style={{
-                    padding: '4px 8px',
-                    fontSize: '12px',
-                    backgroundColor: '#f3f4f6',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    color: '#374151'
-                  }}
-                  title="Set to 50"
-                >
-                  50
-                </button>
-                <button
-                  onClick={() => setIndexSize(100)}
-                  style={{
-                    padding: '4px 8px',
-                    fontSize: '12px',
-                    backgroundColor: '#f3f4f6',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    color: '#374151'
-                  }}
-                  title="Set to 100"
-                >
-                  100
-                </button>
-                <button
-                  onClick={() => setIndexSize(500)}
-                  style={{
-                    padding: '4px 8px',
-                    fontSize: '12px',
-                    backgroundColor: '#f3f4f6',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    color: '#374151'
-                  }}
-                  title="Set to 500"
-                >
-                  500
-                </button>
-              </div>
-            </div>
-          </div>
+          <IndexSizeSlider value={indexSize} onChange={setIndexSize} />
 
-          {/* Index Currency Selection */}
+          {/* Index Currency and Start Amount Selection */}
           <div style={{ marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>
-              Index Currency
-            </h3>
             <div style={{ 
               display: 'flex', 
-              gap: '8px'
+              gap: '32px',
+              alignItems: 'flex-start'
             }}>
-                              <button
-                  onClick={() => setIndexCurrency('USD')}
+              {/* Index Currency */}
+              <div>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>
+                  Index Currency
+                </h3>
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '8px'
+                }}>
+                  <button
+                    onClick={() => setIndexCurrency('USD')}
+                    style={{
+                      padding: '8px 16px',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      backgroundColor: indexCurrency === 'USD' ? '#059669' : '#f3f4f6',
+                      color: indexCurrency === 'USD' ? 'white' : '#374151',
+                      border: indexCurrency === 'USD' ? '1px solid #059669' : '1px solid #d1d5db'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (indexCurrency !== 'USD') {
+                        e.currentTarget.style.backgroundColor = '#e5e7eb';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (indexCurrency !== 'USD') {
+                        e.currentTarget.style.backgroundColor = '#f3f4f6';
+                      }
+                    }}
+                  >
+                    USD
+                  </button>
+                  <button
+                    onClick={() => setIndexCurrency('EUR')}
+                    style={{
+                      padding: '8px 16px',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      backgroundColor: indexCurrency === 'EUR' ? '#059669' : '#f3f4f6',
+                      color: indexCurrency === 'EUR' ? 'white' : '#374151',
+                      border: indexCurrency === 'EUR' ? '1px solid #059669' : '1px solid #d1d5db'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (indexCurrency !== 'EUR') {
+                        e.currentTarget.style.backgroundColor = '#e5e7eb';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (indexCurrency !== 'EUR') {
+                        e.currentTarget.style.backgroundColor = '#f3f4f6';
+                      }
+                    }}
+                  >
+                    EUR
+                  </button>
+                </div>
+              </div>
+
+              {/* Start Amount */}
+              <div>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>
+                  Start Amount
+                </h3>
+                <input
+                  type="number"
+                  value={indexStartAmount}
+                  onChange={(e) => setIndexStartAmount(Number(e.target.value))}
+                  min="1"
+                  step="1"
                   style={{
                     padding: '8px 16px',
                     fontSize: '13px',
                     fontWeight: '600',
+                    border: '1px solid #d1d5db',
                     borderRadius: '6px',
+                    backgroundColor: 'white',
+                    color: '#374151',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
-                    backgroundColor: indexCurrency === 'USD' ? '#059669' : '#f3f4f6',
-                    color: indexCurrency === 'USD' ? 'white' : '#374151',
-                    border: indexCurrency === 'USD' ? '1px solid #059669' : '1px solid #d1d5db'
+                    width: '120px'
                   }}
-                onMouseEnter={(e) => {
-                  if (indexCurrency !== 'USD') {
-                    e.currentTarget.style.backgroundColor = '#e5e7eb';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (indexCurrency !== 'USD') {
-                    e.currentTarget.style.backgroundColor = '#f3f4f6';
-                  }
-                }}
-              >
-                USD
-              </button>
-              <button
-                onClick={() => setIndexCurrency('EUR')}
-                style={{
-                  padding: '8px 16px',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  backgroundColor: indexCurrency === 'EUR' ? '#059669' : '#f3f4f6',
-                  color: indexCurrency === 'EUR' ? 'white' : '#374151',
-                  border: indexCurrency === 'EUR' ? '1px solid #059669' : '1px solid #d1d5db'
-                }}
-                onMouseEnter={(e) => {
-                  if (indexCurrency !== 'EUR') {
-                    e.currentTarget.style.backgroundColor = '#e5e7eb';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (indexCurrency !== 'EUR') {
-                    e.currentTarget.style.backgroundColor = '#f3f4f6';
-                  }
-                }}
-              >
-                EUR
-              </button>
+                />
+              </div>
             </div>
           </div>
 
@@ -472,7 +413,15 @@ export default function IndexMakerPage() {
                 <input
                   type="date"
                   value={indexStartDate}
-                  onChange={(e) => setIndexStartDate(e.target.value)}
+                  onChange={(e) => {
+                    const newStart = e.target.value;
+                    setIndexStartDate(newStart);
+                    if (indexEndDate < newStart) {
+                      setIndexEndDate(newStart);
+                    }
+                  }}
+                  min={"2014-01-01"}
+                  max={indexEndDate}
                   style={{
                     width: '100%',
                     padding: '8px 12px',
@@ -500,8 +449,16 @@ export default function IndexMakerPage() {
                 <input
                   type="date"
                   value={indexEndDate}
-                  onChange={(e) => setIndexEndDate(e.target.value)}
+                  onChange={(e) => {
+                    const newEnd = e.target.value;
+                    if (newEnd < indexStartDate) {
+                      setIndexEndDate(indexStartDate);
+                    } else {
+                      setIndexEndDate(newEnd);
+                    }
+                  }}
                   min={indexStartDate}
+                  max={new Date().toISOString().split('T')[0]}
                   style={{
                     width: '100%',
                     fontSize: '13px',
@@ -613,7 +570,6 @@ export default function IndexMakerPage() {
           {/* Countries Selection */}
           <div style={{ marginBottom: '20px' }}>
             <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>
-              Countries
             </h3>
             <div style={{ position: 'relative' }}>
                           <button
@@ -1937,10 +1893,7 @@ export default function IndexMakerPage() {
                     return;
                   }
                   
-                  if (Object.keys(selectedKPIs).length === 0) {
-                    alert('Please select at least 1 KPI before creating an index.');
-                    return;
-                  }
+                  // KPIs are optional; proceed even if none are selected
 
                   // Start spinner and timer
                   setIsCreatingIndex(true);
@@ -1954,12 +1907,24 @@ export default function IndexMakerPage() {
                       // Append "_perc" to the KPI field name
                       const dbFieldName = `${kpiName}_perc`;
                       
-                      parsedKPIs[dbFieldName] = kpiValues.map(value => {
-                        // Take first 4 characters and extract only numbers
-                        const firstFour = value.toString().substring(0, 4);
-                        const numbersOnly = firstFour.replace(/[^0-9]/g, '');
-                        return numbersOnly;
-                      }).filter(numbersOnly => numbersOnly.length > 0); // Remove empty values
+                      parsedKPIs[dbFieldName] = kpiValues
+                        .map((value) => {
+                          const s = String(value).trim();
+                          const gtMatch = s.match(/^>\s*=?\s*(\d+)/);
+                          if (gtMatch) {
+                            const n = parseInt(gtMatch[1], 10);
+                            if (!isNaN(n)) {
+                              // If it's >99 or >=99, map to 100; otherwise map to n+1
+                              return String(Math.min(n >= 99 ? 100 : n + 1, 100));
+                            }
+                          }
+                          const firstFour = s.substring(0, 4);
+                          const numbersOnly = firstFour.replace(/[^0-9]/g, '');
+                          const n = parseInt(numbersOnly, 10);
+                          if (isNaN(n)) return '';
+                          return String(Math.min(n, 100));
+                        })
+                        .filter((v) => v.length > 0);
                     }
                   });
 
@@ -1967,6 +1932,7 @@ export default function IndexMakerPage() {
                   const payload = {
                     indexSize,
                     indexCurrency,
+                    indexStartAmount,
                     indexStartDate,
                     indexEndDate,
                     selectedCountries,
@@ -1981,6 +1947,7 @@ export default function IndexMakerPage() {
                   console.log('📊 Index Configuration:');
                   console.log('   • Size:', indexSize, 'stocks');
                   console.log('   • Currency:', indexCurrency);
+                  console.log('   • Start Amount:', indexStartAmount);
                   console.log('   • Date Range:', indexStartDate, 'to', indexEndDate);
                   console.log('');
                   console.log('🌍 Selected Countries:', selectedCountries);
@@ -2112,6 +2079,7 @@ export default function IndexMakerPage() {
               }}>
                 <div><strong>Size:</strong> {indexSize} stocks</div>
                 <div><strong>Currency:</strong> {indexCurrency}</div>
+                <div><strong>Start Amount:</strong> {indexStartAmount}</div>
                 <div><strong>Period:</strong> {indexStartDate} to {indexEndDate}</div>
                 <div><strong>Countries:</strong> {selectedCountries.length}</div>
                 <div><strong>KPIs:</strong> {Object.keys(selectedKPIs).length}</div>
@@ -2129,7 +2097,7 @@ export default function IndexMakerPage() {
       </div>
       
       {/* Right Panel - Graph Area */}
-      <div style={{ 
+      <div className="right-pane" style={{ 
         width: '70%', 
         padding: '24px',
         backgroundColor: '#f8fafc',
@@ -2268,6 +2236,26 @@ export default function IndexMakerPage() {
           </div>
         )}
       </div>
+      <style jsx>{`
+        @media (max-width: 768px) {
+          .page-container {
+            flex-direction: column;
+            height: auto;
+          }
+          .left-pane {
+            width: 100% !important;
+            border-right: none !important;
+            border-bottom: 1px solid #e5e7eb;
+            max-height: 50vh;
+            overflow-y: auto;
+          }
+          .right-pane {
+            width: 100% !important;
+            border-left: none !important;
+            min-height: 50vh;
+          }
+        }
+      `}</style>
     </div>
   );
 }

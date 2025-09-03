@@ -1,8 +1,8 @@
-
+import time
 import polars as pl
 from datetime import datetime, date
 from typing import Union
-from utils.utils import run_query, run_query_to_polars_simple
+from utils.utils import run_query, run_query_to_polars_simple, run_query_debug, run_query_to_polars_simple1, run_query_to_polars_simple2
 #pl.Config.set_tbl_rows(-1)
 #pl.Config.set_tbl_cols(-1) 
 
@@ -29,7 +29,6 @@ from utils.utils import run_query, run_query_to_polars_simple
 
 
 def make_query(max_constituents, 
-               min_volume_eur, 
                selected_countries, 
                selected_sectors, 
                selected_industries, 
@@ -48,6 +47,11 @@ def make_query(max_constituents,
         stocks_condition = ""
 
 
+    # If no KPIs provided, select everything basicaly
+    if not kpis:
+        kpis = {
+            'asset_turnover_perc': ['1', '20', '30', '40', '50', '60', '70', '80', '90', '99', '100']
+        }
 
     kpi_filters = []
     for kpi, values in kpis.items():
@@ -132,7 +136,7 @@ def make_query(max_constituents,
             prep7.currency,
             prep7.year,
             prep7.quarter,
-            prep7.last_quarter_date,
+            cast(prep7.last_quarter_date as BOOLEAN) as last_quarter_date,
             CAST(prep7.close as FLOAT8) as close ,
             CAST(prep7.close_eur as FLOAT8) as close_eur,
             CAST(prep7.close_usd as FLOAT8) as close_usd,
@@ -155,13 +159,17 @@ def make_query(max_constituents,
     df = run_query_to_polars_simple(query)
     return df
 
+########################################################
+########################################################
+########################################################
 
 
-
-def calculate_index_values(df: pl.DataFrame, 
-                           index_start_date: Union[date, str, None] = "2015-03-15",
+def make_index(df: pl.DataFrame, 
+                           index_start_date: Union[date, str, None] = "2014-01-01",
                            index_end_date: Union[date, str, None] = None,
-                           index_currency: str = "EUR") -> pl.DataFrame:
+                           index_currency: str = "EUR",
+                           index_start_amount: float = 1000.0) -> pl.DataFrame:
+    
     # Step 0: Cast decimals to floats
     decimal_cols = [name for name, dtype in zip(df.columns, df.dtypes) if dtype.base_type() == pl.Decimal]
     df = df.with_columns([pl.col(c).cast(pl.Float64) for c in decimal_cols])
@@ -172,11 +180,14 @@ def calculate_index_values(df: pl.DataFrame,
     elif df.schema["date"] != pl.Date:
         df = df.with_columns(pl.col("date").cast(pl.Date))
 
-    # Step 2: Forward-fill prices
+    # Step 2: Forward-fill prices based on currency
+    price_col = "close_eur" if index_currency == "EUR" else "close_usd"
+    mcap_col  = "market_cap_eur" if index_currency == "EUR" else "market_cap_usd"
+
     df = (
         df.sort(["symbol", "date"])
           .with_columns([
-              pl.col("close_eur").forward_fill().over("symbol")
+              pl.col(price_col).forward_fill().over("symbol")
           ])
     )
 
@@ -184,19 +195,24 @@ def calculate_index_values(df: pl.DataFrame,
     rebalance_df = df.filter(pl.col("last_quarter_date") == True)
     print(f"Rebalance df: {rebalance_df}")
 
+    # Use appropriate market cap column based on currency
+    
     rebalance_snapshots = (
         rebalance_df
         .group_by(["year", "quarter"])
         .agg([
             pl.first("date").alias("rebalance_date"),
             pl.col("symbol"),
-            pl.col("market_cap_eur")
+            pl.col(mcap_col)
         ])
     )
 
-    # Step 4: Parse index_start_date
+    # Step 4: Parse index_start_date and index_end_date
     if isinstance(index_start_date, str):
         index_start_date = datetime.strptime(index_start_date, "%Y-%m-%d").date()
+
+    if isinstance(index_end_date, str):
+        index_end_date = datetime.strptime(index_end_date, "%Y-%m-%d").date()
 
     # Step 5: Find the latest rebalance on or before index_start_date
     initial_snapshot = rebalance_snapshots.filter(pl.col("rebalance_date") <= index_start_date)
@@ -205,8 +221,8 @@ def calculate_index_values(df: pl.DataFrame,
 
     initial_row = initial_snapshot.sort("rebalance_date", descending=True).row(0, named=True)
     initial_weights = {
-        s: float(m) / float(sum(initial_row["market_cap_eur"]))
-        for s, m in zip(initial_row["symbol"], initial_row["market_cap_eur"])
+        s: float(m) / float(sum(initial_row[mcap_col]))
+        for s, m in zip(initial_row["symbol"], initial_row[mcap_col])
     }
     active_weights = initial_weights
     last_rebalance_date = initial_row["rebalance_date"]
@@ -214,20 +230,20 @@ def calculate_index_values(df: pl.DataFrame,
     # Step 6: Store future quarterly rebalance dates > index_start_date
     future_rebalances = {
         row["rebalance_date"]: {
-            s: float(m) / float(sum(row["market_cap_eur"]))
-            for s, m in zip(row["symbol"], row["market_cap_eur"])
+            s: float(m) / float(sum(row[mcap_col]))
+            for s, m in zip(row["symbol"], row[mcap_col])
         }
         for row in rebalance_snapshots.iter_rows(named=True)
         if row["rebalance_date"] > index_start_date
     }
 
-    # Step 7: Pivot prices
+    # Step 7: Pivot prices using appropriate currency column
     pivot = (
         df.with_columns([
             pl.col("date").cast(pl.Utf8)
         ])
-        .select(["date", "symbol", "close_eur"])
-        .pivot(index="date", values="close_eur", on="symbol", aggregate_function="first")
+        .select(["date", "symbol", price_col])
+        .pivot(index="date", values=price_col, on="symbol", aggregate_function="first")
         .with_columns([
             pl.col("date").str.to_date()
         ])
@@ -240,7 +256,7 @@ def calculate_index_values(df: pl.DataFrame,
     pivot = pivot.filter(pl.col("date") >= pl.lit(index_start_date))
 
     # Step 8: Main loop
-    index_value = 1000.0
+    index_value = float(index_start_amount)
     index_values = []
     previous_prices = None
     symbol_columns = [c for c in pivot.columns if c != "date"]
@@ -283,12 +299,18 @@ def calculate_index_values(df: pl.DataFrame,
 
         index_values.append((current_date, index_value))
 
-    return pl.DataFrame(index_values, schema=["date", "index_value"], orient="row").sort("date")
+    result_df = pl.DataFrame(index_values, schema=["date", "index_value"], orient="row").sort("date")
+    if index_end_date is not None:
+        # Cut off the final dataframe at index_end_date (inclusive)
+        result_df = result_df.filter(pl.col("date") <= pl.lit(index_end_date))
+    return result_df
 
 
-import time
+########################################################
+########################################################
+########################################################
 
-def create_custom_index(index_size, currency, start_date, end_date, countries, sectors, industries, kpis, stocks):
+def create_custom_index(index_size, currency, start_amount, start_date, end_date, countries, sectors, industries, kpis, stocks):
 
     try:
 
@@ -298,6 +320,7 @@ def create_custom_index(index_size, currency, start_date, end_date, countries, s
         print(f"DEBUG: Received parameters:")
         print(f"  - index_size: {index_size}")
         print(f"  - currency: {currency}")
+        print(f"  - start_amount: {start_amount}")
         print(f"  - start_date: {start_date}")
         print(f"  - end_date: {end_date}")
         print(f"  - countries: {countries}")
@@ -306,13 +329,10 @@ def create_custom_index(index_size, currency, start_date, end_date, countries, s
         print(f"  - kpis: {kpis}")
         print(f"  - stocks: {stocks}")
         
-        # Set minimum volume based on currency
-        min_volume = 100000 if currency == "EUR" else 100000  # Adjust as needed
-        
+
         # Create the query and get the data
         df = make_query(
             max_constituents=index_size,
-            min_volume_eur=min_volume,
             selected_countries=countries,
             selected_sectors=sectors,
             selected_industries=industries,
@@ -322,22 +342,24 @@ def create_custom_index(index_size, currency, start_date, end_date, countries, s
 
         print(f"Index data loaded at {time.strftime('%Y-%m-%d %H:%M:%S')}")
         # Calculate index values
-        index_df = calculate_index_values(
+        index_df = make_index(
             df, 
             index_start_date=start_date,
-            index_currency=currency
+            index_end_date=end_date,
+            index_currency=currency,
+            index_start_amount=start_amount
         )
 
         print(f"Index values calculated at {time.strftime('%Y-%m-%d %H:%M:%S')}")
         
-        # Print the output of calculate_index_values function
-        print(f"\n📈 INDEX CALCULATION OUTPUT:")
-        print(f"DataFrame shape: {index_df.shape}")
-        print(f"Columns: {index_df.columns}")
-        print(f"First 10 rows:")
-        print(index_df.head(10))
-        print(f"\nLast 10 rows:")
-        print(index_df.tail(10))
+        # # Print the output of make_index function
+        # print(f"\n📈 INDEX CALCULATION OUTPUT:")
+        # print(f"DataFrame shape: {index_df.shape}")
+        # print(f"Columns: {index_df.columns}")
+        # print(f"First 10 rows:")
+        # print(index_df.head(10))
+        # print(f"\nLast 10 rows:")
+        # print(index_df.tail(10))
         
         # Convert to JSON-serializable format
         index_data = index_df.to_dicts()
@@ -347,6 +369,7 @@ def create_custom_index(index_size, currency, start_date, end_date, countries, s
         print(f"   • Total data points: {len(index_data)}")
         print(f"   • Date range: {start_date} to {end_date}")
         print(f"   • Currency: {currency}")
+        print(f"   • Start amount: {start_amount}")
         print(f"   • Index size: {index_size} stocks")
         print(f"   • Countries: {len(countries)}")
         print(f"   • Sectors: {len(sectors)}")
@@ -354,18 +377,17 @@ def create_custom_index(index_size, currency, start_date, end_date, countries, s
         print(f"   • KPIs: {len([k for k, v in kpis.items() if v])}")
         print(f"   • Selected stocks: {len(stocks)}")
         
-        # Show sample of index data
-        if len(index_data) > 0:
-            print(f"\n📊 SAMPLE INDEX DATA (first 5 points):")
-            for i, point in enumerate(index_data[:5]):
-                print(f"   {i+1}. Date: {point['date']}, Value: {point['index_value']:.2f}")
+        # # Show sample of index data
+        # if len(index_data) > 0:
+        #     print(f"\n📊 SAMPLE INDEX DATA (first 5 points):")
+        #     for i, point in enumerate(index_data[:5]):
+        #         print(f"   {i+1}. Date: {point['date']}, Value: {point['index_value']:.2f}")
         
-        if len(index_data) > 5:
-            print(f"   ... and {len(index_data) - 5} more data points")
+        # if len(index_data) > 5:
+        #     print(f"   ... and {len(index_data) - 5} more data points")
         
         print(f"\n✅ Index creation completed successfully!")
         
-        # Return the full dataframe instead of limited data
         return index_df
     except Exception as e:
         print(f"❌ Error creating index: {e}")

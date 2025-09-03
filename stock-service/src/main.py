@@ -30,6 +30,7 @@ app.add_middleware(
 class IndexCreationRequest(BaseModel):
     indexSize: int
     indexCurrency: str
+    indexStartAmount: int
     indexStartDate: str
     indexEndDate: str
     selectedCountries: List[str]
@@ -73,6 +74,7 @@ async def create_index(request: IndexCreationRequest):
         result = create_custom_index(
             index_size=request.indexSize,
             currency=request.indexCurrency,
+            start_amount=request.indexStartAmount,
             start_date=request.indexStartDate,
             end_date=request.indexEndDate,
             countries=request.selectedCountries,

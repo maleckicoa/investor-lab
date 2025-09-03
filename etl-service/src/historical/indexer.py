@@ -18,24 +18,26 @@ class IndexManager:
         
         # Define all index creation SQL statements
         self.indexes = {
-            "idx_stock_info_country": """
-                CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_stock_info_country
-                ON raw.stock_info (country);
+ 
+            "idx_stock_info_symbol": """
+                CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_stock_info_symbol
+                ON raw.stock_info (symbol);
+            """,
+
+            "idx_stock_info_country_sector_industry": """
+                CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_stock_info_country_sector_industry
+                ON raw.stock_info (country, sector, industry);
             """,
             
             "idx_fmp_symbol_year_quarter": """
                 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_fmp_symbol_year_quarter
                 ON clean.financial_metrics_perc (symbol, fiscal_year, period);
             """,
-            
-            "idx_hpv_symbol_year_quarter": """
-                CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_hpv_symbol_year_quarter
-                ON raw.historical_price_volume (symbol, year, quarter);
-            """,
-            
-            "idx_hpv_volume_eur": """
-                CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_hpv_volume_eur
-                ON raw.historical_price_volume (volume_eur);
+
+            "idx_hpv_symbol_year_quarter_volume": """
+                CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_hpv_symbol_year_quarter_volume
+                ON raw.historical_price_volume (symbol, year, quarter)
+                WHERE volume_eur > 100000;
             """,
             
             "idx_hmc_lqd_symbol_year_quarter": """
