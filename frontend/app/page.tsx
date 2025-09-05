@@ -17,7 +17,7 @@ export default function HomePage() {
         maxWidth: '800px',
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
         borderRadius: '20px',
-        padding: '3rem',
+        padding: '0rem',
         boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
         backdropFilter: 'blur(10px)'
       }}>

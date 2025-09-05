@@ -297,8 +297,8 @@ export default function IndexMakerPage() {
   return (
     <div className="page-container" style={{ display: 'flex', width: '100%', height: '100vh' }}>
       {/* Left Panel - Index Maker Content */}
-      <div className="left-pane" style={{ width: '30%', padding: '16px', overflowY: 'auto', borderRight: '1px solid #e5e7eb', position: 'relative' }}>
-        <div style={{ backgroundColor: 'white', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', borderRadius: '8px', padding: '20px' }}>
+      <div className="left-pane" style={{ width: '30%', padding: '24px', overflowY: 'auto', borderRight: '1px solid #e5e7eb', position: 'relative' }}>
+        <div style={{ backgroundColor: 'white', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', borderRadius: '8px', padding: '20px', width: '100%',  }}>
           <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', marginBottom: '12px' }}>
             Index Maker
           </h2>
@@ -464,155 +464,177 @@ export default function IndexMakerPage() {
         overflowY: 'auto',
         height: '100vh'
       }}>
-        {indexResult ? (
-          <div style={{ width: '100%', maxWidth: '800px' }}>
-            {/* Index Results Header */}
-                <div style={{ 
-              marginBottom: '24px',
-              padding: '20px',
-                      backgroundColor: 'white',
-              borderRadius: '8px',
-              border: '1px solid #e5e7eb',
-              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-            }}>
-                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                   <path d="M3 3v18h18"/>
-                   <path d="m9 9 3 3 3-3"/>
-                   <path d="M9 12h6"/>
-                   <path d="M9 16h6"/>
-                 </svg>
-                 <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', margin: '0' }}>
-                   Index Results
-                 </h2>
-                        <button
-                   onClick={() => setIndexResult(null)}
-                          style={{
-                     marginLeft: 'auto',
-                     padding: '6px 12px',
-                            backgroundColor: '#fee2e2',
-                            border: '1px solid #fecaca',
-                     borderRadius: '4px',
-                            color: '#dc2626',
-                     fontSize: '12px',
-                            cursor: 'pointer',
-                     fontWeight: '500'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#fecaca';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = '#fee2e2';
-                          }}
-                        >
-                   Clear Results
-                        </button>
-                      </div>
-                      
-                              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-                gap: '16px',
-                fontSize: '14px'
-              }}>
-                <div style={{ padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '6px', border: '1px solid #0ea5e9' }}>
-                  <div style={{ fontWeight: '600', color: '#0c4a6e', marginBottom: '4px' }}>Total Data Points</div>
-                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#0ea5e9' }}>{indexResult.total_data_points}</div>
-                              </div>
-                <div style={{ padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '6px', border: '1px solid #22c55e' }}>
-                  <div style={{ fontWeight: '600', color: '#166534', marginBottom: '4px' }}>Constituent Weights</div>
-                  <div style={{ fontSize: '12px', color: '#166534', marginBottom: '6px' }}>Years and quarters included</div>
-                  {(() => {
-                    const weights = (indexResult && indexResult.constituent_weights) ? indexResult.constituent_weights : {};
-                    const years = Object.keys(weights || {}).length;
-                    const quarters = Object.values(weights || {}).reduce((acc: number, q: any) => acc + Object.keys(q as any).length, 0);
-                    return (
-                      <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#22c55e' }}>{years} yrs • {quarters} qtrs</div>
-                    );
-                  })()}
-                    </div>
-                    </div>
+        <div style={{ width: '100%', maxWidth: '800px' }}>
+          {/* Index Results Header */}
+          <div style={{ 
+            marginBottom: '24px',
+            padding: '20px',
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            border: '1px solid #e5e7eb',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 3v18h18"/>
+                <path d="m9 9 3 3 3-3"/>
+                <path d="M9 12h6"/>
+                <path d="M9 16h6"/>
+              </svg>
+              <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', margin: '0' }}>
+                Index Results
+              </h2>
+              {indexResult && (
+                <button
+                  onClick={() => setIndexResult(null)}
+                  style={{
+                    marginLeft: 'auto',
+                    padding: '6px 12px',
+                    backgroundColor: '#fee2e2',
+                    border: '1px solid #fecaca',
+                    borderRadius: '4px',
+                    color: '#dc2626',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    fontWeight: '500'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#fecaca';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#fee2e2';
+                  }}
+                >
+                  Clear Results
+                </button>
+              )}
             </div>
             
-            {/* Index Data Display */}
-              <div style={{ 
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              border: '1px solid #e5e7eb',
-              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-              overflow: 'hidden'
-              }}>
-                <div style={{ 
-                padding: '16px 20px',
-                borderBottom: '1px solid #e5e7eb',
-                backgroundColor: '#f9fafb'
-              }}>
-                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#374151', margin: '0' }}>
-                  Index Value (Line Chart)
-                </h3>
-                <p style={{ fontSize: '12px', color: '#6b7280', margin: '8px 0 0 0' }}>Showing index over time</p>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+              gap: '16px',
+              fontSize: '14px'
+            }}>
+              <div style={{ padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '6px', border: '1px solid #0ea5e9' }}>
+                <div style={{ fontWeight: '600', color: '#0c4a6e', marginBottom: '4px' }}>Total Data Points</div>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#0ea5e9' }}>
+                  {indexResult ? indexResult.total_data_points : '--'}
+                </div>
+              </div>
+              <div style={{ padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '6px', border: '1px solid #22c55e' }}>
+                <div style={{ fontWeight: '600', color: '#166534', marginBottom: '4px' }}>Constituent Weights</div>
+                <div style={{ fontSize: '12px', color: '#166534', marginBottom: '6px' }}>Years and quarters included</div>
+                {indexResult ? (() => {
+                  const weights = (indexResult && indexResult.constituent_weights) ? indexResult.constituent_weights : {};
+                  const years = Object.keys(weights || {}).length;
+                  const quarters = Object.values(weights || {}).reduce((acc: number, q: any) => acc + Object.keys(q as any).length, 0);
+                  return (
+                    <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#22c55e' }}>{years} yrs • {quarters} qtrs</div>
+                  );
+                })() : (
+                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#22c55e' }}>--</div>
+                )}
+              </div>
+            </div>
           </div>
+          
+          {/* Index Data Display */}
+          <div style={{ 
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            border: '1px solid #e5e7eb',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+            overflow: 'hidden'
+          }}>
+            <div style={{ 
+              padding: '16px 20px',
+              borderBottom: '1px solid #e5e7eb',
+              backgroundColor: '#f9fafb'
+            }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#374151', margin: '0' }}>
+                Index Value (Line Chart)
+              </h3>
+              <p style={{ fontSize: '12px', color: '#6b7280', margin: '8px 0 0 0' }}>Showing index over time</p>
+            </div>
 
-              <div style={{ padding: '20px' }}>
+            <div style={{ padding: '20px' }}>
+              {indexResult ? (
                 <IndexLineChart
                   data={indexResult?.index_data || []}
                   width={800}
                   height={320}
                   startValue={indexStartAmount}
                 />
-              </div>
+              ) : (
+                <div style={{ 
+                  height: '320px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  border: '2px dashed #d1d5db',
+                  borderRadius: '8px',
+                  backgroundColor: '#f9fafb'
+                }}>
+                  <div style={{ textAlign: 'center', color: '#6b7280' }}>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ marginBottom: '12px' }}>
+                      <path d="M3 3v18h18"/>
+                      <path d="m9 9 3 3 3-3"/>
+                      <path d="M9 12h6"/>
+                      <path d="M9 16h6"/>
+                    </svg>
+                    <p style={{ fontSize: '14px', margin: '0' }}>No data to display</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-            {/* Constituent Weights Table */}
+          {/* Constituent Weights Table */}
+          <div style={{ 
+            marginTop: '16px',
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            border: '1px solid #e5e7eb',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+          }}>
             <div style={{ 
-              marginTop: '16px',
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              border: '1px solid #e5e7eb',
-              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+              padding: '16px 20px',
+              borderBottom: '1px solid #e5e7eb',
+              backgroundColor: '#f9fafb'
             }}>
-              <div style={{ 
-                padding: '16px 20px',
-                borderBottom: '1px solid #e5e7eb',
-                backgroundColor: '#f9fafb'
-              }}>
-                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#374151', margin: '0' }}>
-                  Constituent Weights by Quarter
-                </h3>
-                <p style={{ fontSize: '12px', color: '#6b7280', margin: '8px 0 0 0' }}>Columns are Year/Quarter from oldest to latest. Rows are constituents sorted by weight in the latest period.</p>
-              </div>
-              <div style={{ padding: '12px 20px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#374151', margin: '0' }}>
+                Constituent Weights by Quarter
+              </h3>
+              <p style={{ fontSize: '12px', color: '#6b7280', margin: '8px 0 0 0' }}>Columns are Year/Quarter from oldest to latest. Rows are constituents sorted by weight in the latest period.</p>
+            </div>
+            <div style={{ padding: '12px 20px' }}>
+              {indexResult ? (
                 <ConstituentWeightsTable weights={indexResult?.constituent_weights || []} />
+              ) : (
+                <div style={{ 
+                  height: '200px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  border: '2px dashed #d1d5db',
+                  borderRadius: '8px',
+                  backgroundColor: '#f9fafb'
+                }}>
+                  <div style={{ textAlign: 'center', color: '#6b7280' }}>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ marginBottom: '8px' }}>
+                      <path d="M3 3v18h18"/>
+                      <path d="m9 9 3 3 3-3"/>
+                      <path d="M9 12h6"/>
+                      <path d="M9 16h6"/>
+                    </svg>
+                    <p style={{ fontSize: '14px', margin: '0' }}>No data to display</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
-        ) : (
-        <div style={{ 
-          textAlign: 'center',
-          color: '#6b7280'
-        }}>
-          <svg 
-            width="64" 
-            height="64" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="1.5"
-            style={{ marginBottom: '16px' }}
-          >
-            <path d="M3 3v18h18"/>
-            <path d="m9 9 3 3 3-3"/>
-            <path d="M9 12h6"/>
-            <path d="M9 16h6"/>
-          </svg>
-          <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>
-            Graph Area
-          </h3>
-          <p style={{ fontSize: '14px', margin: '0' }}>
-              Interactive charts and visualizations will appear here after creating an index
-          </p>
-        </div>
-        )}
       </div>
       <style jsx>{`
         @media (max-width: 768px) {
