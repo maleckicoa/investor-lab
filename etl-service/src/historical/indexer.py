@@ -23,6 +23,10 @@ class IndexManager:
                 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_stock_info_symbol
                 ON raw.stock_info (symbol);
             """,
+            "idx_stock_info_country_sector": """
+                CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_stock_info_country_sector
+                ON raw.stock_info (country, sector);
+            """,
 
             "idx_stock_info_country_sector_industry": """
                 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_stock_info_country_sector_industry

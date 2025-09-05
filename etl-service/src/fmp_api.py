@@ -87,6 +87,15 @@ class FMPAPI:
              "from": from_date, 
              "to": to_date}
         )
+
+    async def get_index_list(self) -> Dict:
+        """Get list of global indices."""
+        return await self._make_request("stable/index-list")
+
+    async def get_etf_list(self) -> Dict:
+        """Get list of ETFs."""
+        return await self._make_request("stable/etf-list")
+    
     async def get_eod_bulk(self, date: str) -> str:
         """Get EOD bulk data for a specific date."""
         endpoint = "stable/eod-bulk"

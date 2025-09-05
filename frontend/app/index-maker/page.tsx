@@ -12,6 +12,8 @@ import StockSearch from '../components/index-maker/StockSearch';
 import SelectionSummary from '../components/index-maker/SelectionSummary';
 import MakeIndexButton from '../components/index-maker/MakeIndexButton';
 import IndexCreationSummary from '../components/index-maker/IndexCreationSummary';
+import IndexLineChart from '../components/index-maker/IndexLineChart';
+import ConstituentWeightsTable from '../components/index-maker/ConstituentWeightsTable';
 
 // Types for the API response
 interface IndexFields {
@@ -408,7 +410,7 @@ export default function IndexMakerPage() {
           />
 
           {/* Make Index Button */}
-          <div style={{ 
+                        <div style={{
             marginTop: '24px',
             padding: '20px',
             backgroundColor: '#f8fafc',
@@ -443,34 +445,32 @@ export default function IndexMakerPage() {
               kpiCategoriesCount={Object.keys(selectedKPIs).length}
               stocksCount={selectedStocks.length}
             />
-          </div>
-
+                        </div>
+                        
           {/* Empty Spacing Block */}
-          <div style={{ 
+                        <div style={{
             height: '200px',
             backgroundColor: 'transparent'
           }}></div>
-        </div>
-      </div>
-      
+                                </div>
+            </div>
+            
       {/* Right Panel - Graph Area */}
       <div className="right-pane" style={{ 
         width: '70%', 
         padding: '24px',
         backgroundColor: '#f8fafc',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         borderLeft: '1px solid #e5e7eb',
-        overflowY: 'auto'
+        overflowY: 'auto',
+        height: '100vh'
       }}>
         {indexResult ? (
           <div style={{ width: '100%', maxWidth: '800px' }}>
             {/* Index Results Header */}
-            <div style={{ 
+                <div style={{ 
               marginBottom: '24px',
               padding: '20px',
-              backgroundColor: 'white',
+                      backgroundColor: 'white',
               borderRadius: '8px',
               border: '1px solid #e5e7eb',
               boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
@@ -485,31 +485,31 @@ export default function IndexMakerPage() {
                  <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', margin: '0' }}>
                    Index Results
                  </h2>
-                 <button
+                        <button
                    onClick={() => setIndexResult(null)}
-                   style={{
+                          style={{
                      marginLeft: 'auto',
                      padding: '6px 12px',
-                     backgroundColor: '#fee2e2',
-                     border: '1px solid #fecaca',
+                            backgroundColor: '#fee2e2',
+                            border: '1px solid #fecaca',
                      borderRadius: '4px',
-                     color: '#dc2626',
+                            color: '#dc2626',
                      fontSize: '12px',
-                     cursor: 'pointer',
+                            cursor: 'pointer',
                      fontWeight: '500'
-                   }}
-                   onMouseEnter={(e) => {
-                     e.currentTarget.style.backgroundColor = '#fecaca';
-                   }}
-                   onMouseLeave={(e) => {
-                     e.currentTarget.style.backgroundColor = '#fee2e2';
-                   }}
-                 >
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = '#fecaca';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = '#fee2e2';
+                          }}
+                        >
                    Clear Results
-                 </button>
-               </div>
-              
-              <div style={{ 
+                        </button>
+                      </div>
+                      
+                              <div style={{ 
                 display: 'grid', 
                 gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
                 gap: '16px',
@@ -518,21 +518,58 @@ export default function IndexMakerPage() {
                 <div style={{ padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '6px', border: '1px solid #0ea5e9' }}>
                   <div style={{ fontWeight: '600', color: '#0c4a6e', marginBottom: '4px' }}>Total Data Points</div>
                   <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#0ea5e9' }}>{indexResult.total_data_points}</div>
-                </div>
+                              </div>
                 <div style={{ padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '6px', border: '1px solid #22c55e' }}>
-                  <div style={{ fontWeight: '600', color: '#166534', marginBottom: '4px' }}>DataFrame Shape</div>
-                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#22c55e' }}>{indexResult.dataframe_shape[0]} × {indexResult.dataframe_shape[1]}</div>
-                </div>
-              </div>
+                  <div style={{ fontWeight: '600', color: '#166534', marginBottom: '4px' }}>Constituent Weights</div>
+                  <div style={{ fontSize: '12px', color: '#166534', marginBottom: '6px' }}>Years and quarters included</div>
+                  {(() => {
+                    const weights = (indexResult && indexResult.constituent_weights) ? indexResult.constituent_weights : {};
+                    const years = Object.keys(weights || {}).length;
+                    const quarters = Object.values(weights || {}).reduce((acc: number, q: any) => acc + Object.keys(q as any).length, 0);
+                    return (
+                      <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#22c55e' }}>{years} yrs • {quarters} qtrs</div>
+                    );
+                  })()}
+                    </div>
+                    </div>
             </div>
-
+            
             {/* Index Data Display */}
-            <div style={{ 
+              <div style={{ 
               backgroundColor: 'white',
               borderRadius: '8px',
               border: '1px solid #e5e7eb',
               boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
               overflow: 'hidden'
+              }}>
+                <div style={{ 
+                padding: '16px 20px',
+                borderBottom: '1px solid #e5e7eb',
+                backgroundColor: '#f9fafb'
+              }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#374151', margin: '0' }}>
+                  Index Value (Line Chart)
+                </h3>
+                <p style={{ fontSize: '12px', color: '#6b7280', margin: '8px 0 0 0' }}>Showing index over time</p>
+          </div>
+
+              <div style={{ padding: '20px' }}>
+                <IndexLineChart
+                  data={indexResult.index_data || []}
+                  width={800}
+                  height={320}
+                  startValue={indexStartAmount}
+                />
+              </div>
+          </div>
+
+            {/* Constituent Weights Table */}
+            <div style={{ 
+              marginTop: '16px',
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              border: '1px solid #e5e7eb',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
             }}>
               <div style={{ 
                 padding: '16px 20px',
@@ -540,57 +577,41 @@ export default function IndexMakerPage() {
                 backgroundColor: '#f9fafb'
               }}>
                 <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#374151', margin: '0' }}>
-                  Index Data (Dictionary Format)
+                  Constituent Weights by Quarter
                 </h3>
-                <p style={{ fontSize: '12px', color: '#6b7280', margin: '8px 0 0 0' }}>
-                  Showing all index data points
-                </p>
+                <p style={{ fontSize: '12px', color: '#6b7280', margin: '8px 0 0 0' }}>Columns are Year/Quarter from oldest to latest. Rows are constituents sorted by weight in the latest period.</p>
               </div>
-              
-              <div style={{ padding: '20px', maxHeight: '500px', overflowY: 'auto' }}>
-                <pre style={{ 
-                  fontSize: '12px',
-                  lineHeight: '1.4',
-                  color: '#374151',
-                  backgroundColor: '#f9fafb',
-                  padding: '16px',
-                  borderRadius: '6px',
-                  border: '1px solid #e5e7eb',
-                  overflow: 'auto',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word'
-                }}>
-                  {JSON.stringify(indexResult, null, 2)}
-                </pre>
-              </div>
+              <div style={{ padding: '12px 20px' }}>
+                <ConstituentWeightsTable weights={indexResult.constituent_weights || {}} />
             </div>
           </div>
+        </div>
         ) : (
-          <div style={{ 
-            textAlign: 'center',
-            color: '#6b7280'
-          }}>
-            <svg 
-              width="64" 
-              height="64" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="1.5"
-              style={{ marginBottom: '16px' }}
-            >
-              <path d="M3 3v18h18"/>
-              <path d="m9 9 3 3 3-3"/>
-              <path d="M9 12h6"/>
-              <path d="M9 16h6"/>
-            </svg>
-            <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>
-              Graph Area
-            </h3>
-            <p style={{ fontSize: '14px', margin: '0' }}>
+        <div style={{ 
+          textAlign: 'center',
+          color: '#6b7280'
+        }}>
+          <svg 
+            width="64" 
+            height="64" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="1.5"
+            style={{ marginBottom: '16px' }}
+          >
+            <path d="M3 3v18h18"/>
+            <path d="m9 9 3 3 3-3"/>
+            <path d="M9 12h6"/>
+            <path d="M9 16h6"/>
+          </svg>
+          <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>
+            Graph Area
+          </h3>
+          <p style={{ fontSize: '14px', margin: '0' }}>
               Interactive charts and visualizations will appear here after creating an index
-            </p>
-          </div>
+          </p>
+        </div>
         )}
       </div>
       <style jsx>{`

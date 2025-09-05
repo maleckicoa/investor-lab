@@ -162,7 +162,7 @@ class ETLSummaryManager:
         """Main method to run the ETL summary update process."""
 
         print("\n")
-        logger.info("######################### Step 7 (14) - ETLSummaryManager initialized")
+        logger.info("######################### Step 9 (16) - ETLSummaryManager initialized")
 
         try:
             logger.info("Starting ETL summary process...")

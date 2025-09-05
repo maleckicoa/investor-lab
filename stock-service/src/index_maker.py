@@ -69,6 +69,7 @@ def make_query(max_constituents,
     import time
 
     query = f"""
+    SET enable_mergejoin = off;
     WITH prep1 AS (
         SELECT symbol
         FROM raw.stock_info 
@@ -96,13 +97,13 @@ def make_query(max_constituents,
     hmc.*,
     'Q' || (
         CASE 
-            WHEN EXTRACT(YEAR FROM hmc.date)::INT = 2013 THEN 4
+            --WHEN EXTRACT(YEAR FROM hmc.date)::INT = 2013 THEN 4
             WHEN EXTRACT(QUARTER FROM hmc.date)::INT = 4 THEN 1
             ELSE EXTRACT(QUARTER FROM hmc.date)::INT + 1
         END
     ) AS next_quarter,
     CASE 
-        WHEN EXTRACT(YEAR FROM hmc.date)::INT = 2013 THEN 2013
+        --WHEN EXTRACT(YEAR FROM hmc.date)::INT = 2013 THEN 2013
         WHEN EXTRACT(QUARTER FROM hmc.date)::INT = 4 THEN EXTRACT(YEAR FROM hmc.date)::INT + 1
         ELSE EXTRACT(YEAR FROM hmc.date)::INT
     END AS next_year,
@@ -164,146 +165,136 @@ def make_query(max_constituents,
 ########################################################
 
 
+def build_constituent_weights_dict(rebalance_snapshots: pl.DataFrame, mcap_col: str) -> dict:
+    weights_by_year_quarter: dict = {}
+    for row in rebalance_snapshots.sort(["year", "quarter"]).iter_rows(named=True):
+        year = row["year"]
+        quarter = row["quarter"]
+        symbols = row["symbol"]
+        mcaps = row[mcap_col]
+        if symbols is None or mcaps is None or len(symbols) == 0:
+            continue
+        total_mcap = float(sum(mcaps)) if mcaps is not None else 0.0
+        if total_mcap <= 0.0:
+            continue
+        pairs = [
+            {"symbol": s, "weight": float(m) / total_mcap}
+            for s, m in zip(symbols, mcaps)
+        ]
+        pairs.sort(key=lambda x: x["weight"], reverse=True)
+        if year not in weights_by_year_quarter:
+            weights_by_year_quarter[year] = {}
+        weights_by_year_quarter[year][quarter] = pairs
+    return weights_by_year_quarter
+
+########################################################
+########################################################
+########################################################
+
+
 def make_index(df: pl.DataFrame, 
                            index_start_date: Union[date, str, None] = "2014-01-01",
                            index_end_date: Union[date, str, None] = None,
                            index_currency: str = "EUR",
-                           index_start_amount: float = 1000.0) -> pl.DataFrame:
+                           index_start_amount: float = 1000.0):
     
-    # Step 0: Cast decimals to floats
-    decimal_cols = [name for name, dtype in zip(df.columns, df.dtypes) if dtype.base_type() == pl.Decimal]
-    df = df.with_columns([pl.col(c).cast(pl.Float64) for c in decimal_cols])
-
-    # Step 1: Parse date column
-    if df.schema["date"] == pl.Utf8:
-        df = df.with_columns(pl.col("date").str.to_date())
-    elif df.schema["date"] != pl.Date:
-        df = df.with_columns(pl.col("date").cast(pl.Date))
-
-    # Step 2: Forward-fill prices based on currency
-    price_col = "close_eur" if index_currency == "EUR" else "close_usd"
-    mcap_col  = "market_cap_eur" if index_currency == "EUR" else "market_cap_usd"
-
-    df = (
-        df.sort(["symbol", "date"])
-          .with_columns([
-              pl.col(price_col).forward_fill().over("symbol")
-          ])
-    )
-
-    # Step 3: Rebalance snapshots
-    rebalance_df = df.filter(pl.col("last_quarter_date") == True)
-    print(f"Rebalance df: {rebalance_df}")
-
-    # Use appropriate market cap column based on currency
-    
-    rebalance_snapshots = (
-        rebalance_df
-        .group_by(["year", "quarter"])
-        .agg([
-            pl.first("date").alias("rebalance_date"),
-            pl.col("symbol"),
-            pl.col(mcap_col)
-        ])
-    )
-
-    # Step 4: Parse index_start_date and index_end_date
     if isinstance(index_start_date, str):
         index_start_date = datetime.strptime(index_start_date, "%Y-%m-%d").date()
 
     if isinstance(index_end_date, str):
         index_end_date = datetime.strptime(index_end_date, "%Y-%m-%d").date()
 
-    # Step 5: Find the latest rebalance on or before index_start_date
-    initial_snapshot = rebalance_snapshots.filter(pl.col("rebalance_date") <= index_start_date)
-    if initial_snapshot.is_empty():
-        raise ValueError(f"No rebalance snapshot found on or before {index_start_date}")
+    decimal_cols = [name for name, dtype in zip(df.columns, df.dtypes) if dtype.base_type() == pl.Decimal]
+    df = df.with_columns([pl.col(c).cast(pl.Float64) for c in decimal_cols])
 
-    initial_row = initial_snapshot.sort("rebalance_date", descending=True).row(0, named=True)
-    initial_weights = {
-        s: float(m) / float(sum(initial_row[mcap_col]))
-        for s, m in zip(initial_row["symbol"], initial_row[mcap_col])
-    }
-    active_weights = initial_weights
-    last_rebalance_date = initial_row["rebalance_date"]
+    if df.schema["date"] == pl.Utf8:
+        df = df.with_columns(pl.col("date").str.to_date())
+    elif df.schema["date"] != pl.Date:
+        df = df.with_columns(pl.col("date").cast(pl.Date))
 
-    # Step 6: Store future quarterly rebalance dates > index_start_date
-    future_rebalances = {
-        row["rebalance_date"]: {
-            s: float(m) / float(sum(row[mcap_col]))
-            for s, m in zip(row["symbol"], row[mcap_col])
-        }
-        for row in rebalance_snapshots.iter_rows(named=True)
-        if row["rebalance_date"] > index_start_date
-    }
+    price_col = "close_eur" if index_currency == "EUR" else "close_usd"
+    mcap_col  = "market_cap_eur" if index_currency == "EUR" else "market_cap_usd"
 
-    # Step 7: Pivot prices using appropriate currency column
-    pivot = (
-        df.with_columns([
-            pl.col("date").cast(pl.Utf8)
-        ])
-        .select(["date", "symbol", price_col])
-        .pivot(index="date", values=price_col, on="symbol", aggregate_function="first")
-        .with_columns([
-            pl.col("date").str.to_date()
-        ])
-        .sort("date")
-        .with_columns(
-            pl.all().exclude("date").fill_null(strategy="forward")
-        )
+    ########################################################
+    df = (
+        df.sort(["symbol", "date"])
+          .with_columns([
+              pl.col(price_col).forward_fill().over(["symbol", "year", "quarter"])
+          ])
+    )
+    print("df")
+    print(df)
+    ########################################################
+    weights_df = (
+    df.filter(pl.col("last_quarter_date") == True)
+      .select(["year", "quarter", "symbol", mcap_col])
+      .group_by(["year", "quarter"])
+      .agg([
+          pl.col(mcap_col).sum().alias("total_mcap")
+      ])
+      .join(df.filter(pl.col("last_quarter_date") == True), on=["year", "quarter"])
+      .with_columns([
+          (pl.col(mcap_col) / pl.col("total_mcap")).alias("weight")
+      ])
+      .select(["year", "quarter", "symbol", "weight"])
+      .sort(["year", "quarter", "weight"], descending=[False, False, True])
     )
 
-    pivot = pivot.filter(pl.col("date") >= pl.lit(index_start_date))
+    print("weights_df")
+    print(weights_df)
+    ########################################################
 
-    # Step 8: Main loop
-    index_value = float(index_start_amount)
-    index_values = []
-    previous_prices = None
-    symbol_columns = [c for c in pivot.columns if c != "date"]
+    pivot = (
+        df.select(["date", "symbol", "year", "quarter", price_col])
+          .pivot(
+              values=price_col,
+              index=["date", "year", "quarter"],
+              columns="symbol"
+          )
+          .sort("date")
+          .with_columns([
+              pl.all().exclude(["date", "year", "quarter"]).forward_fill()
+          ])
+    )
+    print("pivot")
+    print(pivot)
 
-    for row in pivot.iter_rows(named=True):
-        current_date = row["date"]
-        price_row = {s: row[s] for s in symbol_columns}
+    ########################################################
 
-        # Check if rebalancing today
-        if current_date in future_rebalances:
-            active_weights = future_rebalances[current_date]
-            previous_prices = {s: price_row[s] for s in active_weights if price_row[s] is not None}
-            index_values.append((current_date, index_value))
-            continue
+  
+    initial_shares = (
+    weights_df.filter((pl.col("year") == pl.lit(2014)) & (pl.col("quarter") == pl.lit("Q1")))
+    .join(
+        pivot.filter(pl.col("date") == pivot.get_column("date").min())
+          .select(["symbol", price_col]),
+        on="symbol"
+    )
+    .with_columns([
+        pl.lit(1).alias("shares")
+    ])
+    .select(["symbol", "shares"])
+    )
 
-        # Initialize previous prices on the start date
-        if previous_prices is None:
-            previous_prices = {s: price_row[s] for s in active_weights if price_row[s] is not None}
-            index_values.append((current_date, index_value))
-            continue
+    
 
-        # Compute daily return
-        returns = {}
-        for symbol, prev_price in previous_prices.items():
-            current_price = price_row.get(symbol)
-            if current_price is not None and prev_price > 0:
-                returns[symbol] = current_price / prev_price
-            else:
-                returns[symbol] = 1.0
+    print("initial_shares")
+    print(initial_shares)
+    ########################################################
 
-        daily_return = sum(
-            active_weights[s] * returns.get(s, 1.0) for s in active_weights
-        )
-        index_value *= daily_return
 
-        # Update previous prices
-        for s in previous_prices:
-            if price_row.get(s) is not None:
-                previous_prices[s] = price_row[s]
+########################################################
+########################################################
+########################################################
 
-        index_values.append((current_date, index_value))
 
-    result_df = pl.DataFrame(index_values, schema=["date", "index_value"], orient="row").sort("date")
-    if index_end_date is not None:
-        # Cut off the final dataframe at index_end_date (inclusive)
-        result_df = result_df.filter(pl.col("date") <= pl.lit(index_end_date))
-    return result_df
+def make_constituents(df: pl.DataFrame) -> pl.DataFrame:
+
+    count_df = (df.filter(pl.col("last_quarter_date") == True)
+                    .group_by(["year", "quarter"])
+                    .agg(pl.col("symbol").n_unique().alias("unique_symbol_count"))
+                    .sort(["year", "quarter"], descending=[True, True]))
+    return count_df
+
 
 
 ########################################################
@@ -341,8 +332,9 @@ def create_custom_index(index_size, currency, start_amount, start_date, end_date
         )
 
         print(f"Index data loaded at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+
         # Calculate index values
-        index_df = make_index(
+        index_df, constituent_weights = make_index(
             df, 
             index_start_date=start_date,
             index_end_date=end_date,
@@ -350,18 +342,11 @@ def create_custom_index(index_size, currency, start_amount, start_date, end_date
             index_start_amount=start_amount
         )
 
+        constituents_df = make_constituents(df)
+        print(constituents_df)
+
         print(f"Index values calculated at {time.strftime('%Y-%m-%d %H:%M:%S')}")
         
-        # # Print the output of make_index function
-        # print(f"\n📈 INDEX CALCULATION OUTPUT:")
-        # print(f"DataFrame shape: {index_df.shape}")
-        # print(f"Columns: {index_df.columns}")
-        # print(f"First 10 rows:")
-        # print(index_df.head(10))
-        # print(f"\nLast 10 rows:")
-        # print(index_df.tail(10))
-        
-        # Convert to JSON-serializable format
         index_data = index_df.to_dicts()
         
         # Print the final index result for debugging/monitoring
@@ -388,7 +373,7 @@ def create_custom_index(index_size, currency, start_amount, start_date, end_date
         
         print(f"\n✅ Index creation completed successfully!")
         
-        return index_df
+        return {"index_df": index_df, "constituent_weights": constituent_weights}
     except Exception as e:
         print(f"❌ Error creating index: {e}")
         raise e

@@ -78,10 +78,9 @@ def run_query_to_polars_simple(query):
         cur.close()
         conn.close()
         return pl.DataFrame()
-    print("description")
+
     columns = [desc[0] for desc in cur.description]
     rows = cur.fetchall()
-    print("fetchall")
 
     cur.close()
     conn.close()
@@ -90,7 +89,7 @@ def run_query_to_polars_simple(query):
         # Process rows in batches of 50000
         batch_size = 10000
         dfs = []
-        print("loop")
+
         for i in range(0, len(rows), batch_size):
             batch = rows[i:i + batch_size]
             df_batch = pl.DataFrame(batch, schema=columns, orient="row")

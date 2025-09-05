@@ -8,6 +8,7 @@ from src.daily.daily_market_cap import DailyMcapManager, DailyMcapFxConverter
 from src.daily.daily_forex import DailyForexManager
 from src.historical.historical_forex_full import FullForexManager
 from src.historical.etl_summary import ETLSummaryManager
+from src.benchmarks.benchmarks import BenchmarkManager, BenchmarkFxConverter
 from src.utils.utils import get_logger
 
 logger = get_logger(__name__)
@@ -35,6 +36,12 @@ async def run_etl_job():
 
         # mcap_fx_converter = DailyMcapFxConverter() # Convert Market Cap to EUR and USD
         # await mcap_fx_converter.run_daily_fx_conversion()
+
+        benchmark_manager = BenchmarkManager() # Get and store benchmark data
+        await benchmark_manager.run()
+
+        benchmark_fx_converter = BenchmarkFxConverter() # Convert benchmark data to EUR and USD
+        benchmark_fx_converter.convert()
 
         etl_summary_manager = ETLSummaryManager() # Update ETL Summary data
         await etl_summary_manager.run_update()

@@ -86,7 +86,9 @@ async def create_index(request: IndexCreationRequest):
         )
         
         # Convert dataframe to JSON-serializable format
-        index_data = result.to_dicts()
+        index_df = result["index_df"]
+        constituent_weights = result["constituent_weights"]
+        index_data = index_df.to_dicts()
         
         return IndexCreationResponse(
             success=True,
@@ -94,7 +96,7 @@ async def create_index(request: IndexCreationRequest):
             result={
                 "index_data": index_data,
                 "total_data_points": len(index_data),
-                "dataframe_shape": result.shape
+                "constituent_weights": constituent_weights
             }
         )
             
