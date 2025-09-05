@@ -161,7 +161,6 @@ def make_query(max_constituents,
     """
     df = run_query_to_polars_simple(query)
     print("df")
-    df.head(100).write_csv("first_100_rows.csv")
     return df
 
 ########################################################
@@ -170,19 +169,10 @@ def make_query(max_constituents,
 
 
 def make_index(df: pl.DataFrame,
-               index_start_date: Union[date, str, None] = "2014-01-01",
-               index_end_date: Union[date, str, None] = None,
-               index_currency: str = "EUR",
-               index_start_amount: float = 1000.0) -> pl.DataFrame:
+               index_currency: str = "EUR"
+               ) -> pl.DataFrame:
 
     ########## SETUP
-
-    if isinstance(index_start_date, str):
-        index_start_date = datetime.strptime(index_start_date, "%Y-%m-%d").date()
-
-    if isinstance(index_end_date, str):
-        index_end_date = datetime.strptime(index_end_date, "%Y-%m-%d").date()
-
 
     decimal_cols = [name for name, dtype in zip(df.columns, df.dtypes) if dtype.base_type() == pl.Decimal]
     df = df.with_columns([pl.col(c).cast(pl.Float64) for c in decimal_cols])
@@ -261,7 +251,7 @@ def make_index(df: pl.DataFrame,
     ########### SHARES DF
 
     shares_chunks = []
-    current_index_value = index_start_amount
+    current_index_value = 1000
 
     for i, start_date in enumerate(rebalance_dates_list):
         end_date = rebalance_dates_list[i + 1] if i + 1 < len(rebalance_dates_list) else None
@@ -340,20 +330,9 @@ def make_index(df: pl.DataFrame,
 
 
 def make_constituent_weights(df: pl.DataFrame, index_currency: str = "EUR") -> pl.DataFrame:
-    """Create constituent weights DataFrame with company names.
-    
-    Args:
-        df: DataFrame with market cap data
-        index_currency: Currency for the index ("EUR" or "USD")
-    
-    Returns data in format: year, quarter, symbol, company_name, weight
-    Only includes companies that have weight > 0 for each quarter.
-    """
-    
-    # Select currency columns (same logic as make_index)
+
+
     mcap_col = "market_cap_eur" if index_currency == "EUR" else "market_cap_usd"
-    
-    # Load companies mapping
     companies_df = pl.read_csv("/Users/aleksamihajlovic/Documents/naro-index-advisor/stock-service/src/utils/fields/companies.csv")
     
     # Get max market cap for each stock within each quarter and calculate weights
@@ -398,6 +377,46 @@ def make_constituent_weights(df: pl.DataFrame, index_currency: str = "EUR") -> p
 ########################################################
 ########################################################
 ########################################################
+
+def trim_index(
+    df: pl.DataFrame,
+    index_start_amount: float = 1000,
+    index_start_date: Union[date, str, None] = "2014-01-01",
+    index_end_date: Union[date, str, None] = None,
+    ) -> pl.DataFrame:
+
+    if isinstance(index_start_date, str):
+        index_start_date = datetime.strptime(index_start_date, "%Y-%m-%d").date()
+    if isinstance(index_end_date, str):
+        index_end_date = datetime.strptime(index_end_date, "%Y-%m-%d").date()
+
+    df = df.filter(pl.col("date") >= index_start_date)
+    if index_end_date:
+        df = df.filter(pl.col("date") <= index_end_date)
+
+    df = df.sort("date")
+
+    index_vals = df.get_column("index_value").to_list()
+    returns = [1.0]
+    for i in range(1, len(index_vals)):
+        returns.append(index_vals[i] / index_vals[i - 1])
+
+    # Rebuild new index
+    new_index_vals = [float(index_start_amount)]
+    for r in returns[1:]:
+        new_index_vals.append(new_index_vals[-1] * r)
+
+    # Replace index_value column with new values (as Float64!)
+    df = df.with_columns([
+        pl.Series(name="index_value", values=new_index_vals, dtype=pl.Float64)
+    ]).select(["date", "index_value"])
+
+    # Print before returning
+    print("Index values calculated at", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    print(df)
+
+    return df
+
 ########################################################
 ########################################################
 ########################################################
@@ -449,13 +468,17 @@ def create_custom_index(index_size,
 
 
         index_df = make_index(
-            df, 
-            index_start_date=start_date,
-            index_end_date=end_date,
-            index_currency=currency,
-            index_start_amount=start_amount
-        )
+            df,
+            index_currency=currency
+            )
         print(f"Index values calculated at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+
+        index_df = trim_index(
+            index_df,
+            index_start_amount=start_amount,
+            index_start_date=start_date,
+            index_end_date=end_date
+        )
         
 
         constituent_weights = make_constituent_weights(df, currency)
