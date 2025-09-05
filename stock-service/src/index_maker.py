@@ -3,8 +3,10 @@ import polars as pl
 from datetime import datetime, date
 from typing import Union
 from utils.utils import run_query, run_query_to_polars_simple, run_query_debug, run_query_to_polars_simple1, run_query_to_polars_simple2
-#pl.Config.set_tbl_rows(-1)
-#pl.Config.set_tbl_cols(-1) 
+pl.Config.set_tbl_rows(-1)
+pl.Config.set_tbl_cols(-1) 
+pl.Config.set_tbl_rows(None)
+pl.Config.set_tbl_cols(None) 
 
 ######################################################## EXAMPLE VALUES
 # max_constituents = 100
@@ -158,6 +160,8 @@ def make_query(max_constituents,
     --WHERE (EXTRACT(DOW FROM date) = 1 OR last_quarter_date = TRUE)
     """
     df = run_query_to_polars_simple(query)
+    print("df")
+    df.head(100).write_csv("first_100_rows.csv")
     return df
 
 ########################################################
@@ -165,44 +169,20 @@ def make_query(max_constituents,
 ########################################################
 
 
-def build_constituent_weights_dict(rebalance_snapshots: pl.DataFrame, mcap_col: str) -> dict:
-    weights_by_year_quarter: dict = {}
-    for row in rebalance_snapshots.sort(["year", "quarter"]).iter_rows(named=True):
-        year = row["year"]
-        quarter = row["quarter"]
-        symbols = row["symbol"]
-        mcaps = row[mcap_col]
-        if symbols is None or mcaps is None or len(symbols) == 0:
-            continue
-        total_mcap = float(sum(mcaps)) if mcaps is not None else 0.0
-        if total_mcap <= 0.0:
-            continue
-        pairs = [
-            {"symbol": s, "weight": float(m) / total_mcap}
-            for s, m in zip(symbols, mcaps)
-        ]
-        pairs.sort(key=lambda x: x["weight"], reverse=True)
-        if year not in weights_by_year_quarter:
-            weights_by_year_quarter[year] = {}
-        weights_by_year_quarter[year][quarter] = pairs
-    return weights_by_year_quarter
+def make_index(df: pl.DataFrame,
+               index_start_date: Union[date, str, None] = "2014-01-01",
+               index_end_date: Union[date, str, None] = None,
+               index_currency: str = "EUR",
+               index_start_amount: float = 1000.0) -> pl.DataFrame:
 
-########################################################
-########################################################
-########################################################
+    ########## SETUP
 
-
-def make_index(df: pl.DataFrame, 
-                           index_start_date: Union[date, str, None] = "2014-01-01",
-                           index_end_date: Union[date, str, None] = None,
-                           index_currency: str = "EUR",
-                           index_start_amount: float = 1000.0):
-    
     if isinstance(index_start_date, str):
         index_start_date = datetime.strptime(index_start_date, "%Y-%m-%d").date()
 
     if isinstance(index_end_date, str):
         index_end_date = datetime.strptime(index_end_date, "%Y-%m-%d").date()
+
 
     decimal_cols = [name for name, dtype in zip(df.columns, df.dtypes) if dtype.base_type() == pl.Decimal]
     df = df.with_columns([pl.col(c).cast(pl.Float64) for c in decimal_cols])
@@ -213,95 +193,230 @@ def make_index(df: pl.DataFrame,
         df = df.with_columns(pl.col("date").cast(pl.Date))
 
     price_col = "close_eur" if index_currency == "EUR" else "close_usd"
-    mcap_col  = "market_cap_eur" if index_currency == "EUR" else "market_cap_usd"
+    mcap_col = "market_cap_eur" if index_currency == "EUR" else "market_cap_usd"
 
-    ########################################################
-    df = (
-        df.sort(["symbol", "date"])
-          .with_columns([
-              pl.col(price_col).forward_fill().over(["symbol", "year", "quarter"])
-          ])
-    )
-    print("df")
-    print(df)
-    ########################################################
-    weights_df = (
-    df.filter(pl.col("last_quarter_date") == True)
-      .select(["year", "quarter", "symbol", mcap_col])
-      .group_by(["year", "quarter"])
-      .agg([
-          pl.col(mcap_col).sum().alias("total_mcap")
-      ])
-      .join(df.filter(pl.col("last_quarter_date") == True), on=["year", "quarter"])
-      .with_columns([
-          (pl.col(mcap_col) / pl.col("total_mcap")).alias("weight")
-      ])
-      .select(["year", "quarter", "symbol", "weight"])
-      .sort(["year", "quarter", "weight"], descending=[False, False, True])
-    )
-
-    print("weights_df")
-    print(weights_df)
-    ########################################################
-
-    pivot = (
-        df.select(["date", "symbol", "year", "quarter", price_col])
-          .pivot(
-              values=price_col,
-              index=["date", "year", "quarter"],
-              columns="symbol"
-          )
+    ############ PRICES PIVOT
+    # Create prices_pivot: date as index, columns = symbols
+    prices_pivot = (
+        df.select(["date", "symbol", price_col])
+          .pivot(index="date", columns="symbol", values=price_col)
           .sort("date")
           .with_columns([
-              pl.all().exclude(["date", "year", "quarter"]).forward_fill()
+              pl.all().exclude("date").forward_fill()
           ])
     )
-    print("pivot")
-    print(pivot)
 
-    ########################################################
+    ########### WEIGHTS PIVOT
 
-  
-    initial_shares = (
-    weights_df.filter((pl.col("year") == pl.lit(2014)) & (pl.col("quarter") == pl.lit("Q1")))
-    .join(
-        pivot.filter(pl.col("date") == pivot.get_column("date").min())
-          .select(["symbol", price_col]),
-        on="symbol"
-    )
-    .with_columns([
-        pl.lit(1).alias("shares")
-    ])
-    .select(["symbol", "shares"])
+    daily_mcap_df = (
+        df.select(["date", "symbol", mcap_col])
+          .filter(pl.col(mcap_col).is_not_null())
+          .unique(subset=["date", "symbol"])
     )
 
+    total_mcap_df = (
+        daily_mcap_df
+        .group_by("date")
+        .agg(pl.col(mcap_col).sum().alias("total_mcap"))
+    )
+
+    daily_weights_df = (
+        daily_mcap_df.join(total_mcap_df, on="date")
+                     .with_columns([
+                         (pl.col(mcap_col) / pl.col("total_mcap")).alias("weight")
+                     ])
+                     .select(["date", "symbol", "weight"])
+    )
+
+    weights_pivot = (
+        daily_weights_df
+        .pivot(index="date", columns="symbol", values="weight")
+        .sort("date")
+        .with_columns([
+            pl.all().exclude("date").fill_null(0.0)
+        ])
+    )
+
+    # Ensure same columns & order
+    symbols = [col for col in prices_pivot.columns if col != "date"]
+    prices_pivot = prices_pivot.select(["date"] + symbols)
+    weights_pivot = weights_pivot.select(["date"] + symbols)
+
+    print("prices_pivot")
+    print(prices_pivot)
+    print("weights_pivot")
+    print(weights_pivot)
+
+    ########### REBALANCE DATES
+    rebalance_dates = (
+        pl.concat([
+            df.select("date").sort("date").limit(1),
+            df.filter(pl.col("last_quarter_date") == True).select("date")
+        ])
+        .unique()
+        .sort("date")
+    )
+    rebalance_dates_list = rebalance_dates["date"].to_list()
+
+    ########### SHARES DF
+
+    shares_chunks = []
+    current_index_value = index_start_amount
+
+    for i, start_date in enumerate(rebalance_dates_list):
+        end_date = rebalance_dates_list[i + 1] if i + 1 < len(rebalance_dates_list) else None
+
+        # Filter date range
+        date_mask = pl.col("date") >= start_date
+        if end_date:
+            date_mask &= pl.col("date") < end_date
+
+        # Slice relevant date range
+        period_dates = prices_pivot.filter(date_mask).select("date")
+
+        # Get prices and weights at start_date
+        prices = prices_pivot.filter(pl.col("date") == start_date).select(symbols)
+        weights = weights_pivot.filter(pl.col("date") == start_date).select(symbols)
+
+        # Compute shares for this period using current index value
+        shares = [
+            (weights[s][0] * current_index_value / prices[s][0]) if prices[s][0] not in [None, 0.0] else 0.0
+            for s in symbols
+        ]
+
+        # Repeat shares for all dates in the period
+        repeated_shares = period_dates.with_columns([
+            pl.lit(share).alias(sym) for sym, share in zip(symbols, shares)
+        ])
+        shares_chunks.append(repeated_shares)
+
+        # Update index value using last available date in period
+        last_date = period_dates["date"][-1]
+        last_prices = prices_pivot.filter(pl.col("date") == last_date).select(symbols)
+
+        current_index_value = sum([
+            share * last_prices[s][0] if last_prices[s][0] is not None else 0.0
+            for s, share in zip(symbols, shares)
+        ])
+
+    shares_df = pl.concat(shares_chunks).sort("date")
+    print("shares_df")
+    print(shares_df)
+
+
+    ########### INDEX
+    values_df = (
+        shares_df
+        .join(prices_pivot, on="date", suffix="_price")
+        .with_columns([
+            (pl.col(sym) * pl.col(f"{sym}_price")).alias(sym)
+            for sym in symbols
+        ])
+        .select(["date"] + symbols)
+    )
+
+    # Final index = sum of all values per day
+    index_df = (
+        values_df
+        .with_columns([
+            pl.sum_horizontal(pl.all().exclude("date")).alias("index_value")
+        ])
+        .select(["date", "index_value"])
+    )
+
+    # Print index head and tail
+    #pl.Config.set_tbl_rows(10000)
+    print("\n📈 First 10 index values:")
+    print(index_df.head(100))
+
+    print("\n📉 Last 10 index values:")
+    print(index_df.tail(10))
     
-
-    print("initial_shares")
-    print(initial_shares)
-    ########################################################
-
-
+    return index_df
 ########################################################
 ########################################################
 ########################################################
 
 
-def make_constituents(df: pl.DataFrame) -> pl.DataFrame:
 
-    count_df = (df.filter(pl.col("last_quarter_date") == True)
-                    .group_by(["year", "quarter"])
-                    .agg(pl.col("symbol").n_unique().alias("unique_symbol_count"))
-                    .sort(["year", "quarter"], descending=[True, True]))
-    return count_df
-
+def make_constituent_weights(df: pl.DataFrame, index_currency: str = "EUR") -> pl.DataFrame:
+    """Create constituent weights DataFrame with company names.
+    
+    Args:
+        df: DataFrame with market cap data
+        index_currency: Currency for the index ("EUR" or "USD")
+    
+    Returns data in format: year, quarter, symbol, company_name, weight
+    Only includes companies that have weight > 0 for each quarter.
+    """
+    
+    # Select currency columns (same logic as make_index)
+    mcap_col = "market_cap_eur" if index_currency == "EUR" else "market_cap_usd"
+    
+    # Load companies mapping
+    companies_df = pl.read_csv("/Users/aleksamihajlovic/Documents/naro-index-advisor/stock-service/src/utils/fields/companies.csv")
+    
+    # Get max market cap for each stock within each quarter and calculate weights
+    weights_df = (
+        df.select(["year", "quarter", "symbol", mcap_col])
+          .group_by(["year", "quarter", "symbol"])
+          .agg([
+              pl.col(mcap_col).max().alias("max_market_cap")
+          ])
+          .group_by(["year", "quarter"])
+          .agg([
+              pl.col("max_market_cap").sum().alias("total_mcap")
+          ])
+          .join(
+              df.select(["year", "quarter", "symbol", mcap_col])
+                .group_by(["year", "quarter", "symbol"])
+                .agg([
+                    pl.col(mcap_col).max().alias("max_market_cap")
+                ]),
+              on=["year", "quarter"]
+          )
+          .with_columns([
+              (pl.col("max_market_cap") / pl.col("total_mcap")).alias("weight")
+          ])
+          .filter(pl.col("weight") > 0)  # Only include companies with weight > 0
+          .join(
+              companies_df.select(["symbol", "company_name"]),
+              on="symbol",
+              how="left"
+          )
+          .with_columns([
+              pl.col("company_name").fill_null(pl.col("symbol"))  # Use symbol as fallback if name not found
+          ])
+          .select(["year", "quarter", "symbol", "company_name", "weight"])
+          .sort(["year", "quarter", "weight"], descending=[True, True, True])
+    )
+    
+    return weights_df
 
 
 ########################################################
 ########################################################
 ########################################################
+########################################################
+########################################################
+########################################################
+########################################################
+########################################################
+########################################################
+########################################################
+########################################################
+########################################################
 
-def create_custom_index(index_size, currency, start_amount, start_date, end_date, countries, sectors, industries, kpis, stocks):
+def create_custom_index(index_size,
+                        currency, 
+                        start_amount, 
+                        start_date, 
+                        end_date, 
+                        countries, 
+                        sectors, 
+                        industries, 
+                        kpis, 
+                        stocks):
 
     try:
 
@@ -330,23 +445,24 @@ def create_custom_index(index_size, currency, start_amount, start_date, end_date
             selected_stocks=stocks,
             kpis=kpis
         )
-
         print(f"Index data loaded at {time.strftime('%Y-%m-%d %H:%M:%S')}")
 
-        # Calculate index values
-        index_df, constituent_weights = make_index(
+
+        index_df = make_index(
             df, 
             index_start_date=start_date,
             index_end_date=end_date,
             index_currency=currency,
             index_start_amount=start_amount
         )
-
-        constituents_df = make_constituents(df)
-        print(constituents_df)
-
         print(f"Index values calculated at {time.strftime('%Y-%m-%d %H:%M:%S')}")
         
+
+        constituent_weights = make_constituent_weights(df, currency)
+        print("constituent_weights")
+        print(constituent_weights)
+
+        print("index_df_to dict")
         index_data = index_df.to_dicts()
         
         # Print the final index result for debugging/monitoring
@@ -362,18 +478,13 @@ def create_custom_index(index_size, currency, start_amount, start_date, end_date
         print(f"   • KPIs: {len([k for k, v in kpis.items() if v])}")
         print(f"   • Selected stocks: {len(stocks)}")
         
-        # # Show sample of index data
-        # if len(index_data) > 0:
-        #     print(f"\n📊 SAMPLE INDEX DATA (first 5 points):")
-        #     for i, point in enumerate(index_data[:5]):
-        #         print(f"   {i+1}. Date: {point['date']}, Value: {point['index_value']:.2f}")
-        
-        # if len(index_data) > 5:
-        #     print(f"   ... and {len(index_data) - 5} more data points")
-        
+
         print(f"\n✅ Index creation completed successfully!")
         
-        return {"index_df": index_df, "constituent_weights": constituent_weights}
+        return {
+            "index_df": index_df.to_dicts(), 
+            "constituent_weights": constituent_weights.to_dicts()
+        }
     except Exception as e:
         print(f"❌ Error creating index: {e}")
         raise e

@@ -555,7 +555,7 @@ export default function IndexMakerPage() {
 
               <div style={{ padding: '20px' }}>
                 <IndexLineChart
-                  data={indexResult.index_data || []}
+                  data={indexResult?.index_data || []}
                   width={800}
                   height={320}
                   startValue={indexStartAmount}
@@ -582,7 +582,7 @@ export default function IndexMakerPage() {
                 <p style={{ fontSize: '12px', color: '#6b7280', margin: '8px 0 0 0' }}>Columns are Year/Quarter from oldest to latest. Rows are constituents sorted by weight in the latest period.</p>
               </div>
               <div style={{ padding: '12px 20px' }}>
-                <ConstituentWeightsTable weights={indexResult.constituent_weights || {}} />
+                <ConstituentWeightsTable weights={indexResult?.constituent_weights || []} />
             </div>
           </div>
         </div>

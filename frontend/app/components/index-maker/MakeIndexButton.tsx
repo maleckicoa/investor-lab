@@ -117,6 +117,11 @@ const MakeIndexButton: React.FC<MakeIndexButtonProps> = ({
 
       if (response.ok) {
         console.log('✅ Index created successfully:', result.result);
+        console.log('🔍 DEBUG - Index data received:', result.result.index_data?.slice(0, 3));
+        console.log('🔍 DEBUG - Total data points:', result.result.total_data_points);
+        console.log('🔍 DEBUG - Constituent weights received:', result.result.constituent_weights?.slice(0, 5));
+        console.log('🔍 DEBUG - Constituent weights type:', typeof result.result.constituent_weights);
+        console.log('🔍 DEBUG - Constituent weights length:', result.result.constituent_weights?.length);
         setIndexResult(result.result);
       } else {
         alert(`Failed to create index: ${result.error}`);

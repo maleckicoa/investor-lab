@@ -1,5 +1,13 @@
 import React from 'react';
 
+type WeightRow = {
+  year: number;
+  quarter: string;
+  symbol: string;
+  company_name: string;
+  weight: number;
+};
+
 type WeightsDict = {
   [year: string]: {
     [quarter: string]: Array<{ symbol: string; weight: number }>;
@@ -7,7 +15,7 @@ type WeightsDict = {
 };
 
 interface ConstituentWeightsTableProps {
-  weights: WeightsDict | Record<string, any>;
+  weights: WeightRow[] | WeightsDict | Record<string, any>;
 }
 
 const QUARTER_ORDER = ['Q1', 'Q2', 'Q3', 'Q4'];
@@ -29,6 +37,153 @@ function sortPeriods(weights: WeightsDict): Array<{ year: string; quarter: strin
 }
 
 const ConstituentWeightsTable: React.FC<ConstituentWeightsTableProps> = ({ weights }) => {
+  // Check if weights is an array (new format) or object (old format)
+  const isArrayFormat = Array.isArray(weights);
+  
+  if (isArrayFormat) {
+    // Handle new array format - show each quarter as a separate section
+    const weightRows = weights as WeightRow[];
+    
+    if (!weightRows || !Array.isArray(weightRows) || weightRows.length === 0) {
+      return (
+        <div style={{ color: '#6b7280', fontSize: '12px' }}>No constituent weights available.</div>
+      );
+    }
+
+    // Group by year and quarter
+    const groupedWeights: { [key: string]: WeightRow[] } = {};
+    weightRows.forEach(row => {
+      const key = `${row.year}-${row.quarter}`;
+      if (!groupedWeights[key]) {
+        groupedWeights[key] = [];
+      }
+      groupedWeights[key].push(row);
+    });
+
+    // Sort quarters chronologically (latest first, oldest last)
+    const quarters = Object.keys(groupedWeights).sort((a, b) => {
+      const [yearA, quarterA] = a.split('-');
+      const [yearB, quarterB] = b.split('-');
+      const yearDiff = parseInt(yearB) - parseInt(yearA); // Reverse year order (newest first)
+      if (yearDiff !== 0) return yearDiff;
+      const quarterOrder = ['Q4', 'Q3', 'Q2', 'Q1']; // Reverse quarter order (Q4 first)
+      return quarterOrder.indexOf(quarterA) - quarterOrder.indexOf(quarterB);
+    });
+
+    return (
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'row', 
+        gap: '16px',
+        overflowX: 'auto',
+        paddingBottom: '8px'
+      }}>
+        {quarters.map((quarterKey, idx) => {
+          const [year, quarter] = quarterKey.split('-');
+          const companies = groupedWeights[quarterKey].sort((a, b) => b.weight - a.weight);
+          
+          return (
+            <div key={quarterKey} style={{ 
+              border: '1px solid #e5e7eb', 
+              borderRadius: '8px', 
+              overflow: 'hidden',
+              backgroundColor: 'white',
+              minWidth: '200px',
+              maxWidth: '250px',
+              flexShrink: 0
+            }}>
+              <div style={{ 
+                padding: '8px 12px', 
+                backgroundColor: '#f9fafb', 
+                borderBottom: '1px solid #e5e7eb',
+                fontWeight: '600',
+                color: '#374151',
+                fontSize: '12px'
+              }}>
+                {year} {quarter} ({companies.length})
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ 
+                        textAlign: 'left', 
+                        padding: '6px 8px', 
+                        borderBottom: '1px solid #e5e7eb', 
+                        color: '#374151', 
+                        fontWeight: 600,
+                        backgroundColor: '#f9fafb',
+                        fontSize: '11px'
+                      }}>Company</th>
+                      <th style={{ 
+                        textAlign: 'right', 
+                        padding: '6px 8px', 
+                        borderBottom: '1px solid #e5e7eb', 
+                        color: '#374151', 
+                        fontWeight: 600,
+                        backgroundColor: '#f9fafb',
+                        fontSize: '11px'
+                      }}>Weight</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {companies.map((company, r) => (
+                      <tr key={company.symbol} style={{ 
+                        backgroundColor: r % 2 === 0 ? '#ffffff' : '#f9fafb' 
+                      }}>
+                        <td style={{ 
+                          padding: '6px 8px', 
+                          borderBottom: '1px solid #f3f4f6', 
+                          color: '#111827',
+                          wordWrap: 'break-word',
+                          whiteSpace: 'normal'
+                        }}>
+                          <div style={{ 
+                            fontWeight: '600', 
+                            marginBottom: '2px',
+                            fontSize: '11px',
+                            lineHeight: '1.2'
+                          }}>
+                            {company.company_name}
+                          </div>
+                          <div style={{ 
+                            fontSize: '9px', 
+                            color: '#6b7280',
+                            lineHeight: '1.1'
+                          }}>
+                            {company.symbol}
+                          </div>
+                        </td>
+                        <td style={{ 
+                          textAlign: 'right', 
+                          padding: '6px 8px', 
+                          borderBottom: '1px solid #f3f4f6', 
+                          color: '#111827',
+                          fontWeight: '500',
+                          fontSize: '10px',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {(company.weight * 100).toFixed(1)}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Handle old object format (fallback) or invalid data
+  if (!weights) {
+    return (
+      <div style={{ color: '#6b7280', fontSize: '12px' }}>No constituent weights available.</div>
+    );
+  }
+  
   const typed = (weights || {}) as WeightsDict;
   const periods = sortPeriods(typed);
   if (periods.length === 0) {

@@ -27,6 +27,15 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, width = 800, heig
   const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number; px: number; py: number; date: string; value: number } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
+  // Debug logging
+  console.log('🔍 IndexLineChart received data:', data);
+  console.log('🔍 Data length:', data?.length);
+  console.log('🔍 Data type:', typeof data);
+  if (data && data.length > 0) {
+    console.log('🔍 First data point:', data[0]);
+    console.log('🔍 Sample data points:', data.slice(0, 3));
+  }
+
   if (!data || data.length === 0) {
     return <div style={{ fontSize: '12px', color: '#6b7280' }}>No data to display</div>;
   }
