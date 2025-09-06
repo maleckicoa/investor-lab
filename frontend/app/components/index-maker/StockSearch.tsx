@@ -242,16 +242,47 @@ const StockSearch: React.FC<StockSearchProps> = ({
           <div style={{ 
             display: 'flex', 
             alignItems: 'center', 
-            gap: '6px',
+            justifyContent: 'space-between',
             marginBottom: '6px'
           }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M9 12l2 2 4-4"/>
-              <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
-            </svg>
-            <span style={{ color: '#991b1b', fontWeight: '500', fontSize: '12px' }}>
-              Selected Stocks ({selectedStocks.length})
-            </span>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px'
+            }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 12l2 2 4-4"/>
+                <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
+              </svg>
+              <span style={{ color: '#991b1b', fontWeight: '500', fontSize: '12px' }}>
+                Selected Stocks ({selectedStocks.length})
+              </span>
+            </div>
+            <button
+              onClick={() => setSelectedStocks([])}
+              style={{
+                background: 'none',
+                border: '1px solid #fecaca',
+                color: '#991b1b',
+                cursor: 'pointer',
+                fontSize: '10px',
+                fontWeight: '500',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#fecaca';
+                e.currentTarget.style.color = '#991b1b';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = '#991b1b';
+              }}
+              title="Remove all stocks"
+            >
+              Remove all
+            </button>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
             {selectedStocks.map((symbol) => {

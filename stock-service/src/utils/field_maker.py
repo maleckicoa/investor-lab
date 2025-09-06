@@ -62,7 +62,22 @@ def get_companies():
     
     return company_df
 
-def update_fields_file(countries_df, sectors_df, industries_df, kpis_df, companies_df):
+def get_benchmarks():
+    benchmark_query = """
+    SELECT 
+        name,
+        symbol,
+        type,
+        MIN(date) as date
+    FROM raw.benchmarks 
+    WHERE name IS NOT NULL 
+    GROUP BY name, symbol, type
+    ORDER BY type, name
+    """
+    benchmark_df = run_query(benchmark_query)
+    return benchmark_df
+
+def update_fields_file(countries_df, sectors_df, industries_df, kpis_df, companies_df, benchmarks_df):
     # Create fields directory if it doesn't exist
     fields_dir = os.path.join(os.path.dirname(__file__), 'fields')
     os.makedirs(fields_dir, exist_ok=True)
@@ -102,8 +117,14 @@ def update_fields_file(countries_df, sectors_df, industries_df, kpis_df, compani
         companies_df.to_csv(companies_csv_path, index=False)
         print(f"✅ Wrote {len(companies_df)} companies to {companies_csv_path}")
     
+    # Write benchmarks to CSV
+    if not benchmarks_df.empty:
+        benchmarks_csv_path = os.path.join(fields_dir, 'benchmarks.csv')
+        benchmarks_df.to_csv(benchmarks_csv_path, index=False)
+        print(f"✅ Wrote {len(benchmarks_df)} benchmarks to {benchmarks_csv_path}")
+    
     print(f"✅ Field generation complete! Created CSV files in {fields_dir}")
-    return countries_df, sectors_df, industries_df, kpis_df, companies_df
+    return countries_df, sectors_df, industries_df, kpis_df, companies_df, benchmarks_df
 
 def main():
     countries = get_countries()
@@ -111,6 +132,7 @@ def main():
     industries = get_industries()
     kpis = get_kpis()
     companies = get_companies()
-    update_fields_file(countries, sectors, industries, kpis, companies)
+    benchmarks = get_benchmarks()
+    update_fields_file(countries, sectors, industries, kpis, companies, benchmarks)
 if __name__ == "__main__":
     main()

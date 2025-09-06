@@ -16,7 +16,8 @@ def read_index_fields_from_csv() -> Dict[str, Any]:
         "sectors": [],
         "industries": {},
         "kpis": {},
-        "companies": []
+        "companies": [],
+        "benchmarks": []
     }
     
     # Read countries from CSV
@@ -79,5 +80,17 @@ def read_index_fields_from_csv() -> Dict[str, Any]:
             ]
     except Exception as e:
         print(f"Warning: Could not read companies.csv: {e}")
+    
+    # Read benchmarks from CSV
+    try:
+        benchmarks_path = os.path.join(fields_dir, 'benchmarks.csv')
+        if os.path.exists(benchmarks_path):
+            benchmarks_df = pd.read_csv(benchmarks_path, dtype=str, keep_default_na=False, na_filter=False)
+            result["benchmarks"] = [
+                {"name": row["name"], "symbol": row["symbol"], "type": row["type"], "date": row["date"]}
+                for _, row in benchmarks_df.iterrows()
+            ]
+    except Exception as e:
+        print(f"Warning: Could not read benchmarks.csv: {e}")
     
     return result

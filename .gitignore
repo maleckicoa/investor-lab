@@ -34,3 +34,5 @@ __pycache__/
 # OS files
 .DS_Store
 Thumbs.db
+
+stock-service/src/utils/fields/*.csv

@@ -1,39 +1,34 @@
 import React from 'react';
 
-interface SectorSelectorProps {
-  sectors: string[];
-  selectedSectors: string[];
-  setSelectedSectors: React.Dispatch<React.SetStateAction<string[]>>;
-  selectedIndustries: string[];
-  setSelectedIndustries: React.Dispatch<React.SetStateAction<string[]>>;
-  industries: Record<string, string[]>;
-  showSectorDropdown: boolean;
-  setShowSectorDropdown: (show: boolean) => void;
-  sectorDropdownPosition: { top: number; left: number };
-  setSectorDropdownPosition: (position: { top: number; left: number }) => void;
-  getDropdownPosition: (buttonElement: HTMLElement) => { top: number; left: number };
-  handleSectorToggle: (sector: string) => void;
-  handleSectorRemove: (sector: string) => void;
-  isSectorFullySelected: (sector: string) => boolean;
-  isSectorPartiallySelected: (sector: string) => boolean;
+interface Benchmark {
+  name: string;
+  symbol: string;
+  type: string;
+  date: string;
 }
 
-const SectorSelector: React.FC<SectorSelectorProps> = ({
-  sectors,
-  selectedSectors,
-  setSelectedSectors,
-  selectedIndustries,
-  setSelectedIndustries,
-  industries,
-  showSectorDropdown,
-  setShowSectorDropdown,
-  sectorDropdownPosition,
-  setSectorDropdownPosition,
+interface BenchmarkSelectorProps {
+  benchmarks: Benchmark[];
+  selectedBenchmarks: string[];
+  setSelectedBenchmarks: React.Dispatch<React.SetStateAction<string[]>>;
+  showBenchmarkDropdown: boolean;
+  setShowBenchmarkDropdown: (show: boolean) => void;
+  benchmarkDropdownPosition: { top: number; left: number };
+  setBenchmarkDropdownPosition: (position: { top: number; left: number }) => void;
+  getDropdownPosition: (buttonElement: HTMLElement) => { top: number; left: number };
+  handleBenchmarkToggle: (benchmark: string) => void;
+}
+
+const BenchmarkSelector: React.FC<BenchmarkSelectorProps> = ({
+  benchmarks,
+  selectedBenchmarks,
+  setSelectedBenchmarks,
+  showBenchmarkDropdown,
+  setShowBenchmarkDropdown,
+  benchmarkDropdownPosition,
+  setBenchmarkDropdownPosition,
   getDropdownPosition,
-  handleSectorToggle,
-  handleSectorRemove,
-  isSectorFullySelected,
-  isSectorPartiallySelected
+  handleBenchmarkToggle
 }) => {
   return (
     <div style={{ marginBottom: '20px' }}>
@@ -42,12 +37,12 @@ const SectorSelector: React.FC<SectorSelectorProps> = ({
       <div style={{ position: 'relative' }}>
         <button
           onClick={(e) => {
-            const newState = !showSectorDropdown;
+            const newState = !showBenchmarkDropdown;
             if (newState) {
               const position = getDropdownPosition(e.currentTarget);
-              setSectorDropdownPosition(position);
+              setBenchmarkDropdownPosition(position);
             }
-            setShowSectorDropdown(newState);
+            setShowBenchmarkDropdown(newState);
           }}
           style={{
             backgroundColor: '#2563eb',
@@ -71,7 +66,7 @@ const SectorSelector: React.FC<SectorSelectorProps> = ({
             e.currentTarget.style.backgroundColor = '#2563eb';
           }}
         >
-          SECTORS ({selectedSectors.length} selected)
+          BENCHMARKS ({selectedBenchmarks.length} selected)
           <svg 
             width="14" 
             height="14" 
@@ -80,7 +75,7 @@ const SectorSelector: React.FC<SectorSelectorProps> = ({
             stroke="currentColor" 
             strokeWidth="2"
             style={{ 
-              transform: showSectorDropdown ? 'rotate(180deg)' : 'rotate(0deg)',
+              transform: showBenchmarkDropdown ? 'rotate(180deg)' : 'rotate(0deg)',
               transition: 'transform 0.2s',
               marginLeft: 'auto'
             }}
@@ -89,14 +84,14 @@ const SectorSelector: React.FC<SectorSelectorProps> = ({
           </svg>
         </button>
         
-        {/* Sector Dropdown */}
-        {showSectorDropdown && (
+        {/* Benchmark Dropdown */}
+        {showBenchmarkDropdown && (
           <div 
             className="dropdown-container"
             style={{
               position: 'fixed',
-              top: sectorDropdownPosition.top,
-              left: sectorDropdownPosition.left,
+              top: benchmarkDropdownPosition.top,
+              left: benchmarkDropdownPosition.left,
               width: '600px',
               backgroundColor: 'white',
               border: '1px solid #e5e7eb',
@@ -107,15 +102,17 @@ const SectorSelector: React.FC<SectorSelectorProps> = ({
               overflowY: 'auto'
             }}
           >
-            {sectors.map((sector: string) => {
-              const isSelected = selectedSectors.includes(sector);
-              const isFullySelected = isSectorFullySelected(sector);
-              const isPartiallySelected = isSectorPartiallySelected(sector);
-              
-              return (
+            {benchmarks.length === 0 ? (
+              <div style={{ padding: '16px', textAlign: 'center', color: '#6b7280' }}>
+                Loading benchmarks... ({benchmarks.length} loaded)
+              </div>
+            ) : (
+              benchmarks.map((benchmark) => {
+                const isSelected = selectedBenchmarks.includes(benchmark.symbol);
+                return (
                 <button
-                  key={sector}
-                  onClick={() => handleSectorToggle(sector)}
+                  key={benchmark.symbol}
+                  onClick={() => handleBenchmarkToggle(benchmark.symbol)}
                   style={{
                     width: '100%',
                     padding: '8px 12px',
@@ -158,39 +155,23 @@ const SectorSelector: React.FC<SectorSelectorProps> = ({
                         <path d="M9 12l2 2 4-4"/>
                       </svg>
                     )}
-                    {isPartiallySelected && !isFullySelected && (
-                      <div style={{ 
-                        width: '6px', 
-                        height: '2px', 
-                        backgroundColor: '#2563eb',
-                        borderRadius: '1px'
-                      }} />
-                    )}
                   </div>
                   <span style={{ 
                     color: isSelected ? '#1e40af' : '#111827',
                     fontWeight: isSelected ? '600' : '400'
                   }}>
-                    {sector}
+                    {benchmark.name} - {benchmark.symbol}
                   </span>
-                  {isPartiallySelected && !isFullySelected && (
-                    <span style={{ 
-                      fontSize: '10px', 
-                      color: '#6b7280',
-                      marginLeft: 'auto'
-                    }}>
-                      Partial
-                    </span>
-                  )}
                 </button>
               );
-            })}
+            })
+            )}
           </div>
         )}
       </div>
       
-      {/* Selected Sectors Display */}
-      {selectedSectors.length > 0 && (
+      {/* Selected Benchmarks Display */}
+      {selectedBenchmarks.length > 0 && (
         <div style={{ 
           marginTop: '12px',
           padding: '8px 12px',
@@ -214,14 +195,11 @@ const SectorSelector: React.FC<SectorSelectorProps> = ({
                 <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
               </svg>
               <span style={{ color: '#0c4a6e', fontWeight: '500', fontSize: '12px' }}>
-                Selected Sectors ({selectedSectors.length})
+                Selected Benchmarks ({selectedBenchmarks.length})
               </span>
             </div>
             <button
-              onClick={() => {
-                setSelectedSectors([]);
-                setSelectedIndustries([]);
-              }}
+              onClick={() => setSelectedBenchmarks([])}
               style={{
                 background: 'none',
                 border: '1px solid #0ea5e9',
@@ -241,49 +219,52 @@ const SectorSelector: React.FC<SectorSelectorProps> = ({
                 e.currentTarget.style.backgroundColor = 'transparent';
                 e.currentTarget.style.color = '#0ea5e9';
               }}
-              title="Remove all sectors and industries"
+              title="Remove all benchmarks"
             >
               Remove all
             </button>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-            {selectedSectors.map((sector) => (
-              <span
-                key={sector}
-                style={{
-                  backgroundColor: '#0ea5e9',
-                  color: 'white',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                  fontSize: '11px',
-                  fontWeight: '500',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}
-              >
-                {sector}
-                <button
-                  onClick={() => {
-                    handleSectorRemove(sector);
-                  }}
+            {selectedBenchmarks.map((benchmarkSymbol) => {
+              const benchmark = benchmarks.find(b => b.symbol === benchmarkSymbol);
+              return (
+                <span
+                  key={benchmarkSymbol}
                   style={{
-                    background: 'none',
-                    border: 'none',
+                    backgroundColor: '#0ea5e9',
                     color: 'white',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    padding: '0',
-                    marginLeft: '2px',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    fontWeight: '500',
                     display: 'flex',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    gap: '4px'
                   }}
-                  title="Remove this sector"
                 >
-                  ×
-                </button>
-              </span>
-            ))}
+                  {benchmark?.name || benchmarkSymbol}
+                  <button
+                    onClick={() => {
+                      setSelectedBenchmarks(prev => prev.filter(b => b !== benchmarkSymbol));
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'white',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      padding: '0',
+                      marginLeft: '2px',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                    title="Remove this benchmark"
+                  >
+                    ×
+                  </button>
+                </span>
+              );
+            })}
           </div>
         </div>
       )}
@@ -291,4 +272,4 @@ const SectorSelector: React.FC<SectorSelectorProps> = ({
   );
 };
 
-export default SectorSelector;
+export default BenchmarkSelector;

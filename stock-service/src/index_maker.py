@@ -333,7 +333,7 @@ def make_constituent_weights(df: pl.DataFrame, index_currency: str = "EUR") -> p
 
 
     mcap_col = "market_cap_eur" if index_currency == "EUR" else "market_cap_usd"
-    companies_df = pl.read_csv("/Users/aleksamihajlovic/Documents/naro-index-advisor/stock-service/src/utils/fields/companies.csv")
+    companies_df = pl.read_csv("src/utils/fields/companies.csv")
     
     # Get max market cap for each stock within each quarter and calculate weights
     weights_df = (

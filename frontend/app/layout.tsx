@@ -74,9 +74,9 @@ export default function RootLayout({
             </div>
           </header>
           <main style={{ 
-            maxWidth: '1280px', 
+            maxWidth: '1600px', 
             margin: '0 auto', 
-            padding: '1.5rem 1rem' 
+            padding: '1rem 0.5rem' 
           }}>
             {children}
           </main>

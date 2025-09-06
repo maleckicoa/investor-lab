@@ -14,6 +14,7 @@ import MakeIndexButton from '../components/index-maker/MakeIndexButton';
 import IndexCreationSummary from '../components/index-maker/IndexCreationSummary';
 import IndexLineChart from '../components/index-maker/IndexLineChart';
 import ConstituentWeightsTable from '../components/index-maker/ConstituentWeightsTable';
+import BenchmarkSelector from '../components/index-maker/BenchmarkSelector';
 
 // Types for the API response
 interface IndexFields {
@@ -22,6 +23,7 @@ interface IndexFields {
   industries: Record<string, string[]>;
   kpis: Record<string, string[]>;
   companies: Array<{company_name: string, symbol: string}>;
+  benchmarks: Array<{name: string, symbol: string, type: string, date: string}>;
 }
 
 // Type for KPI selection with selected values
@@ -40,6 +42,8 @@ export default function IndexMakerPage() {
   const [selectedKPIs, setSelectedKPIs] = useState<KPISelection>({});
   const [companies, setCompanies] = useState<Array<{company_name: string, symbol: string}>>([]);
   const [selectedStocks, setSelectedStocks] = useState<string[]>([]);
+  const [benchmarks, setBenchmarks] = useState<Array<{name: string, symbol: string, type: string, date: string}>>([]);
+  const [selectedBenchmarks, setSelectedBenchmarks] = useState<string[]>(['SPY', 'SMH', '^NDX', '^GDAXI']);
   const [indexSize, setIndexSize] = useState<number>(100);
   const [indexCurrency, setIndexCurrency] = useState<'USD' | 'EUR'>('USD');
   const [indexStartAmount, setIndexStartAmount] = useState<number>(1000);
@@ -58,6 +62,7 @@ export default function IndexMakerPage() {
   const [showIndustryDropdown, setShowIndustryDropdown] = useState(false);
   const [showKPIDropdown, setShowKPIDropdown] = useState(false);
   const [showStockSearch, setShowStockSearch] = useState(false);
+  const [showBenchmarkDropdown, setShowBenchmarkDropdown] = useState(false);
   const [stockSearchQuery, setStockSearchQuery] = useState('');
   const [stockSearchResults, setStockSearchResults] = useState<Array<{company_name: string, symbol: string}>>([]);
   const [countryDropdownPosition, setCountryDropdownPosition] = useState({ top: 0, left: 0 });
@@ -65,6 +70,7 @@ export default function IndexMakerPage() {
   const [industryDropdownPosition, setIndustryDropdownPosition] = useState({ top: 0, left: 0 });
   const [kpiDropdownPosition, setKpiDropdownPosition] = useState({ top: 0, left: 0 });
   const [stockSearchPosition, setStockSearchPosition] = useState({ top: 0, left: 0 });
+  const [benchmarkDropdownPosition, setBenchmarkDropdownPosition] = useState({ top: 0, left: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -130,6 +136,7 @@ export default function IndexMakerPage() {
         setShowIndustryDropdown(false);
         setShowKPIDropdown(false);
         setShowStockSearch(false);
+        setShowBenchmarkDropdown(false);
       }
     };
 
@@ -154,6 +161,7 @@ export default function IndexMakerPage() {
         setIndustries(data.industries);
         setKpis(data.kpis);
         setCompanies(data.companies || []);
+        setBenchmarks(data.benchmarks || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
@@ -218,6 +226,15 @@ export default function IndexMakerPage() {
       setSelectedCountries(prev => prev.filter(c => c !== country));
     } else {
       setSelectedCountries(prev => [...prev, country]);
+    }
+  };
+
+  // Handle benchmark selection/deselection
+  const handleBenchmarkToggle = (benchmark: string) => {
+    if (selectedBenchmarks.includes(benchmark)) {
+      setSelectedBenchmarks(prev => prev.filter(b => b !== benchmark));
+    } else {
+      setSelectedBenchmarks(prev => [...prev, benchmark]);
     }
   };
 
@@ -297,7 +314,7 @@ export default function IndexMakerPage() {
   return (
     <div className="page-container" style={{ display: 'flex', width: '100%', height: '100vh' }}>
       {/* Left Panel - Index Maker Content */}
-      <div className="left-pane" style={{ width: '30%', padding: '24px', overflowY: 'auto', borderRight: '1px solid #e5e7eb', position: 'relative' }}>
+      <div className="left-pane" style={{ width: '25%', padding: '24px', overflowY: 'auto', borderRight: '1px solid #e5e7eb', position: 'relative' }}>
         <div style={{ backgroundColor: 'white', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', borderRadius: '8px', padding: '20px', width: '100%',  }}>
           <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', marginBottom: '12px' }}>
             Index Maker
@@ -455,12 +472,13 @@ export default function IndexMakerPage() {
                                 </div>
             </div>
             
-      {/* Right Panel - Graph Area */}
-      <div className="right-pane" style={{ 
-        width: '70%', 
+      {/* Middle Panel - Graph Area */}
+      <div className="middle-pane" style={{ 
+        width: '50%', 
         padding: '24px',
         backgroundColor: '#f8fafc',
         borderLeft: '1px solid #e5e7eb',
+        borderRight: '1px solid #e5e7eb',
         overflowY: 'auto',
         height: '100vh'
       }}>
@@ -558,11 +576,15 @@ export default function IndexMakerPage() {
               <p style={{ fontSize: '12px', color: '#6b7280', margin: '8px 0 0 0' }}>Showing index over time</p>
             </div>
 
-            <div style={{ padding: '20px' }}>
+            <div className="chart-container" style={{ 
+              padding: '20px 20px 20px 20px',
+              overflowX: 'auto',
+              overflowY: 'hidden'
+            }}>
               {indexResult ? (
                 <IndexLineChart
                   data={indexResult?.index_data || []}
-                  width={800}
+                  width={750}
                   height={320}
                   startValue={indexStartAmount}
                 />
@@ -636,6 +658,38 @@ export default function IndexMakerPage() {
           </div>
         </div>
       </div>
+      
+      {/* Right Panel - Benchmark Selector */}
+      <div className="right-pane" style={{ 
+        width: '25%', 
+        padding: '24px',
+        backgroundColor: '#f8fafc',
+        borderLeft: '1px solid #e5e7eb',
+        overflowY: 'auto',
+        height: '100vh'
+      }}>
+        <div style={{ backgroundColor: 'white', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', borderRadius: '8px', padding: '20px', width: '100%' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', marginBottom: '12px' }}>
+            Benchmark Selection
+          </h2>
+          <p style={{ color: '#6b7280', marginBottom: '20px', fontSize: '14px' }}>
+            Select benchmarks to compare against your index
+          </p>
+          
+          <BenchmarkSelector
+            benchmarks={benchmarks}
+            selectedBenchmarks={selectedBenchmarks}
+            setSelectedBenchmarks={setSelectedBenchmarks}
+            showBenchmarkDropdown={showBenchmarkDropdown}
+            setShowBenchmarkDropdown={setShowBenchmarkDropdown}
+            benchmarkDropdownPosition={benchmarkDropdownPosition}
+            setBenchmarkDropdownPosition={setBenchmarkDropdownPosition}
+            getDropdownPosition={getDropdownPosition}
+            handleBenchmarkToggle={handleBenchmarkToggle}
+          />
+        </div>
+      </div>
+      
       <style jsx>{`
         @media (max-width: 768px) {
           .page-container {
@@ -646,13 +700,64 @@ export default function IndexMakerPage() {
             width: 100% !important;
             border-right: none !important;
             border-bottom: 1px solid #e5e7eb;
-            max-height: 50vh;
+            max-height: 33vh;
             overflow-y: auto;
+          }
+          .middle-pane {
+            width: 100% !important;
+            border-left: none !important;
+            border-right: none !important;
+            border-bottom: 1px solid #e5e7eb;
+            min-height: 33vh;
           }
           .right-pane {
             width: 100% !important;
             border-left: none !important;
-            min-height: 50vh;
+            min-height: 33vh;
+          }
+          
+          .chart-container {
+            padding: 10px !important;
+          }
+          
+          .chart-container svg {
+            max-width: 100% !important;
+            height: auto !important;
+          }
+          
+          .chart-container {
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+          }
+          
+          .chart-container::-webkit-scrollbar {
+            height: 8px;
+          }
+          
+          .chart-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+          }
+          
+          .chart-container::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+          }
+          
+          .chart-container::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+          }
+        }
+        
+        @media (max-width: 1024px) {
+          .chart-container {
+            padding: 15px !important;
+          }
+        }
+        
+        @media (max-width: 768px) {
+          .chart-container {
+            padding: 10px !important;
           }
         }
       `}</style>
