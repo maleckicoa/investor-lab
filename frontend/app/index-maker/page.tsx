@@ -81,6 +81,10 @@ export default function IndexMakerPage() {
     // Index results state
   const [indexResult, setIndexResult] = useState<any>(null);
   
+  // Benchmark data state
+  const [benchmarkData, setBenchmarkData] = useState<{ [symbol: string]: Array<{ date: string; value: number }> }>({});
+  const [loadingBenchmarks, setLoadingBenchmarks] = useState(false);
+  
 
 
 ////////////////////////////////////
@@ -237,6 +241,37 @@ export default function IndexMakerPage() {
       setSelectedBenchmarks(prev => [...prev, benchmark]);
     }
   };
+
+  // Fetch benchmark data
+  const fetchBenchmarkData = async (symbols: string[]) => {
+    if (symbols.length === 0) {
+      setBenchmarkData({});
+      return;
+    }
+
+    try {
+      setLoadingBenchmarks(true);
+      const symbolsParam = symbols.join(',');
+      const response = await fetch(`/api/benchmark-data?symbols=${symbolsParam}&startDate=${indexStartDate}&endDate=${indexEndDate}&startAmount=${indexStartAmount}&currency=${indexCurrency}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setBenchmarkData(data);
+    } catch (error) {
+      console.error('Error fetching benchmark data:', error);
+      setBenchmarkData({});
+    } finally {
+      setLoadingBenchmarks(false);
+    }
+  };
+
+  // Fetch benchmark data when selected benchmarks change
+  useEffect(() => {
+    fetchBenchmarkData(selectedBenchmarks);
+  }, [selectedBenchmarks, indexStartDate, indexEndDate, indexStartAmount, indexCurrency]);
 
   // Check if all industries of a sector are selected
   const isSectorFullySelected = (sector: string) => {
@@ -573,7 +608,10 @@ export default function IndexMakerPage() {
               <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#374151', margin: '0' }}>
                 Index Value (Line Chart)
               </h3>
-              <p style={{ fontSize: '12px', color: '#6b7280', margin: '8px 0 0 0' }}>Showing index over time</p>
+              <p style={{ fontSize: '12px', color: '#6b7280', margin: '8px 0 0 0' }}>
+                Showing index over time
+                {loadingBenchmarks && <span style={{ color: '#2563eb', marginLeft: '8px' }}>• Loading benchmarks...</span>}
+              </p>
             </div>
 
             <div className="chart-container" style={{ 
@@ -584,6 +622,7 @@ export default function IndexMakerPage() {
               {indexResult ? (
                 <IndexLineChart
                   data={indexResult?.index_data || []}
+                  benchmarkData={benchmarkData}
                   width={750}
                   height={320}
                   startValue={indexStartAmount}

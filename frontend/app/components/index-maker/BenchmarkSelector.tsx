@@ -242,7 +242,7 @@ const BenchmarkSelector: React.FC<BenchmarkSelectorProps> = ({
                     gap: '4px'
                   }}
                 >
-                  {benchmark?.name || benchmarkSymbol}
+                  {benchmark ? `${benchmark.name} - ${benchmark.symbol}` : benchmarkSymbol}
                   <button
                     onClick={() => {
                       setSelectedBenchmarks(prev => prev.filter(b => b !== benchmarkSymbol));

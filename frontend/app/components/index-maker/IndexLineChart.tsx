@@ -1,9 +1,11 @@
 import React, { useState, useRef } from 'react';
 
 type IndexPoint = { date: string; index_value: number };
+type BenchmarkPoint = { date: string; value: number };
 
 interface IndexLineChartProps {
   data: IndexPoint[];
+  benchmarkData?: { [symbol: string]: BenchmarkPoint[] };
   width?: number;
   height?: number;
   startValue?: number; // optional: ensures Y axis includes and shows this value
@@ -23,12 +25,13 @@ function niceStep(span: number, maxTicks: number): number {
   return nice * pow10;
 }
 
-const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, width = 800, height = 320, startValue }) => {
-  const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number; px: number; py: number; date: string; value: number } | null>(null);
+const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, benchmarkData, width = 800, height = 320, startValue }) => {
+  const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number; px: number; py: number; date: string; value: number; type: string } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
   // Debug logging
   console.log('🔍 IndexLineChart received data:', data);
+  console.log('🔍 Benchmark data:', benchmarkData);
   console.log('🔍 Data length:', data?.length);
   console.log('🔍 Data type:', typeof data);
   if (data && data.length > 0) {
@@ -40,13 +43,27 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, width = 800, heig
     return <div style={{ fontSize: '12px', color: '#6b7280' }}>No data to display</div>;
   }
 
-  // Parse dates and values
-  const parsed = data
+  // Parse main index data
+  const parsedIndex = data
     .filter(d => d.date && d.index_value !== null && d.index_value !== undefined)
-    .map(d => ({ t: new Date(d.date).getTime(), v: Number(d.index_value) }))
+    .map(d => ({ t: new Date(d.date).getTime(), v: Number(d.index_value), type: 'index' }))
     .sort((a, b) => a.t - b.t);
 
-  if (parsed.length === 0) {
+  // Parse benchmark data
+  const parsedBenchmarks: { [symbol: string]: Array<{ t: number; v: number; type: string }> } = {};
+  if (benchmarkData) {
+    Object.entries(benchmarkData).forEach(([symbol, points]) => {
+      parsedBenchmarks[symbol] = points
+        .filter(d => d.date && d.value !== null && d.value !== undefined)
+        .map(d => ({ t: new Date(d.date).getTime(), v: Number(d.value), type: symbol }))
+        .sort((a, b) => a.t - b.t);
+    });
+  }
+
+  // Combine all data for domain calculation
+  const allData = [parsedIndex, ...Object.values(parsedBenchmarks)].flat();
+  
+  if (allData.length === 0) {
     return <div style={{ fontSize: '12px', color: '#6b7280' }}>No data to display</div>;
   }
 
@@ -56,10 +73,10 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, width = 800, heig
   const innerW = w - padding.left - padding.right;
   const innerH = h - padding.top - padding.bottom;
 
-  const minX = parsed[0].t;
-  const maxX = parsed[parsed.length - 1].t;
-  let minY = Math.min(...parsed.map(p => p.v));
-  let maxY = Math.max(...parsed.map(p => p.v));
+  const minX = Math.min(...allData.map(p => p.t));
+  const maxX = Math.max(...allData.map(p => p.t));
+  let minY = Math.min(...allData.map(p => p.v));
+  let maxY = Math.max(...allData.map(p => p.v));
 
   // Ensure the provided startValue is included in the domain
   if (typeof startValue === 'number' && isFinite(startValue)) {
@@ -76,9 +93,18 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, width = 800, heig
     return padding.top + innerH - ((v - minY) / yRange) * innerH;
   };
 
-  const pathD = parsed
-    .map((p, i) => `${i === 0 ? 'M' : 'L'} ${xScale(p.t)} ${yScale(p.v)}`)
-    .join(' ');
+  // Generate paths for each data series
+  const generatePath = (points: Array<{ t: number; v: number }>) => {
+    return points
+      .map((p, i) => `${i === 0 ? 'M' : 'L'} ${xScale(p.t)} ${yScale(p.v)}`)
+      .join(' ');
+  };
+
+  const indexPath = generatePath(parsedIndex);
+  const benchmarkPaths = Object.entries(parsedBenchmarks).map(([symbol, points]) => ({
+    symbol,
+    path: generatePath(points)
+  }));
 
   // Handle mouse move to find closest point by X (date) anywhere in plot
   const handleMouseMove = (event: React.MouseEvent<SVGSVGElement>) => {
@@ -90,33 +116,54 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, width = 800, heig
     
     // Convert mouseX back to time to find nearest by X only
     const t = minX + ((mouseX - padding.left) / (innerW)) * (maxX - minX);
-    // Binary search for nearest index by time
-    let lo = 0;
-    let hi = parsed.length - 1;
-    while (lo < hi) {
-      const mid = Math.floor((lo + hi) / 2);
-      if (parsed[mid].t < t) lo = mid + 1; else hi = mid;
-    }
-    let idx = lo;
-    // Compare with previous to choose closest
-    if (idx > 0 && Math.abs(parsed[idx - 1].t - t) < Math.abs(parsed[idx].t - t)) idx = idx - 1;
-    const p = parsed[idx];
-    const px = xScale(p.t);
-    const py = yScale(p.v);
-    const closestPoint = {
-      x: mouseX,
-      y: mouseY,
-      px,
-      py,
-      date: new Date(p.t).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      }),
-      value: p.v
-    };
     
-    setHoveredPoint(closestPoint);
+    // Calculate interpolated value at cursor Y position
+    const cursorValue = minY + ((padding.top + innerH - mouseY) / innerH) * (maxY - minY);
+    
+    // Find closest point across all data series for date
+    let closestPoint: { t: number; v: number; type: string } | null = null;
+    let minDistance = Infinity;
+    
+    // Check index data
+    for (const point of parsedIndex) {
+      const distance = Math.abs(point.t - t);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestPoint = point;
+      }
+    }
+    
+    // Check benchmark data
+    Object.values(parsedBenchmarks).forEach(points => {
+      for (const point of points) {
+        const distance = Math.abs(point.t - t);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestPoint = point;
+        }
+      }
+    });
+    
+    if (closestPoint) {
+      const px = xScale(closestPoint.t);
+      const py = yScale(cursorValue); // Use cursor Y position for crosshair
+      
+      const hoverPoint = {
+        x: mouseX,
+        y: mouseY,
+        px,
+        py,
+        date: new Date(closestPoint.t).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        }),
+        value: cursorValue, // Use interpolated value at cursor position
+        type: closestPoint.type
+      };
+      
+      setHoveredPoint(hoverPoint);
+    }
   };
 
   const handleMouseLeave = () => {
@@ -221,24 +268,110 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, width = 800, heig
         );
       })}
 
-      {/* Line */}
-      <path d={pathD} fill="none" stroke="#2563eb" strokeWidth={2} />
+      {/* Lines */}
+      {/* Main index line */}
+      <path d={indexPath} fill="none" stroke="#2563eb" strokeWidth={2} />
+      
+      {/* Benchmark lines */}
+      {benchmarkPaths.map(({ symbol, path }, index) => {
+        const colors = ['#dc2626', '#059669', '#7c3aed', '#ea580c', '#0891b2', '#be123c'];
+        const color = colors[index % colors.length];
+        return (
+          <path 
+            key={symbol} 
+            d={path} 
+            fill="none" 
+            stroke={color} 
+            strokeWidth={2} 
+            strokeDasharray={index > 0 ? "5,5" : "none"}
+          />
+        );
+      })}
 
       {/* Hover guideline and point */}
       {hoveredPoint && (
         <g>
           {/* Vertical guideline */}
           <line x1={hoveredPoint.px} y1={padding.top} x2={hoveredPoint.px} y2={padding.top + innerH} stroke="#d1d5db" strokeDasharray="4 4" />
+          {/* Horizontal guideline */}
+          <line x1={padding.left} y1={hoveredPoint.py} x2={padding.left + innerW} y2={hoveredPoint.py} stroke="#d1d5db" strokeDasharray="4 4" />
           {/* Highlighted point */}
           <circle cx={hoveredPoint.px} cy={hoveredPoint.py} r={4} fill="#2563eb" stroke="#ffffff" strokeWidth={1} />
         </g>
       )}
 
-      {/* Last point marker */}
-      {parsed.length > 0 && (
-        <circle cx={xScale(parsed[parsed.length - 1].t)} cy={yScale(parsed[parsed.length - 1].v)} r={3} fill="#2563eb" />
+      {/* Last point markers */}
+      {parsedIndex.length > 0 && (
+        <circle cx={xScale(parsedIndex[parsedIndex.length - 1].t)} cy={yScale(parsedIndex[parsedIndex.length - 1].v)} r={3} fill="#2563eb" />
       )}
+      {Object.entries(parsedBenchmarks).map(([symbol, points], index) => {
+        if (points.length > 0) {
+          const colors = ['#dc2626', '#059669', '#7c3aed', '#ea580c', '#0891b2', '#be123c'];
+          const color = colors[index % colors.length];
+          return (
+            <circle 
+              key={`marker-${symbol}`}
+              cx={xScale(points[points.length - 1].t)} 
+              cy={yScale(points[points.length - 1].v)} 
+              r={3} 
+              fill={color} 
+            />
+          );
+        }
+        return null;
+      })}
     </svg>
+
+    {/* Legend */}
+    <div
+      style={{
+        position: 'absolute',
+        top: '0.5rem',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        backgroundColor: 'transparent',
+        padding: '0',
+        fontSize: '0.75rem',
+        zIndex: 100,
+        display: 'flex',
+        flexDirection: 'row',
+        gap: '1rem',
+        alignItems: 'center'
+      }}
+    >
+      {/* Index line */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+        <div
+          style={{
+            width: '1rem',
+            height: '0.125rem',
+            backgroundColor: '#2563eb',
+            borderRadius: '0.0625rem'
+          }}
+        />
+        <span style={{ color: '#6b7280' }}>Index</span>
+      </div>
+      
+      {/* Benchmark lines */}
+      {benchmarkPaths.map(({ symbol }, index) => {
+        const colors = ['#dc2626', '#059669', '#7c3aed', '#ea580c', '#0891b2', '#be123c'];
+        const color = colors[index % colors.length];
+        return (
+          <div key={`legend-${symbol}`} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+            <div
+              style={{
+                width: '1rem',
+                height: '0.125rem',
+                backgroundColor: color,
+                borderRadius: '0.0625rem',
+                backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 0.125rem, rgba(255,255,255,0.3) 0.125rem, rgba(255,255,255,0.3) 0.25rem)'
+              }}
+            />
+            <span style={{ color: '#6b7280' }}>{symbol}</span>
+          </div>
+        );
+      })}
+    </div>
 
     {/* Tooltip */}
     {hoveredPoint && (
@@ -259,7 +392,9 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, width = 800, heig
         }}
       >
         <div style={{ fontWeight: 'bold' }}>{hoveredPoint.date}</div>
-        <div>Index: {hoveredPoint.value.toLocaleString()}</div>
+        <div>
+          Value: {hoveredPoint.value.toLocaleString()}
+        </div>
       </div>
     )}
     </div>

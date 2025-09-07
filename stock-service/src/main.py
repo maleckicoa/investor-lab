@@ -10,6 +10,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from index_maker import create_custom_index
 from utils.csv_reader import read_index_fields_from_csv
+from utils.benchmark_data import get_benchmark_historical_data
 
 app = FastAPI(
     title="Stock Index Advisor API",
@@ -65,6 +66,34 @@ async def get_index_fields():
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch index fields: {str(e)}")
+
+@app.get("/api/benchmark-data")
+async def get_benchmark_data(symbols: str, startDate: str = None, endDate: str = None, startAmount: float = 1000, currency: str = "USD"):
+    """Get historical data for selected benchmark symbols"""
+    try:
+        # Parse symbols from comma-separated string
+        symbols_list = [s.strip() for s in symbols.split(',') if s.strip()]
+        
+        if not symbols_list:
+            raise HTTPException(status_code=400, detail="No symbols provided")
+        
+        # Validate currency
+        if currency.upper() not in ["USD", "EUR"]:
+            raise HTTPException(status_code=400, detail="Currency must be USD or EUR")
+        
+        # Fetch benchmark data
+        benchmark_data = get_benchmark_historical_data(
+            symbols=symbols_list,
+            start_date=startDate,
+            end_date=endDate,
+            start_amount=startAmount,
+            currency=currency.upper()
+        )
+        
+        return benchmark_data
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch benchmark data: {str(e)}")
 
 @app.post("/api/create-index", response_model=IndexCreationResponse)
 async def create_index(request: IndexCreationRequest):
