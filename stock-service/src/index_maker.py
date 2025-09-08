@@ -1,7 +1,7 @@
 import time
 import polars as pl
 from datetime import datetime, date
-from typing import Union
+from typing import Union, Dict
 from utils.utils import run_query, run_query_to_polars_simple, run_query_debug, run_query_to_polars_simple1, run_query_to_polars_simple2
 pl.Config.set_tbl_rows(-1)
 pl.Config.set_tbl_cols(-1) 
@@ -167,7 +167,6 @@ def make_query(max_constituents,
 ########################################################
 ########################################################
 
-
 def make_index(df: pl.DataFrame,
                index_currency: str = "EUR"
                ) -> pl.DataFrame:
@@ -323,14 +322,13 @@ def make_index(df: pl.DataFrame,
     print(index_df.tail(10))
     
     return index_df
-########################################################
-########################################################
-########################################################
 
+########################################################
+########################################################
+########################################################
 
 
 def make_constituent_weights(df: pl.DataFrame, index_currency: str = "EUR") -> pl.DataFrame:
-
 
     mcap_col = "market_cap_eur" if index_currency == "EUR" else "market_cap_usd"
     companies_df = pl.read_csv("src/utils/fields/companies.csv")
@@ -420,6 +418,52 @@ def trim_index(
 ########################################################
 ########################################################
 ########################################################
+
+def calculate_risk_return(df: pl.DataFrame) -> Dict[str, float]:
+    if df.is_empty():
+        return {"return": 0.0, "risk": 0.0}
+        
+    # Sort by date descending to get latest values first
+    df = df.sort("date", descending=True)
+    
+    # Get all values
+    values = df.get_column("index_value").to_list()
+    dates = df.get_column("date").to_list()
+    
+    # Check if we have at least 5 years of data
+    first_date = dates[-1]
+    last_date = dates[0]
+    days_between = (last_date - first_date).days
+    
+    if days_between < 5 * 250:
+        return {"return": 0.0, "risk": 0.0}
+    
+    # Calculate returns between t0 and t-250
+    returns = []
+    for i in range(len(values)):
+        if i + 250 >= len(values):
+            break
+        t0_val = values[i]
+        t250_val = values[i + 250]
+        ret = (t0_val / t250_val) - 1
+        returns.append(ret)
+    
+    # Calculate average return
+    avg_return = sum(returns) / len(returns) if returns else 0.0
+    
+    # Calculate risk (std dev of negative returns)
+    neg_returns = [r for r in returns if r < 0]
+    risk = 0.0
+    if neg_returns:
+        mean = sum(neg_returns) / len(neg_returns)
+        squared_diff = [(r - mean) ** 2 for r in neg_returns]
+        risk = (sum(squared_diff) / len(neg_returns)) ** 0.5
+        
+    return {
+        "return": round(float(avg_return), 4),
+        "risk": round(float(risk), 4)
+    }
+
 ########################################################
 ########################################################
 ########################################################
@@ -440,21 +484,6 @@ def create_custom_index(index_size,
     try:
 
         print(f"Starting index creation at {time.strftime('%Y-%m-%d %H:%M:%S')}")
-
-        # Log the received parameters for debugging
-        print(f"DEBUG: Received parameters:")
-        print(f"  - index_size: {index_size}")
-        print(f"  - currency: {currency}")
-        print(f"  - start_amount: {start_amount}")
-        print(f"  - start_date: {start_date}")
-        print(f"  - end_date: {end_date}")
-        print(f"  - countries: {countries}")
-        print(f"  - sectors: {sectors}")
-        print(f"  - industries: {industries}")
-        print(f"  - kpis: {kpis}")
-        print(f"  - stocks: {stocks}")
-        
-
         # Create the query and get the data
         df = make_query(
             max_constituents=index_size,
@@ -472,6 +501,10 @@ def create_custom_index(index_size,
             index_currency=currency
             )
         print(f"Index values calculated at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+
+        risk_return = calculate_risk_return(index_df)
+        print("risk_return")
+        print(risk_return)
 
         index_df = trim_index(
             index_df,

@@ -5,6 +5,7 @@ import sys
 
 from src.utils.fields_utils import kpi_query, country_codes
 from src.utils.utils import run_query
+from src.utils.benchmark_utils import calculate_benchmark_risk_return
 
 def get_countries():
     
@@ -68,14 +69,40 @@ def get_benchmarks():
         name,
         symbol,
         type,
-        MIN(date) as date
+        date,
+        close_eur,
+        close_usd
     FROM raw.benchmarks 
-    WHERE name IS NOT NULL 
-    GROUP BY name, symbol, type
+    WHERE name IS NOT NULL
     ORDER BY type, name
     """
     benchmark_df = run_query(benchmark_query)
-    return benchmark_df
+
+    unique_benchmarks = benchmark_df[['name', 'symbol', 'type']].drop_duplicates()
+    processed_benchmarks = []
+    
+    # Process each unique benchmark
+    for _, row in unique_benchmarks.iterrows():
+        symbol = row['symbol']
+        
+        symbol_data = benchmark_df[benchmark_df['symbol'] == symbol]
+        risk_return = calculate_benchmark_risk_return(symbol_data)
+        min_date = symbol_data['date'].min()
+        
+        benchmark_record = {
+            'name': row['name'],
+            'symbol': symbol,
+            'type': row['type'],
+            'date': min_date,
+            'return_eur': risk_return['return_eur'],
+            'return_usd': risk_return['return_usd'],
+            'risk_eur': risk_return['risk_eur'],
+            'risk_usd': risk_return['risk_usd']
+        }
+        processed_benchmarks.append(benchmark_record)
+    
+    result_df = pd.DataFrame(processed_benchmarks)    
+    return result_df
 
 def update_fields_file(countries_df, sectors_df, industries_df, kpis_df, companies_df, benchmarks_df):
     # Create fields directory if it doesn't exist

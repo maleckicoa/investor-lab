@@ -54,20 +54,13 @@ def normalize_benchmark_data(
     
     return df
 
-def get_benchmark_historical_data(symbols: List[str], start_date: str = None, end_date: str = None, start_amount: float = 1000, currency: str = "USD") -> Dict[str, List[Dict]]:
-    """
-    Fetch historical data for selected benchmark symbols and normalize them.
-    
-    Args:
-        symbols: List of benchmark symbols to fetch
-        start_date: Start date in YYYY-MM-DD format (optional)
-        end_date: End date in YYYY-MM-DD format (optional)
-        start_amount: Starting amount for normalization (default: 1000)
-        currency: Currency for the data (USD or EUR, default: USD)
-    
-    Returns:
-        Dictionary with symbol as key and list of normalized historical data points as value
-    """
+def get_benchmark_historical_data(symbols: List[str], 
+                                    start_date: str = None, 
+                                    end_date: str = None, 
+                                    start_amount: float = 1000, 
+                                    currency: str = "USD"
+                                    ) -> Dict[str, List[Dict]]:
+
     if not symbols:
         return {}
     
@@ -122,3 +115,64 @@ def get_benchmark_historical_data(symbols: List[str], start_date: str = None, en
     except Exception as e:
         print(f"Error fetching benchmark data: {e}")
         return {symbol: [] for symbol in symbols}
+
+
+
+def calculate_benchmark_risk_return(df: pd.DataFrame) -> Dict[str, float]:
+    if df.empty:
+        return {
+            "return_eur": 0.0,
+            "return_usd": 0.0,
+            "risk_eur": 0.0,
+            "risk_usd": 0.0
+        }
+    
+    # Sort by date descending to get latest values first
+    df = df.sort_values('date', ascending=False)
+    
+    # Check if we have at least 5 years of data
+    first_date = df['date'].min()
+    last_date = df['date'].max()
+    days_between = (last_date - first_date).days
+    
+    if days_between < 5 * 250:
+        return {
+            "return_eur": 0.0,
+            "return_usd": 0.0,
+            "risk_eur": 0.0,
+            "risk_usd": 0.0
+        }
+
+    results = {}
+    
+    # Calculate for both EUR and USD
+    for currency in ['eur', 'usd']:
+        col = f'close_{currency}'
+        
+        # Calculate returns between t0 and t-250
+        returns = []
+        values = df[col].values
+        for i in range(len(values)):
+            if i + 250 >= len(values):
+                break
+            t0_val = values[i]
+            t250_val = values[i + 250]
+            if t0_val and t250_val:  # Check for non-null values
+                ret = (t0_val / t250_val) - 1
+                returns.append(ret)
+        
+        # Calculate average return
+        avg_return = sum(returns) / len(returns) if returns else 0.0
+        
+        # Calculate risk (std dev of negative returns)
+        neg_returns = [r for r in returns if r < 0]
+        risk = 0.0
+        if neg_returns:
+            mean = sum(neg_returns) / len(neg_returns)
+            squared_diff = [(r - mean) ** 2 for r in neg_returns]
+            risk = (sum(squared_diff) / len(neg_returns)) ** 0.5
+            
+        results[f'return_{currency}'] = round(float(avg_return), 4)
+        results[f'risk_{currency}'] = round(float(risk), 4)
+    
+    return results

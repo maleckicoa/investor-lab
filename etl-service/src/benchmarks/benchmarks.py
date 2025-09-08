@@ -10,6 +10,8 @@ from ..utils.utils import get_postgres_connection, get_logger, ensure_schemas_ex
 etf_symbols: Dict[str, Dict[str, str]] = {
     "SPY": {"name": "SPDR S&P 500 ETF Trust", "currency": "USD"},
     "SMH": {"name": "VanEck Semiconductor ETF", "currency": "USD"},
+    "QQQ": {"name": "Invesco QQQ Trust", "currency": "USD"},
+    "VVSM.DE": {"name": "VanEck Semiconductor UCITS ETF", "currency": "EUR"}
 }
 
 
