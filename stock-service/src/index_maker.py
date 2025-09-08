@@ -539,7 +539,8 @@ def create_custom_index(index_size,
         
         return {
             "index_df": index_df.to_dicts(), 
-            "constituent_weights": constituent_weights.to_dicts()
+            "constituent_weights": constituent_weights.to_dicts(),
+            "risk_return": risk_return,
         }
     except Exception as e:
         print(f"❌ Error creating index: {e}")

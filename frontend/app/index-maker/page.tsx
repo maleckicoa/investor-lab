@@ -15,6 +15,8 @@ import IndexCreationSummary from '../components/index-maker/IndexCreationSummary
 import IndexLineChart from '../components/index-maker/IndexLineChart';
 import ConstituentWeightsTable from '../components/index-maker/ConstituentWeightsTable';
 import BenchmarkSelector from '../components/index-maker/BenchmarkSelector';
+import { useRef } from 'react';
+import RiskReturn, { RiskReturnZoomSlider } from '../components/index-maker/RiskReturn';
 
 // Types for the API response
 interface IndexFields {
@@ -73,6 +75,11 @@ export default function IndexMakerPage() {
   const [benchmarkDropdownPosition, setBenchmarkDropdownPosition] = useState({ top: 0, left: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [riskReturnData, setRiskReturnData] = useState<any[]>([]);
+  const [indexRiskReturn, setIndexRiskReturn] = useState<{ risk: number; return: number } | null>(null);
+  const [riskReturnZoom, setRiskReturnZoom] = useState<number>(1);
+  const rrRef = useRef<any>(null);
+  const riskReturnContainerRef = useRef<HTMLDivElement>(null);
   
   // Spinner state for index creation
   const [isCreatingIndex, setIsCreatingIndex] = useState(false);
@@ -150,6 +157,15 @@ export default function IndexMakerPage() {
     };
   }, []);
 
+  // Ensure the Risk/Return container scrolls vertically to bottom on first render and on data change
+  useEffect(() => {
+    const el = riskReturnContainerRef.current;
+    if (el) {
+      // Scroll to bottom
+      el.scrollTop = el.scrollHeight;
+    }
+  }, [riskReturnData.length, indexCurrency]);
+
   // Fetch countries, sectors, industries and KPIs data
   useEffect(() => {
     const fetchData = async () => {
@@ -166,6 +182,14 @@ export default function IndexMakerPage() {
         setKpis(data.kpis);
         setCompanies(data.companies || []);
         setBenchmarks(data.benchmarks || []);
+        // fetch risk/return data in parallel route
+        try {
+          const rr = await fetch('/api/benchmark-risk-return');
+          if (rr.ok) {
+            const js = await rr.json();
+            setRiskReturnData(js.benchmarks || []);
+          }
+        } catch {}
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
@@ -485,6 +509,7 @@ export default function IndexMakerPage() {
               setIsCreatingIndex={setIsCreatingIndex}
               setCreationSeconds={setCreationSeconds}
               setIndexResult={setIndexResult}
+              setIndexRiskReturn={setIndexRiskReturn}
             />
             
             <IndexCreationSummary
@@ -726,6 +751,46 @@ export default function IndexMakerPage() {
             getDropdownPosition={getDropdownPosition}
             handleBenchmarkToggle={handleBenchmarkToggle}
           />
+        </div>
+
+        {/* Risk Return */}
+        <div style={{ backgroundColor: 'white', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', borderRadius: '8px', padding: '20px', width: '100%', marginTop: '16px', position: 'relative' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', marginBottom: '12px' }}>
+            Risk • Return
+          </h2>
+          <p style={{ color: '#6b7280', marginBottom: '12px', fontSize: '12px' }}>
+            Each benchmark is a dot. X = Risk, Y = Return.
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <span style={{ color: '#6b7280', fontSize: '12px' }}>Zoom</span>
+            <RiskReturnZoomSlider value={riskReturnZoom} onChange={(n) => setRiskReturnZoom(n)} />
+            <button
+              onClick={() => {
+                setRiskReturnZoom(1);
+                const el = riskReturnContainerRef.current;
+                if (el) {
+                  // Defer to next frame to ensure the DOM has applied size from zoom reset
+                  requestAnimationFrame(() => {
+                    // Match initial load behavior: vertical bottom, horizontal left
+                    el.scrollTo({ top: el.scrollHeight, left: 0, behavior: 'auto' });
+                  });
+                }
+              }}
+              style={{ padding: '6px 8px', border: '1px solid #e5e7eb', borderRadius: '6px', background: 'white', cursor: 'pointer', fontSize: '12px', color: '#374151' }}
+            >
+              Reset
+            </button>
+          </div>
+          <div ref={riskReturnContainerRef} style={{ overflow: 'auto', width: '100%', height: '300px', border: '1px solid #e5e7eb', borderRadius: '6px' }}>
+            <RiskReturn
+              data={riskReturnData as any}
+              currency={indexCurrency}
+              width={1400}
+              height={1800}
+              zoom={riskReturnZoom}
+              indexPoint={indexRiskReturn ? { x: indexRiskReturn.risk, y: indexRiskReturn.return, name: 'Your Index', symbol: 'INDEX' } : undefined}
+            />
+          </div>
         </div>
       </div>
       

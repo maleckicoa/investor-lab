@@ -11,6 +11,8 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from index_maker import create_custom_index
 from utils.csv_reader import read_index_fields_from_csv
 from utils.benchmark_utils import get_benchmark_historical_data
+import os
+import pandas as pd
 
 app = FastAPI(
     title="Stock Index Advisor API",
@@ -95,6 +97,48 @@ async def get_benchmark_data(symbols: str, startDate: str = None, endDate: str =
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch benchmark data: {str(e)}")
 
+@app.get("/api/benchmark-risk-return")
+async def get_benchmark_risk_return():
+    """Return risk/return metrics from benchmarks.csv for scatter plot."""
+    try:
+        # Path to benchmarks.csv under src/utils/fields
+        fields_dir = os.path.join(os.path.dirname(__file__), 'utils', 'fields')
+        csv_path = os.path.join(fields_dir, 'benchmarks.csv')
+
+        if not os.path.exists(csv_path):
+            raise HTTPException(status_code=404, detail="benchmarks.csv not found")
+
+        df = pd.read_csv(csv_path, dtype=str, keep_default_na=False, na_filter=False)
+
+        # Safely coerce numeric columns; missing become None
+        def to_float_safe(x):
+            try:
+                xv = float(x)
+                if pd.isna(xv):
+                    return None
+                return xv
+            except Exception:
+                return None
+
+        result = []
+        for _, row in df.iterrows():
+            item = {
+                "name": row.get("name"),
+                "symbol": row.get("symbol"),
+                "type": row.get("type"),
+                "return_eur": to_float_safe(row.get("return_eur")),
+                "return_usd": to_float_safe(row.get("return_usd")),
+                "risk_eur": to_float_safe(row.get("risk_eur")),
+                "risk_usd": to_float_safe(row.get("risk_usd")),
+            }
+            result.append(item)
+
+        return {"benchmarks": result}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load benchmark risk/return: {str(e)}")
+
 @app.post("/api/create-index", response_model=IndexCreationResponse)
 async def create_index(request: IndexCreationRequest):
     """Create a custom stock index based on provided parameters"""
@@ -117,6 +161,7 @@ async def create_index(request: IndexCreationRequest):
         # Convert dataframes to JSON-serializable format
         index_data = result["index_df"]
         constituent_weights = result["constituent_weights"]
+        risk_return = result.get("risk_return")
         
         return IndexCreationResponse(
             success=True,
@@ -124,7 +169,8 @@ async def create_index(request: IndexCreationRequest):
             result={
                 "index_data": index_data,
                 "total_data_points": len(index_data),
-                "constituent_weights": constituent_weights
+                "constituent_weights": constituent_weights,
+                "risk_return": risk_return,
             }
         )
             

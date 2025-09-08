@@ -16,6 +16,7 @@ interface MakeIndexButtonProps {
   setIsCreatingIndex: React.Dispatch<React.SetStateAction<boolean>>;
   setCreationSeconds: React.Dispatch<React.SetStateAction<number>>;
   setIndexResult: (result: any) => void;
+  setIndexRiskReturn?: (rr: { risk: number; return: number } | null) => void;
 }
 
 const MakeIndexButton: React.FC<MakeIndexButtonProps> = ({
@@ -34,6 +35,7 @@ const MakeIndexButton: React.FC<MakeIndexButtonProps> = ({
   setIsCreatingIndex,
   setCreationSeconds,
   setIndexResult,
+  setIndexRiskReturn,
 }) => {
   const handleClick = async () => {
     try {
@@ -123,6 +125,14 @@ const MakeIndexButton: React.FC<MakeIndexButtonProps> = ({
         console.log('🔍 DEBUG - Constituent weights type:', typeof result.result.constituent_weights);
         console.log('🔍 DEBUG - Constituent weights length:', result.result.constituent_weights?.length);
         setIndexResult(result.result);
+        if (setIndexRiskReturn) {
+          const rr = result?.result?.risk_return;
+          if (rr && typeof rr.risk === 'number' && typeof rr.return === 'number') {
+            setIndexRiskReturn({ risk: rr.risk, return: rr.return });
+          } else {
+            setIndexRiskReturn(null);
+          }
+        }
       } else {
         alert(`Failed to create index: ${result.error}`);
       }
