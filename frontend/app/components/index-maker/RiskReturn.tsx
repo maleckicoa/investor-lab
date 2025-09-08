@@ -22,7 +22,7 @@ interface RiskReturnProps {
 }
 
 const RiskReturn: React.FC<RiskReturnProps> = ({ data, currency, width = 320, height = 220, zoom = 1, indexPoint = null }) => {
-  const padding = { top: 28, right: 20, bottom: 36, left: 56 };
+  const padding = { top: 28, right: 20, bottom: 50, left: 56 };
 
   const retKey = currency === 'EUR' ? 'return_eur' : 'return_usd';
   const riskKey = currency === 'EUR' ? 'risk_eur' : 'risk_usd';
@@ -66,11 +66,12 @@ const RiskReturn: React.FC<RiskReturnProps> = ({ data, currency, width = 320, he
   // Ensure X axis starts at 0%
   const baseMinX = Math.min(0, minX - spanX * 0.05);
   const baseMaxX = maxX + spanX * 0.05;
-  const baseMinY = minY - spanY * 0.05;
+  // Ensure Y axis starts at -20% but don't add extra margin below data
+  const baseMinY = Math.min(-0.2, minY - spanY * 0.02);
   const baseMaxY = maxY + spanY * 0.05;
 
   // PIXEL ZOOM: keep the data domain fixed to base (fit-all) and scale the canvas.
-  const z = Math.max(1, Math.min(5, Number.isFinite(zoom) ? (zoom as number) : 1));
+  const z = Math.max(0.2, Math.min(5, Number.isFinite(zoom) ? (zoom as number) : 1));
   const svgW = Math.round(width * z);
   const svgH = Math.round(height * z);
   const innerW = svgW - padding.left - padding.right;
@@ -104,9 +105,9 @@ const RiskReturn: React.FC<RiskReturnProps> = ({ data, currency, width = 320, he
       {/* ticks */}
       {(() => {
         const ticks: number[] = [];
-        const step = 0.5; // 50%
-        // Start at -50% and go up in 50% increments
-        const minTick = -0.5;
+        const step = 0.2; // 20%
+        // Start at -20% and go up in 20% increments
+        const minTick = -0.2;
         const maxTick = Math.ceil(domMaxY / step) * step;
         for (let v = minTick; v <= maxTick + 1e-9; v += step) {
           if (v + 1e-9 >= domMinY && v - 1e-9 <= domMaxY) {
@@ -152,8 +153,8 @@ const RiskReturn: React.FC<RiskReturnProps> = ({ data, currency, width = 320, he
               <circle
                 cx={xScale(p.x)}
                 cy={yScale(p.y)}
-                r={3}
-                fill={p.isIndex ? '#f59e0b' : (isHovered ? '#93c5fd' : '#2563eb')}
+                r={p.isIndex ? 6 : 3}
+                fill={p.isIndex ? '#ff6b35' : (isHovered ? '#93c5fd' : '#2563eb')}
                 onMouseEnter={() => setHoveredIdx(i)}
                 onMouseLeave={() => setHoveredIdx(null)}
               />
@@ -240,7 +241,7 @@ export function RiskReturnZoomSlider({ value, onChange, width = 140 }: { value: 
   return (
     <input
       type="range"
-      min={1}
+      min={0.2}
       max={5}
       step={0.1}
       value={value}
