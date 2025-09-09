@@ -188,6 +188,26 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
         >
           10Y
         </button>
+        <button
+          onClick={() => {
+            const endDate = new Date();
+            const earliest = '2014-01-01';
+            setIndexStartDate(earliest);
+            setIndexEndDate(endDate.toISOString().split('T')[0]);
+          }}
+          style={{
+            padding: '4px 8px',
+            fontSize: '11px',
+            backgroundColor: '#f3f4f6',
+            border: '1px solid #d1d5db',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            color: '#374151'
+          }}
+          title="Full available period"
+        >
+          All
+        </button>
       </div>
     </div>
   );

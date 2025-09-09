@@ -4,6 +4,9 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'Index Advisor',
   description: 'Financial Data Analysis and Index Creation Platform',
+  icons: {
+    icon: '/site-logo/site-logo.png'
+  }
 }
 
 export default function RootLayout({

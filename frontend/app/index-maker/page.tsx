@@ -9,14 +9,15 @@ import SectorSelector from '../components/index-maker/SectorSelector';
 import IndustrySelector from '../components/index-maker/IndustrySelector';
 import KPISelector from '../components/index-maker/KPISelector';
 import StockSearch from '../components/index-maker/StockSearch';
-import SelectionSummary from '../components/index-maker/SelectionSummary';
 import MakeIndexButton from '../components/index-maker/MakeIndexButton';
 import IndexCreationSummary from '../components/index-maker/IndexCreationSummary';
+import UserInstructions from '../components/index-maker/UserInstructions';
 import IndexLineChart from '../components/index-maker/IndexLineChart';
 import ConstituentWeightsTable from '../components/index-maker/ConstituentWeightsTable';
 import BenchmarkSelector from '../components/index-maker/BenchmarkSelector';
 import { useRef } from 'react';
 import RiskReturnSection from '../components/index-maker/RiskReturnSection';
+import IndexResults from '../components/index-maker/IndexResults';
 
 // Types for the API response
 interface IndexFields {
@@ -315,7 +316,7 @@ export default function IndexMakerPage() {
             animation: 'spin 1s linear infinite',
             margin: '0 auto 16px'
           }}></div>
-          <p style={{ color: '#6b7280' }}>Loading countries, sectors, industries and KPIs...</p>
+          <p style={{ color: '#6b7280' }}>Loading Index Maker...</p>
           <style jsx>{`
             @keyframes spin {
               0% { transform: rotate(0deg); }
@@ -362,15 +363,22 @@ export default function IndexMakerPage() {
   }
 
   return (
-    <div className="page-container" style={{ display: 'flex', width: '100%', height: '100vh' }}>
+    <div className="page-container" style={{ display: 'flex', width: '100%', height: '100vh', justifyContent: 'center', padding: '0 10vw' }}>
+      <div style={{ display: 'flex', width: '100%', height: '100vh' }}>
       {/* Left Panel - Index Maker Content */}
-      <div className="left-pane" style={{ width: '25%', padding: '24px', overflowY: 'auto', borderRight: '1px solid #e5e7eb', position: 'relative' }}>
+      <div className="left-pane" style={{ width: '30%', padding: '24px', overflowY: 'auto', borderRight: '1px solid #e5e7eb', position: 'relative' }}>
         <div style={{ backgroundColor: 'white', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', borderRadius: '8px', padding: '20px', width: '100%',  }}>
-          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', marginBottom: '12px' }}>
-            Index Maker
-          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', margin: 0 }}>
+              Index Maker
+            </h2>
+            <div style={{ marginLeft: 'auto' }}>
+              <UserInstructions />
+            </div>
+          </div>
           <p style={{ color: '#6b7280', marginBottom: '20px', fontSize: '14px' }}>
-            Create and manage custom stock indices by selecting sectors and industries
+            &nbsp;
+            &nbsp;
           </p>
           
                     {/* Index Size Slider */}
@@ -467,14 +475,22 @@ export default function IndexMakerPage() {
             getDropdownPosition={getDropdownPosition}
           />
 
-          {/* Summary */}
-          <SelectionSummary
-            selectedCountriesCount={selectedCountries.length}
-            selectedSectorsCount={selectedSectors.length}
-            selectedIndustriesCount={selectedIndustries.length}
-            selectedKPIs={selectedKPIs}
-            selectedStocksCount={selectedStocks.length}
-          />
+          {/* Benchmarks */}
+          <div style={{ marginTop: '12px' }}>
+            <BenchmarkSelector
+              benchmarks={benchmarks}
+              selectedBenchmarks={selectedBenchmarks}
+              setSelectedBenchmarks={setSelectedBenchmarks}
+              showBenchmarkDropdown={showBenchmarkDropdown}
+              setShowBenchmarkDropdown={setShowBenchmarkDropdown}
+              benchmarkDropdownPosition={benchmarkDropdownPosition}
+              setBenchmarkDropdownPosition={setBenchmarkDropdownPosition}
+              getDropdownPosition={getDropdownPosition}
+              handleBenchmarkToggle={handleBenchmarkToggle}
+            />
+          </div>
+
+          {/* Summary removed */}
 
           {/* Make Index Button */}
                         <div style={{
@@ -523,90 +539,16 @@ export default function IndexMakerPage() {
                                 </div>
             </div>
             
-      {/* Middle Panel - Graph Area */}
-      <div className="middle-pane" style={{ 
-        width: '50%', 
+      {/* Right Panel - Graph Area */}
+      <div className="right-pane" style={{ 
+        width: '70%',
         padding: '24px',
         backgroundColor: '#f8fafc',
-        borderLeft: '1px solid #e5e7eb',
-        borderRight: '1px solid #e5e7eb',
         overflowY: 'auto',
         height: '100vh'
       }}>
-        <div style={{ width: '100%', maxWidth: '800px' }}>
-          {/* Index Results Header */}
-          <div style={{ 
-            marginBottom: '24px',
-            padding: '20px',
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            border: '1px solid #e5e7eb',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 3v18h18"/>
-                <path d="m9 9 3 3 3-3"/>
-                <path d="M9 12h6"/>
-                <path d="M9 16h6"/>
-              </svg>
-              <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', margin: '0' }}>
-                Index Results
-              </h2>
-              {indexResult && (
-                <button
-                  onClick={() => setIndexResult(null)}
-                  style={{
-                    marginLeft: 'auto',
-                    padding: '6px 12px',
-                    backgroundColor: '#fee2e2',
-                    border: '1px solid #fecaca',
-                    borderRadius: '4px',
-                    color: '#dc2626',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                    fontWeight: '500'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#fecaca';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#fee2e2';
-                  }}
-                >
-                  Clear Results
-                </button>
-              )}
-            </div>
-            
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-              gap: '16px',
-              fontSize: '14px'
-            }}>
-              <div style={{ padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '6px', border: '1px solid #0ea5e9' }}>
-                <div style={{ fontWeight: '600', color: '#0c4a6e', marginBottom: '4px' }}>Total Data Points</div>
-                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#0ea5e9' }}>
-                  {indexResult ? indexResult.total_data_points : '--'}
-                </div>
-              </div>
-              <div style={{ padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '6px', border: '1px solid #22c55e' }}>
-                <div style={{ fontWeight: '600', color: '#166534', marginBottom: '4px' }}>Constituent Weights</div>
-                <div style={{ fontSize: '12px', color: '#166534', marginBottom: '6px' }}>Years and quarters included</div>
-                {indexResult ? (() => {
-                  const weights = (indexResult && indexResult.constituent_weights) ? indexResult.constituent_weights : {};
-                  const years = Object.keys(weights || {}).length;
-                  const quarters = Object.values(weights || {}).reduce((acc: number, q: any) => acc + Object.keys(q as any).length, 0);
-                  return (
-                    <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#22c55e' }}>{years} yrs • {quarters} qtrs</div>
-                  );
-                })() : (
-                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#22c55e' }}>--</div>
-                )}
-              </div>
-            </div>
-          </div>
+        <div style={{ width: '100%' }}>
+          <IndexResults indexResult={indexResult} indexRiskReturn={indexRiskReturn} onClear={() => { setIndexResult(null); setIndexRiskReturn(null); }} />
           
           {/* Index Data Display */}
           <div style={{ 
@@ -622,12 +564,8 @@ export default function IndexMakerPage() {
               backgroundColor: '#f9fafb'
             }}>
               <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#374151', margin: '0' }}>
-                Index Value (Line Chart)
+                Index & Benchmark Chart
               </h3>
-              <p style={{ fontSize: '12px', color: '#6b7280', margin: '8px 0 0 0' }}>
-                Showing index over time
-                {loadingBenchmarks && <span style={{ color: '#2563eb', marginLeft: '8px' }}>• Loading benchmarks...</span>}
-              </p>
             </div>
 
             <div className="chart-container" style={{ 
@@ -639,8 +577,8 @@ export default function IndexMakerPage() {
                 <IndexLineChart
                   data={indexResult?.index_data || []}
                   benchmarkData={benchmarkData}
-                  width={750}
-                  height={320}
+                  width={undefined}
+                  height={360}
                   startValue={indexStartAmount}
                 />
               ) : (
@@ -692,7 +630,6 @@ export default function IndexMakerPage() {
               <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#374151', margin: '0' }}>
                 Constituent Weights by Quarter
               </h3>
-              <p style={{ fontSize: '12px', color: '#6b7280', margin: '8px 0 0 0' }}>Columns are Year/Quarter from oldest to latest. Rows are constituents sorted by weight in the latest period.</p>
             </div>
             <div style={{ padding: '12px 20px' }}>
               {indexResult ? (
@@ -722,36 +659,6 @@ export default function IndexMakerPage() {
           </div>
         </div>
       </div>
-      
-      {/* Right Panel - Benchmark Selector */}
-      <div className="right-pane" style={{ 
-        width: '25%', 
-        padding: '24px',
-        backgroundColor: '#f8fafc',
-        borderLeft: '1px solid #e5e7eb',
-        overflowY: 'auto',
-        height: '100vh'
-      }}>
-        <div style={{ backgroundColor: 'white', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', borderRadius: '8px', padding: '20px', width: '100%' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', marginBottom: '12px' }}>
-            Benchmark Selection
-          </h2>
-          <p style={{ color: '#6b7280', marginBottom: '20px', fontSize: '14px' }}>
-            Select benchmarks to compare against your index
-          </p>
-          
-          <BenchmarkSelector
-            benchmarks={benchmarks}
-            selectedBenchmarks={selectedBenchmarks}
-            setSelectedBenchmarks={setSelectedBenchmarks}
-            showBenchmarkDropdown={showBenchmarkDropdown}
-            setShowBenchmarkDropdown={setShowBenchmarkDropdown}
-            benchmarkDropdownPosition={benchmarkDropdownPosition}
-            setBenchmarkDropdownPosition={setBenchmarkDropdownPosition}
-            getDropdownPosition={getDropdownPosition}
-            handleBenchmarkToggle={handleBenchmarkToggle}
-          />
-        </div>
       </div>
       
       <style jsx>{`
@@ -767,16 +674,11 @@ export default function IndexMakerPage() {
             max-height: 33vh;
             overflow-y: auto;
           }
-          .middle-pane {
+          .right-pane {
             width: 100% !important;
             border-left: none !important;
             border-right: none !important;
             border-bottom: 1px solid #e5e7eb;
-            min-height: 33vh;
-          }
-          .right-pane {
-            width: 100% !important;
-            border-left: none !important;
             min-height: 33vh;
           }
           
@@ -828,3 +730,4 @@ export default function IndexMakerPage() {
     </div>
   );
 }
+

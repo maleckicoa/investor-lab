@@ -223,7 +223,7 @@ const StockSearch: React.FC<StockSearchProps> = ({
             {/* Instructions */}
             {stockSearchQuery.length < 2 && (
               <div style={{ padding: '16px', textAlign: 'center', color: '#6b7280' }}>
-                Type at least 2 characters to search for companies
+                Type at least 2 letters...
               </div>
             )}
           </div>

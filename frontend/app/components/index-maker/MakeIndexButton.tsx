@@ -39,6 +39,7 @@ const MakeIndexButton: React.FC<MakeIndexButtonProps> = ({
 }) => {
   const handleClick = async () => {
     try {
+      /*
       if (selectedCountries.length === 0) {
         alert('Please select at least 1 country before creating an index.');
         return;
@@ -51,7 +52,7 @@ const MakeIndexButton: React.FC<MakeIndexButtonProps> = ({
         alert('Please select at least 1 industry before creating an index.');
         return;
       }
-
+      */
       setIsCreatingIndex(true);
       setCreationSeconds(0);
 

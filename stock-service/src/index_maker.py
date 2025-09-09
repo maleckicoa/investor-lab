@@ -37,14 +37,32 @@ def make_query(max_constituents,
                selected_stocks,
                kpis):
     
-    industries = "(" + ", ".join(f"'{i}'" for i in selected_industries) + ")"
-    sectors = "(" + ", ".join(f"'{s}'" for s in selected_sectors) + ")"
-    countries = "(" + ", ".join(f"'{c}'" for c in selected_countries) + ")"
-    
-    # Handle empty selected_stocks list to avoid SQL syntax error
-    if selected_stocks and len(selected_stocks) > 0:
-        selected_stocks_sql = "(" + ", ".join(f"'{c}'" for c in selected_stocks) + ")"
-        stocks_condition = f"OR symbol IN {selected_stocks_sql}"
+    if len(selected_countries) > 0:
+        countries = "(" + ", ".join(f"'{c}'" for c in selected_countries) + ")"
+        countries_condition = f"AND country IN {countries}"
+    else:
+        countries_condition = ""
+
+    if len(selected_sectors) > 0:
+        sectors = "(" + ", ".join(f"'{s}'" for s in selected_sectors) + ")"
+        sectors_condition = f"AND sector IN {sectors}"
+    else:
+        sectors_condition = ""
+
+    if len(selected_industries) > 0:
+        industries = "(" + ", ".join(f"'{i}'" for i in selected_industries) + ")"
+        industries_condition = f"AND industry IN {industries}"
+    else:
+        industries_condition = ""
+
+
+    if len(selected_stocks) > 0:
+        stocks = "(" + ", ".join(f"'{c}'" for c in selected_stocks) + ")"
+        if len(selected_industries)>0 or len(selected_sectors)>0 or len(selected_countries)>0 or len(kpis)>0: 
+            stocks_condition = f"OR symbol IN {stocks}"
+
+        else:
+            stocks_condition = f"AND symbol IN {stocks}"
     else:
         stocks_condition = ""
 
@@ -65,8 +83,7 @@ def make_query(max_constituents,
     active_kpis = [kpi for kpi, values in kpis.items() if values]
     kpi_cols        = ", ".join(active_kpis)
     prep3_kpi_cols  = ", ".join(f"p3.{kpi}" for kpi in active_kpis)
-    #prep6_kpi_cols  = ", ".join(f"prep6.{kpi}" for kpi in active_kpis)
-    prep6_kpi_cols = ", ".join(f"CAST(prep6.{kpi} AS FLOAT8) AS {kpi}" for kpi in active_kpis)
+    prep6_kpi_cols = ", ".join(f"CAST(p6.{kpi} AS FLOAT8) AS {kpi}" for kpi in active_kpis)
 
     import time
 
@@ -75,10 +92,10 @@ def make_query(max_constituents,
     WITH prep1 AS (
         SELECT symbol
         FROM raw.stock_info 
-        WHERE (country IN {countries}
-        AND industry IN {industries}
-        AND sector IN {sectors})
-        {stocks_condition}
+        WHERE 1=1
+        {countries_condition}
+        {industries_condition}
+        {sectors_condition}
     ),
     prep2 AS (
         SELECT *
@@ -130,29 +147,29 @@ def make_query(max_constituents,
         SELECT *
         FROM prep5
         WHERE mcap_rank <= {max_constituents}
-        {f"OR symbol IN {selected_stocks_sql}" if selected_stocks and len(selected_stocks) > 0 else ""}
+        {stocks_condition}
     ),
     prep8 AS (
         SELECT 
-            prep7.date,
-            prep7.symbol,
-            prep7.currency,
-            prep7.year,
-            prep7.quarter,
-            cast(prep7.last_quarter_date as BOOLEAN) as last_quarter_date,
-            CAST(prep7.close as FLOAT8) as close ,
-            CAST(prep7.close_eur as FLOAT8) as close_eur,
-            CAST(prep7.close_usd as FLOAT8) as close_usd,
-            CAST(prep6.market_cap as FLOAT8) as market_cap,
-            CAST(prep6.market_cap_eur as FLOAT8) as market_cap_eur, 
-            CAST(prep6.market_cap_usd as FLOAT8) as market_cap_usd,
+            p7.date,
+            p7.symbol,
+            p7.currency,
+            p7.year,
+            p7.quarter,
+            cast(p7.last_quarter_date as BOOLEAN) as last_quarter_date,
+            CAST(p7.close as FLOAT8) as close ,
+            CAST(p7.close_eur as FLOAT8) as close_eur,
+            CAST(p7.close_usd as FLOAT8) as close_usd,
+            CAST(p6.market_cap as FLOAT8) as market_cap,
+            CAST(p6.market_cap_eur as FLOAT8) as market_cap_eur, 
+            CAST(p6.market_cap_usd as FLOAT8) as market_cap_usd,
             {prep6_kpi_cols},
-            CAST(prep6.mcap_rank as INTEGER) as mcap_rank
-        FROM raw.historical_price_volume prep7
-        INNER JOIN prep6
-        ON prep7.symbol = prep6.symbol
-        AND prep7.year = prep6.next_year
-        AND prep7.quarter = prep6.next_quarter
+            CAST(p6.mcap_rank as INTEGER) as mcap_rank
+        FROM raw.historical_price_volume p7
+        INNER JOIN prep6 p6
+        ON p7.symbol = p6.symbol
+        AND p7.year = p6.next_year
+        AND p7.quarter = p6.next_quarter
         WHERE volume_eur > 100000
     )
     SELECT *

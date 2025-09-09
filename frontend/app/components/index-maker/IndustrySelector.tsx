@@ -233,7 +233,7 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
               Remove all
             </button>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', maxHeight: '15vh', overflowY: 'auto' }}>
             {selectedIndustries.map((industry) => (
               <span
                 key={industry}

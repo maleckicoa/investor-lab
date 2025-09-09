@@ -40,11 +40,9 @@ const RiskReturnSection: React.FC<RiskReturnSectionProps> = ({
         backgroundColor: '#f9fafb'
       }}>
         <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#374151', margin: '0' }}>
-          Risk • Return
+          Risk-Return Chart
         </h3>
-        <p style={{ fontSize: '12px', color: '#6b7280', margin: '8px 0 0 0' }}>
-          Each benchmark is a dot. X = Risk, Y = Return.
-        </p>
+
       </div>
       <div style={{ padding: '12px 20px' }}>
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>

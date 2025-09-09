@@ -57,7 +57,7 @@ const KPISelector: React.FC<KPISelectorProps> = ({
             e.currentTarget.style.backgroundColor = '#4f46e5';
           }}
         >
-          KPIs ({Object.keys(selectedKPIs).length} selected)
+          FUNDAMENTALS ({Object.keys(selectedKPIs).length} selected)
           <svg 
             width="14" 
             height="14" 
