@@ -41,6 +41,7 @@ class IndexCreationRequest(BaseModel):
     selectedIndustries: List[str]
     selectedKPIs: Dict[str, List[str]]
     selectedStocks: List[str]
+    weight: str = "cap" 
 
 class IndexCreationResponse(BaseModel):
     success: bool
@@ -155,7 +156,7 @@ async def create_index(request: IndexCreationRequest):
             industries=request.selectedIndustries,
             kpis=request.selectedKPIs,
             stocks=request.selectedStocks,
-            
+            weight=request.weight
         )
         
         # Convert dataframes to JSON-serializable format

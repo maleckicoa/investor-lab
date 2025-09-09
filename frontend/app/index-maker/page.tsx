@@ -18,6 +18,7 @@ import BenchmarkSelector from '../components/index-maker/BenchmarkSelector';
 import { useRef } from 'react';
 import RiskReturnSection from '../components/index-maker/RiskReturnSection';
 import IndexResults from '../components/index-maker/IndexResults';
+import WeightSelector from '../components/index-maker/WeightSelector';
 
 // Types for the API response
 interface IndexFields {
@@ -54,6 +55,7 @@ export default function IndexMakerPage() {
   const [indexEndDate, setIndexEndDate] = useState<string>(() => {
     return new Date().toISOString().split('T')[0];
   });
+  const [weight, setWeight] = useState<'cap' | 'equal'>('cap');
   // Ensure end date is never before start date
   useEffect(() => {
     if (indexEndDate < indexStartDate) {
@@ -385,12 +387,15 @@ export default function IndexMakerPage() {
           <IndexSizeSlider value={indexSize} onChange={setIndexSize} />
 
           {/* Index Currency and Start Amount Selection */}
-          <CurrencyAndStartAmount
-            indexCurrency={indexCurrency}
-            setIndexCurrency={setIndexCurrency}
-            indexStartAmount={indexStartAmount}
-            setIndexStartAmount={setIndexStartAmount}
-          />
+            <CurrencyAndStartAmount
+              indexCurrency={indexCurrency}
+              setIndexCurrency={setIndexCurrency}
+              indexStartAmount={indexStartAmount}
+              setIndexStartAmount={setIndexStartAmount}
+            />
+
+            {/* Weight Selection */}
+            <WeightSelector weight={weight} setWeight={setWeight} />
 
           {/* Index Date Range Selection */}
           <DateRangePicker
@@ -511,6 +516,7 @@ export default function IndexMakerPage() {
               selectedIndustries={selectedIndustries}
               selectedKPIs={selectedKPIs}
               selectedStocks={selectedStocks}
+              weight={weight}
               isCreatingIndex={isCreatingIndex}
               creationSeconds={creationSeconds}
               setIsCreatingIndex={setIsCreatingIndex}

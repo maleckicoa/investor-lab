@@ -11,6 +11,7 @@ interface MakeIndexButtonProps {
   selectedIndustries: string[];
   selectedKPIs: Record<string, string[]>;
   selectedStocks: string[];
+  weight: 'cap' | 'equal';
   isCreatingIndex: boolean;
   creationSeconds: number;
   setIsCreatingIndex: React.Dispatch<React.SetStateAction<boolean>>;
@@ -30,6 +31,7 @@ const MakeIndexButton: React.FC<MakeIndexButtonProps> = ({
   selectedIndustries,
   selectedKPIs,
   selectedStocks,
+  weight,
   isCreatingIndex,
   creationSeconds,
   setIsCreatingIndex,
@@ -91,6 +93,7 @@ const MakeIndexButton: React.FC<MakeIndexButtonProps> = ({
         selectedIndustries,
         selectedKPIs: parsedKPIs,
         selectedStocks,
+        weight,
       };
 
       console.log('🚀 MAKE INDEX BUTTON CLICKED!');

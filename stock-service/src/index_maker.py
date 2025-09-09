@@ -185,7 +185,8 @@ def make_query(max_constituents,
 ########################################################
 
 def make_index(df: pl.DataFrame,
-               index_currency: str = "EUR"
+               index_currency: str = "EUR",
+               weight: str = "cap"
                ) -> pl.DataFrame:
 
     ########## SETUP
@@ -214,25 +215,47 @@ def make_index(df: pl.DataFrame,
 
     ########### WEIGHTS PIVOT
 
-    daily_mcap_df = (
-        df.select(["date", "symbol", mcap_col])
-          .filter(pl.col(mcap_col).is_not_null())
-          .unique(subset=["date", "symbol"])
-    )
+    if weight == "cap":
 
-    total_mcap_df = (
-        daily_mcap_df
-        .group_by("date")
-        .agg(pl.col(mcap_col).sum().alias("total_mcap"))
-    )
+        daily_mcap_df = (
+            df.select(["date", "symbol", mcap_col])
+              .filter(pl.col(mcap_col).is_not_null())
+              .unique(subset=["date", "symbol"])
+        )
 
-    daily_weights_df = (
-        daily_mcap_df.join(total_mcap_df, on="date")
-                     .with_columns([
-                         (pl.col(mcap_col) / pl.col("total_mcap")).alias("weight")
-                     ])
-                     .select(["date", "symbol", "weight"])
-    )
+        total_mcap_df = (
+            daily_mcap_df
+            .group_by("date")
+            .agg(pl.col(mcap_col).sum().alias("total_mcap"))
+        )
+
+        daily_weights_df = (
+            daily_mcap_df.join(total_mcap_df, on="date")
+                         .with_columns([
+                             (pl.col(mcap_col) / pl.col("total_mcap")).alias("weight")
+                         ])
+                         .select(["date", "symbol", "weight"])
+        )
+    elif weight == "equal":
+
+        daily_weights_df = (
+            df.select(["date", "symbol"])
+              .unique(subset=["date", "symbol"])
+              .group_by("date")
+              .agg([
+                  pl.col("symbol").count().alias("stock_count")
+              ])
+              .join(
+                  df.select(["date", "symbol"]).unique(subset=["date", "symbol"]),
+                  on="date"
+              )
+              .with_columns([
+                  (1.0 / pl.col("stock_count")).alias("weight")
+              ])
+              .select(["date", "symbol", "weight"])
+        )
+    else:
+        raise ValueError(f"Invalid weight parameter: {weight}. Must be 'cap' or 'equal'.")
 
     weights_pivot = (
         daily_weights_df
@@ -345,45 +368,78 @@ def make_index(df: pl.DataFrame,
 ########################################################
 
 
-def make_constituent_weights(df: pl.DataFrame, index_currency: str = "EUR") -> pl.DataFrame:
+def make_constituent_weights(df: pl.DataFrame, index_currency: str = "EUR", weight: str = "cap") -> pl.DataFrame:
 
     mcap_col = "market_cap_eur" if index_currency == "EUR" else "market_cap_usd"
     companies_df = pl.read_csv("src/utils/fields/companies.csv")
     
-    # Get max market cap for each stock within each quarter and calculate weights
-    weights_df = (
-        df.select(["year", "quarter", "symbol", mcap_col])
-          .group_by(["year", "quarter", "symbol"])
-          .agg([
-              pl.col(mcap_col).max().alias("max_market_cap")
-          ])
-          .group_by(["year", "quarter"])
-          .agg([
-              pl.col("max_market_cap").sum().alias("total_mcap")
-          ])
-          .join(
-              df.select(["year", "quarter", "symbol", mcap_col])
-                .group_by(["year", "quarter", "symbol"])
-                .agg([
-                    pl.col(mcap_col).max().alias("max_market_cap")
-                ]),
-              on=["year", "quarter"]
-          )
-          .with_columns([
-              (pl.col("max_market_cap") / pl.col("total_mcap")).alias("weight")
-          ])
-          .filter(pl.col("weight") > 0)  # Only include companies with weight > 0
-          .join(
-              companies_df.select(["symbol", "company_name"]),
-              on="symbol",
-              how="left"
-          )
-          .with_columns([
-              pl.col("company_name").fill_null(pl.col("symbol"))  # Use symbol as fallback if name not found
-          ])
-          .select(["year", "quarter", "symbol", "company_name", "weight"])
-          .sort(["year", "quarter", "weight"], descending=[True, True, True])
-    )
+    if weight == "cap":
+        # Market cap weighted - current implementation
+        weights_df = (
+            df.select(["year", "quarter", "symbol", mcap_col])
+              .group_by(["year", "quarter", "symbol"])
+              .agg([
+                  pl.col(mcap_col).max().alias("max_market_cap")
+              ])
+              .group_by(["year", "quarter"])
+              .agg([
+                  pl.col("max_market_cap").sum().alias("total_mcap")
+              ])
+              .join(
+                  df.select(["year", "quarter", "symbol", mcap_col])
+                    .group_by(["year", "quarter", "symbol"])
+                    .agg([
+                        pl.col(mcap_col).max().alias("max_market_cap")
+                    ]),
+                  on=["year", "quarter"]
+              )
+              .with_columns([
+                  (pl.col("max_market_cap") / pl.col("total_mcap")).alias("weight")
+              ])
+              .filter(pl.col("weight") > 0)  # Only include companies with weight > 0
+              .join(
+                  companies_df.select(["symbol", "company_name"]),
+                  on="symbol",
+                  how="left"
+              )
+              .with_columns([
+                  pl.col("company_name").fill_null(pl.col("symbol"))  # Use symbol as fallback if name not found
+              ])
+              .select(["year", "quarter", "symbol", "company_name", "weight"])
+              .sort(["year", "quarter", "weight"], descending=[True, True, True])
+        )
+    elif weight == "equal":
+
+        weights_df = (
+            df.select(["year", "quarter", "symbol"])
+              .group_by(["year", "quarter", "symbol"])
+              .agg([
+                  pl.col("symbol").count().alias("dummy")  # Just to group by symbol
+              ])
+              .group_by(["year", "quarter"])
+              .agg([
+                  pl.col("symbol").count().alias("stock_count")
+              ])
+              .join(
+                  df.select(["year", "quarter", "symbol"]).unique(subset=["year", "quarter", "symbol"]),
+                  on=["year", "quarter"]
+              )
+              .with_columns([
+                  (1.0 / pl.col("stock_count")).alias("weight")
+              ])
+              .join(
+                  companies_df.select(["symbol", "company_name"]),
+                  on="symbol",
+                  how="left"
+              )
+              .with_columns([
+                  pl.col("company_name").fill_null(pl.col("symbol"))  # Use symbol as fallback if name not found
+              ])
+              .select(["year", "quarter", "symbol", "company_name", "weight"])
+              .sort(["year", "quarter", "weight"], descending=[True, True, True])
+        )
+    else:
+        raise ValueError(f"Invalid weight parameter: {weight}. Must be 'cap' or 'equal'.")
     
     return weights_df
 
@@ -496,7 +552,8 @@ def create_custom_index(index_size,
                         sectors, 
                         industries, 
                         kpis, 
-                        stocks):
+                        stocks,
+                        weight):
 
     try:
 
@@ -515,7 +572,8 @@ def create_custom_index(index_size,
 
         index_df = make_index(
             df,
-            index_currency=currency
+            index_currency=currency,
+            weight=weight
             )
         print(f"Index values calculated at {time.strftime('%Y-%m-%d %H:%M:%S')}")
 
@@ -531,7 +589,7 @@ def create_custom_index(index_size,
         )
         
 
-        constituent_weights = make_constituent_weights(df, currency)
+        constituent_weights = make_constituent_weights(df, currency, weight)
         print("constituent_weights")
         print(constituent_weights)
 
