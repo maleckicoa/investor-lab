@@ -98,6 +98,7 @@ def get_benchmarks():
             'symbol': symbol,
             'type': row['type'],
             'date': min_date,
+            'data_points': risk_return['data_points'],
             'return_eur': risk_return['return_eur'],
             'return_usd': risk_return['return_usd'],
             'risk_eur': risk_return['risk_eur'],
@@ -105,7 +106,8 @@ def get_benchmarks():
         }
         processed_benchmarks.append(benchmark_record)
     
-    result_df = pd.DataFrame(processed_benchmarks)    
+    result_df = pd.DataFrame(processed_benchmarks)
+    result_df = result_df[result_df['data_points'] != 0]
     return result_df
 
 def update_fields_file(countries_df, sectors_df, industries_df, kpis_df, companies_df, benchmarks_df):

@@ -119,35 +119,49 @@ def get_benchmark_historical_data(symbols: List[str],
 
 
 def calculate_benchmark_risk_return(df: pd.DataFrame) -> Dict[str, float]:
-    if df.empty:
-        return {
-            "return_eur": 0.0,
-            "return_usd": 0.0,
-            "risk_eur": 0.0,
-            "risk_usd": 0.0
-        }
-    
-    # Sort by date descending to get latest values first
-    df = df.sort_values('date', ascending=False)
-    
-    # Check if we have at least 5 years of data
-    first_date = df['date'].min()
-    last_date = df['date'].max()
-    days_between = (last_date - first_date).days
-    
-    if days_between < 5 * 250:
-        return {
-            "return_eur": 0.0,
-            "return_usd": 0.0,
-            "risk_eur": 0.0,
-            "risk_usd": 0.0
+
+    default_result = {
+        "data_points": 0,
+        "return_eur": 0.0,
+        "return_usd": 0.0,
+        "risk_eur": 0.0,
+        "risk_usd": 0.0
         }
 
+    if df.empty:
+        return default_result
+    
+    # if data has gap > 30 days, return default result
+    df = df.sort_values('date', ascending=False)
+    df["gap"] = df["date"].diff(periods=-1) 
+    has_gap = (df["gap"] > pd.Timedelta(days=30)).any()
+
+    if has_gap:
+        return default_result
+    
+    # Check if we have at least 5 years of data
+    today = pd.Timestamp.today().normalize().date()
+    first_date = df['date'].min()
+    last_date = df['date'].max()
+    days_between_min_max = (last_date - first_date).days
+    days_between_today_max = (today - last_date).days
+    
+    if days_between_min_max < 5 * 365:
+        return default_result
+
+    if days_between_today_max > 30:
+        return default_result
     results = {}
     
     # Calculate for both EUR and USD
     for currency in ['eur', 'usd']:
         col = f'close_{currency}'
+
+
+        ratio = df[col] / df[col].shift(-1)
+        has_outlier_jump = ((ratio >= 10) | (ratio <= 0.1)).any()
+        if has_outlier_jump:
+            return default_result
         
         # Calculate returns between t0 and t-250
         returns = []
@@ -157,9 +171,10 @@ def calculate_benchmark_risk_return(df: pd.DataFrame) -> Dict[str, float]:
                 break
             t0_val = values[i]
             t250_val = values[i + 250]
-            if t0_val and t250_val:  # Check for non-null values
+            if t0_val>=0 and t250_val>=0:
                 ret = (t0_val / t250_val) - 1
-                returns.append(ret)
+                if abs(ret) < 1000 :
+                    returns.append(ret)
         
         # Calculate average return
         avg_return = sum(returns) / len(returns) if returns else 0.0
@@ -174,5 +189,5 @@ def calculate_benchmark_risk_return(df: pd.DataFrame) -> Dict[str, float]:
             
         results[f'return_{currency}'] = round(float(avg_return), 4)
         results[f'risk_{currency}'] = round(float(risk), 4)
-    
+        results["data_points"] = len(returns)
     return results

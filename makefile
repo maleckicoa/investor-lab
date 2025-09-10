@@ -31,9 +31,8 @@ historical:
 	poetry run --directory etl-service python -m historical_main
 
 historical-forex-full:
+	poetry run --directory etl-service python -m src.historical.historical_forex
 	poetry run --directory etl-service python -m src.historical.historical_forex_full
-
-
 
 
 fields:

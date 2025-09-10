@@ -82,7 +82,7 @@ export default function IndexMakerPage() {
   const [error, setError] = useState<string | null>(null);
   const [riskReturnData, setRiskReturnData] = useState<any[]>([]);
   const [indexRiskReturn, setIndexRiskReturn] = useState<{ risk: number; return: number } | null>(null);
-  const [riskReturnZoom, setRiskReturnZoom] = useState<number>(1);
+  const [riskReturnZoom, setRiskReturnZoom] = useState<number>(0.8);
   const rrRef = useRef<any>(null);
   
   // Spinner state for index creation

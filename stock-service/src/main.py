@@ -127,6 +127,8 @@ async def get_benchmark_risk_return():
                 "name": row.get("name"),
                 "symbol": row.get("symbol"),
                 "type": row.get("type"),
+                "date": row.get("date"),
+                "data_points": to_float_safe(row.get("data_points")),
                 "return_eur": to_float_safe(row.get("return_eur")),
                 "return_usd": to_float_safe(row.get("return_usd")),
                 "risk_eur": to_float_safe(row.get("risk_eur")),

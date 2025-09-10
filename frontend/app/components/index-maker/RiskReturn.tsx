@@ -4,6 +4,8 @@ type BenchmarkRR = {
   name: string;
   symbol: string;
   type?: string;
+  date?: string;
+  data_points?: number | string | null;
   return_eur?: number | string | null;
   return_usd?: number | string | null;
   risk_eur?: number | string | null;
@@ -66,8 +68,8 @@ const RiskReturn: React.FC<RiskReturnProps> = ({ data, currency, width = 320, he
   // Ensure X axis starts at 0%
   const baseMinX = Math.min(0, minX - spanX * 0.05);
   const baseMaxX = maxX + spanX * 0.05;
-  // Ensure Y axis starts at -20% but don't add extra margin below data
-  const baseMinY = Math.min(-0.2, minY - spanY * 0.02);
+  // Ensure Y axis starts at -10% but don't add extra margin below data
+  const baseMinY = Math.min(-0.1, minY - spanY * 0.02);
   const baseMaxY = maxY + spanY * 0.05;
 
   // PIXEL ZOOM: keep the data domain fixed to base (fit-all) and scale the canvas.
@@ -105,9 +107,9 @@ const RiskReturn: React.FC<RiskReturnProps> = ({ data, currency, width = 320, he
       {/* ticks */}
       {(() => {
         const ticks: number[] = [];
-        const step = 0.2; // 20%
-        // Start at -20% and go up in 20% increments
-        const minTick = -0.2;
+        const step = 0.1; // 10%
+        // Start at -10% and go up in 10% increments
+        const minTick = -0.1;
         const maxTick = Math.ceil(domMaxY / step) * step;
         for (let v = minTick; v <= maxTick + 1e-9; v += step) {
           if (v + 1e-9 >= domMinY && v - 1e-9 <= domMaxY) {
@@ -205,7 +207,18 @@ const RiskReturn: React.FC<RiskReturnProps> = ({ data, currency, width = 320, he
           `Return: ${(p.y * 100).toFixed(1)}%`,
           `Risk: ${(p.x * 100).toFixed(1)}%`,
         ];
-        const lines = [...nameLines, ...symbolLines, ...detailLines];
+        
+        // Add Index Start Date and Data Points if available
+        const benchmarkData = data.find(b => b.symbol === p.symbol);
+        if (benchmarkData) {
+          if (benchmarkData.date) {
+            detailLines.push(`Index Start Date: ${benchmarkData.date}`);
+          }
+          if (benchmarkData.data_points !== null && benchmarkData.data_points !== undefined) {
+            detailLines.push(`Data Points: ${benchmarkData.data_points}`);
+          }
+        }
+        const lines = [...nameLines, '', ...symbolLines, ...detailLines];
         const boxH = lines.length * lineH + 8;
 
         let tx = px + 8;

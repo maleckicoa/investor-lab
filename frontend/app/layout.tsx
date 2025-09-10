@@ -34,13 +34,25 @@ export default function RootLayout({
                 alignItems: 'center', 
                 padding: '1.5rem 0' 
               }}>
-                <h1 style={{ 
-                  fontSize: '1.875rem', 
-                  fontWeight: 'bold', 
-                  color: '#111827' 
-                }}>
-                  Index Advisor
-                </h1>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px' }}>
+                  <img 
+                    src="/site-logo/site-logo.png" 
+                    alt="Index Advisor" 
+                    style={{ 
+                      height: '60px',
+                      width: 'auto'
+                    }}
+                  />
+                  <h1 style={{ 
+                    fontSize: '1.5rem', 
+                    fontWeight: 'bold', 
+                    color: '#111827',
+                    margin: 0,
+                    paddingBottom: '4px'
+                  }}>
+                    Investor Lab
+                  </h1>
+                </div>
                 <nav style={{ display: 'flex', gap: '2rem' }}>
                   <a href="/" style={{ 
                     color: '#111827', 

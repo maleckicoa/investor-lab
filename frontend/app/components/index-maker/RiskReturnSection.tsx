@@ -62,7 +62,7 @@ const RiskReturnSection: React.FC<RiskReturnSectionProps> = ({
           <RiskReturnZoomSlider value={riskReturnZoom} onChange={(n) => setRiskReturnZoom(n)} />
           <button
             onClick={() => {
-              setRiskReturnZoom(1);
+              setRiskReturnZoom(0.8);
               const el = riskReturnContainerRef.current;
               if (el) {
                 requestAnimationFrame(() => {
@@ -81,7 +81,7 @@ const RiskReturnSection: React.FC<RiskReturnSectionProps> = ({
               data={riskReturnData as any}
               currency={indexCurrency}
               width={800}
-              height={5000}
+              height={1200}
               zoom={riskReturnZoom}
               indexPoint={{ x: indexRiskReturn.risk, y: indexRiskReturn.return, name: 'Your Index', symbol: 'INDEX' }}
             />

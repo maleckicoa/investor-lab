@@ -12,8 +12,14 @@ etf_symbols: Dict[str, Dict[str, str]] = {
     "SMH": {"name": "VanEck Semiconductor ETF", "currency": "USD"},
     "QQQ": {"name": "Invesco QQQ Trust", "currency": "USD"},
     "VVSM.DE": {"name": "VanEck Semiconductor UCITS ETF", "currency": "EUR"}
-}
+    }
 
+excluded_index_symbols: Dict[str, str] = {
+    '^IRX': '13 Week Treasury Bill Index',
+    '^FVX': 'Treasury Yield 5 Years Index',
+    '^TNX': 'Treasury Yield 10 Years Index',
+    '^TYX': 'Treasury Yield 30 Years Index'
+    }
 
 class BenchmarkManager:
     def __init__(self):
@@ -27,9 +33,9 @@ class BenchmarkManager:
         for src in (indices or []):
             sym = src.get("symbol")
             name = src.get("name")
-            # Currency could be exposed as 'currency' or 'priceCurrency' depending on API response
-            currency = src.get("currency") or src.get("priceCurrency") or "USD"
-            if sym and name:
+            currency = src.get("currency")  or "USD"
+
+            if sym and name and sym not in excluded_index_symbols:
                 items.append({"symbol": sym, "name": name, "type": "index", "currency": currency})
         # Also include selected ETF symbols explicitly
         for sym, meta in etf_symbols.items():
