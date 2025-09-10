@@ -60,12 +60,21 @@ def read_index_fields_from_csv() -> Dict[str, Any]:
         kpis_path = os.path.join(fields_dir, 'kpis.csv')
         if os.path.exists(kpis_path):
             kpis_df = pd.read_csv(kpis_path, dtype=str, keep_default_na=False, na_filter=False)
-            for _, row in kpis_df.iterrows():
-                kpi_name = row["kpi_name"].strip()
-                kpi_value = row["kpi_value"].strip()
-                if kpi_name not in result["kpis"]:
-                    result["kpis"][kpi_name] = []
-                result["kpis"][kpi_name].append(kpi_value)
+
+            # Vectorized build of kpi_labels mapping (kpi_name -> kpi_name_clean) if available
+            if 'kpi_name_clean' in kpis_df.columns:
+                labels_df = kpis_df[["kpi_name", "kpi_name_clean"]].drop_duplicates().copy()
+                labels_df["kpi_name"] = labels_df["kpi_name"].astype(str).str.strip()
+                labels_df["kpi_name_clean"] = labels_df["kpi_name_clean"].astype(str).str.strip()
+                labels_df = labels_df[(labels_df["kpi_name"] != "") & (labels_df["kpi_name_clean"] != "")]
+                result["kpi_labels"] = dict(zip(labels_df["kpi_name"], labels_df["kpi_name_clean"]))
+
+            # Vectorized build of kpis mapping (kpi_name -> list[kpi_value])
+            kv_df = kpis_df[["kpi_name", "kpi_value"]].copy()
+            kv_df["kpi_name"] = kv_df["kpi_name"].astype(str).str.strip()
+            kv_df["kpi_value"] = kv_df["kpi_value"].astype(str).str.strip()
+            kv_df = kv_df[(kv_df["kpi_name"] != "") & (kv_df["kpi_value"] != "")]
+            result["kpis"] = kv_df.groupby("kpi_name")["kpi_value"].apply(list).to_dict()
     except Exception as e:
         print(f"Warning: Could not read kpis.csv: {e}")
     

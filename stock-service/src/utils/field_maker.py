@@ -50,7 +50,7 @@ def get_industries():
 def get_kpis():
     # Import the query from the existing file
     kpi_df = run_query(kpi_query)
-    kpi_df['kpi_name'] = (kpi_df['kpi_name']
+    kpi_df['kpi_name_clean'] = (kpi_df['kpi_name']
         .astype(str)
         .str.replace('_', ' ', regex=False)
         .str.title()

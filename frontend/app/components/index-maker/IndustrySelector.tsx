@@ -42,7 +42,7 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
             setShowIndustryDropdown(newState);
           }}
           style={{
-            backgroundColor: '#059669',
+            backgroundColor: '#2563eb',
             color: 'white',
             border: 'none',
             padding: '10px 20px',
@@ -57,10 +57,10 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
             width: '100%'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#047857';
+            e.currentTarget.style.backgroundColor = '#1d4ed8';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#059669';
+            e.currentTarget.style.backgroundColor = '#2563eb';
           }}
         >
           INDUSTRIES ({selectedIndustries.length} selected)
@@ -123,7 +123,7 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
                         width: '100%',
                         padding: '6px 12px 6px 24px',
                         border: 'none',
-                        backgroundColor: isSelected ? '#d1fae5' : 'transparent',
+                        backgroundColor: isSelected ? '#f0f9ff' : 'transparent',
                         textAlign: 'left',
                         fontSize: '13px',
                         color: '#111827',
@@ -150,7 +150,7 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
                         height: '12px', 
                         border: '2px solid #d1d5db',
                         borderRadius: '2px',
-                        backgroundColor: isSelected ? '#059669' : 'transparent',
+                        backgroundColor: isSelected ? '#0ea5e9' : 'transparent',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center'
@@ -162,7 +162,7 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
                         )}
                       </div>
                       <span style={{ 
-                        color: isSelected ? '#065f46' : '#111827',
+                        color: isSelected ? '#1d4ed8' : '#111827',
                         fontWeight: isSelected ? '500' : '400'
                       }}>
                         {industry}
@@ -181,8 +181,8 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
         <div style={{ 
           marginTop: '12px',
           padding: '8px 12px',
-          backgroundColor: '#f0fdf4',
-          border: '1px solid #22c55e',
+          backgroundColor: '#f0f9ff',
+          border: '1px solid #0ea5e9',
           borderRadius: '6px'
         }}>
           <div style={{ 
@@ -200,7 +200,7 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
                 <path d="M9 12l2 2 4-4"/>
                 <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
               </svg>
-              <span style={{ color: '#166534', fontWeight: '500', fontSize: '12px' }}>
+              <span style={{ color: '#0c4a6e', fontWeight: '500', fontSize: '12px' }}>
                 Selected Industries ({selectedIndustries.length})
               </span>
             </div>
@@ -211,8 +211,8 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
               }}
               style={{
                 background: 'none',
-                border: '1px solid #22c55e',
-                color: '#22c55e',
+                border: '1px solid #0ea5e9',
+                color: '#0ea5e9',
                 cursor: 'pointer',
                 fontSize: '10px',
                 fontWeight: '500',
@@ -221,12 +221,12 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
                 transition: 'all 0.2s'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#22c55e';
+                e.currentTarget.style.backgroundColor = '#0ea5e9';
                 e.currentTarget.style.color = 'white';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = '#22c55e';
+                e.currentTarget.style.color = '#0ea5e9';
               }}
               title="Remove all industries and sectors"
             >
@@ -238,7 +238,7 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
               <span
                 key={industry}
                 style={{
-                  backgroundColor: '#22c55e',
+                  backgroundColor: '#0ea5e9',
                   color: 'white',
                   padding: '2px 6px',
                   borderRadius: '4px',

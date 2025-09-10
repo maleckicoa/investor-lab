@@ -45,7 +45,7 @@ const BenchmarkSelector: React.FC<BenchmarkSelectorProps> = ({
             setShowBenchmarkDropdown(newState);
           }}
           style={{
-            backgroundColor: '#2563eb',
+            backgroundColor: '#6b7280',
             color: 'white',
             border: 'none',
             padding: '10px 20px',
@@ -60,10 +60,10 @@ const BenchmarkSelector: React.FC<BenchmarkSelectorProps> = ({
             width: '100%'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#1d4ed8';
+            e.currentTarget.style.backgroundColor = '#4b5563';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#2563eb';
+            e.currentTarget.style.backgroundColor = '#6b7280';
           }}
         >
           BENCHMARKS ({selectedBenchmarks.length} selected)
@@ -117,7 +117,7 @@ const BenchmarkSelector: React.FC<BenchmarkSelectorProps> = ({
                     width: '100%',
                     padding: '8px 12px',
                     border: 'none',
-                    backgroundColor: isSelected ? '#dbeafe' : 'transparent',
+                    backgroundColor: isSelected ? '#f9fafb' : 'transparent',
                     textAlign: 'left',
                     fontSize: '13px',
                     color: '#111827',
@@ -144,7 +144,7 @@ const BenchmarkSelector: React.FC<BenchmarkSelectorProps> = ({
                     height: '14px', 
                     border: '2px solid #d1d5db',
                     borderRadius: '3px',
-                    backgroundColor: isSelected ? '#2563eb' : 'transparent',
+                    backgroundColor: isSelected ? '#6b7280' : 'transparent',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -157,7 +157,7 @@ const BenchmarkSelector: React.FC<BenchmarkSelectorProps> = ({
                     )}
                   </div>
                   <span style={{ 
-                    color: isSelected ? '#1e40af' : '#111827',
+                    color: isSelected ? '#374151' : '#111827',
                     fontWeight: isSelected ? '600' : '400'
                   }}>
                     {benchmark.name} - {benchmark.symbol}
@@ -175,8 +175,8 @@ const BenchmarkSelector: React.FC<BenchmarkSelectorProps> = ({
         <div style={{ 
           marginTop: '12px',
           padding: '8px 12px',
-          backgroundColor: '#f0f9ff',
-          border: '1px solid #0ea5e9',
+          backgroundColor: '#f9fafb',
+          border: '1px solid #6b7280',
           borderRadius: '6px'
         }}>
           <div style={{ 
@@ -194,7 +194,7 @@ const BenchmarkSelector: React.FC<BenchmarkSelectorProps> = ({
                 <path d="M9 12l2 2 4-4"/>
                 <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
               </svg>
-              <span style={{ color: '#0c4a6e', fontWeight: '500', fontSize: '12px' }}>
+              <span style={{ color: '#374151', fontWeight: '500', fontSize: '12px' }}>
                 Selected Benchmarks ({selectedBenchmarks.length})
               </span>
             </div>
@@ -202,8 +202,8 @@ const BenchmarkSelector: React.FC<BenchmarkSelectorProps> = ({
               onClick={() => setSelectedBenchmarks([])}
               style={{
                 background: 'none',
-                border: '1px solid #0ea5e9',
-                color: '#0ea5e9',
+                border: '1px solid #6b7280',
+                color: '#6b7280',
                 cursor: 'pointer',
                 fontSize: '10px',
                 fontWeight: '500',
@@ -212,12 +212,12 @@ const BenchmarkSelector: React.FC<BenchmarkSelectorProps> = ({
                 transition: 'all 0.2s'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#0ea5e9';
+                e.currentTarget.style.backgroundColor = '#6b7280';
                 e.currentTarget.style.color = 'white';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = '#0ea5e9';
+                e.currentTarget.style.color = '#6b7280';
               }}
               title="Remove all benchmarks"
             >
@@ -231,7 +231,7 @@ const BenchmarkSelector: React.FC<BenchmarkSelectorProps> = ({
                 <span
                   key={benchmarkSymbol}
                   style={{
-                    backgroundColor: '#0ea5e9',
+                    backgroundColor: '#6b7280',
                     color: 'white',
                     padding: '2px 6px',
                     borderRadius: '4px',

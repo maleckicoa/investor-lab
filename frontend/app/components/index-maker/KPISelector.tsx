@@ -9,6 +9,7 @@ interface KPISelectorProps {
   kpiDropdownPosition: { top: number; left: number };
   setKpiDropdownPosition: (position: { top: number; left: number }) => void;
   getDropdownPosition: (buttonElement: HTMLElement) => { top: number; left: number };
+  kpiLabels?: Record<string, string>; // mapping from kpi_name to kpi_name_clean for display
 }
 
 const KPISelector: React.FC<KPISelectorProps> = ({
@@ -19,7 +20,8 @@ const KPISelector: React.FC<KPISelectorProps> = ({
   setShowKPIDropdown,
   kpiDropdownPosition,
   setKpiDropdownPosition,
-  getDropdownPosition
+  getDropdownPosition,
+  kpiLabels = {}
 }) => {
   return (
     <div style={{ marginBottom: '20px' }}>
@@ -36,7 +38,7 @@ const KPISelector: React.FC<KPISelectorProps> = ({
             setShowKPIDropdown(newState);
           }}
           style={{
-            backgroundColor: '#4f46e5',
+            backgroundColor: '#2563eb',
             color: 'white',
             border: 'none',
             padding: '10px 20px',
@@ -51,10 +53,10 @@ const KPISelector: React.FC<KPISelectorProps> = ({
             width: '100%'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#4338ca';
+            e.currentTarget.style.backgroundColor = '#1d4ed8';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#4f46e5';
+            e.currentTarget.style.backgroundColor = '#2563eb';
           }}
         >
           FUNDAMENTALS ({Object.keys(selectedKPIs).length} selected)
@@ -96,6 +98,7 @@ const KPISelector: React.FC<KPISelectorProps> = ({
             {Object.entries(kpis).map(([kpiName, kpiValues]) => {
               const isSelected = !!selectedKPIs[kpiName];
               const selectedValues = selectedKPIs[kpiName] || [];
+              const displayName = kpiLabels[kpiName] || kpiName;
               
               return (
                 <div key={kpiName} style={{
@@ -114,7 +117,7 @@ const KPISelector: React.FC<KPISelectorProps> = ({
                       fontWeight: '600',
                       color: '#374151'
                     }}>
-                      {kpiName}
+                      {displayName}
                     </span>
                     <div style={{
                       display: 'flex',
@@ -278,7 +281,9 @@ const KPISelector: React.FC<KPISelectorProps> = ({
           
           {/* KPI Values Display */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {Object.entries(selectedKPIs).map(([kpiName, selectedValues]) => (
+            {Object.entries(selectedKPIs).map(([kpiName, selectedValues]) => {
+              const displayName = kpiLabels[kpiName] || kpiName;
+              return (
               <div key={kpiName} style={{ 
                 display: 'flex', 
                 flexDirection: 'column',
@@ -298,7 +303,7 @@ const KPISelector: React.FC<KPISelectorProps> = ({
                     fontWeight: '500',
                     color: '#374151'
                   }}>
-                    {kpiName}
+                    {displayName}
                   </span>
                   
                   <button
@@ -311,19 +316,21 @@ const KPISelector: React.FC<KPISelectorProps> = ({
                     }}
                     style={{
                       padding: '2px 6px',
-                      backgroundColor: '#fee2e2',
-                      border: '1px solid #fecaca',
+                      backgroundColor: 'transparent',
+                      border: '1px solid #0ea5e9',
                       borderRadius: '3px',
-                      color: '#dc2626',
+                      color: '#0ea5e9',
                       fontSize: '9px',
                       cursor: 'pointer',
-                      transition: 'background-color 0.2s'
+                      transition: 'background-color 0.2s, color 0.2s'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#fecaca';
+                      e.currentTarget.style.backgroundColor = '#0ea5e9';
+                      e.currentTarget.style.color = 'white';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = '#fee2e2';
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.color = '#0ea5e9';
                     }}
                   >
                     Remove
@@ -381,7 +388,7 @@ const KPISelector: React.FC<KPISelectorProps> = ({
                   ))}
                 </div>
               </div>
-            ))}
+            );})}
           </div>
         </div>
       )}

@@ -49,7 +49,7 @@ const StockSearch: React.FC<StockSearchProps> = ({
             setShowStockSearch(newState);
           }}
           style={{
-            backgroundColor: '#dc2626',
+            backgroundColor: '#ef4444',
             color: 'white',
             border: 'none',
             padding: '10px 20px',
@@ -64,10 +64,10 @@ const StockSearch: React.FC<StockSearchProps> = ({
             width: '100%'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#b91c1c';
+            e.currentTarget.style.backgroundColor = '#dc2626';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#dc2626';
+            e.currentTarget.style.backgroundColor = '#ef4444';
           }}
         >
           STOCKS ({selectedStocks.length} selected)

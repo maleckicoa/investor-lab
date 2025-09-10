@@ -96,22 +96,6 @@ const MakeIndexButton: React.FC<MakeIndexButtonProps> = ({
         weight,
       };
 
-      console.log('🚀 MAKE INDEX BUTTON CLICKED!');
-      console.log('📊 Index Configuration:');
-      console.log('   • Size:', indexSize, 'stocks');
-      console.log('   • Currency:', indexCurrency);
-      console.log('   • Start Amount:', indexStartAmount);
-      console.log('   • Date Range:', indexStartDate, 'to', indexEndDate);
-      console.log('');
-      console.log('🌍 Selected Countries:', selectedCountries);
-      console.log('🏢 Selected Sectors:', selectedSectors);
-      console.log('🏭 Selected Industries:', selectedIndustries);
-      console.log('📈 Selected KPIs (Original):', selectedKPIs);
-      console.log('📈 Selected KPIs (Parsed with _perc):', parsedKPIs);
-      console.log('💼 Selected Stocks:', selectedStocks);
-      console.log('');
-      console.log('📦 Full Payload:', payload);
-      console.log('');
 
       const response = await fetch('/api/create-index', {
         method: 'POST',
@@ -122,12 +106,6 @@ const MakeIndexButton: React.FC<MakeIndexButtonProps> = ({
       const result = await response.json();
 
       if (response.ok) {
-        console.log('✅ Index created successfully:', result.result);
-        console.log('🔍 DEBUG - Index data received:', result.result.index_data?.slice(0, 3));
-        console.log('🔍 DEBUG - Total data points:', result.result.total_data_points);
-        console.log('🔍 DEBUG - Constituent weights received:', result.result.constituent_weights?.slice(0, 5));
-        console.log('🔍 DEBUG - Constituent weights type:', typeof result.result.constituent_weights);
-        console.log('🔍 DEBUG - Constituent weights length:', result.result.constituent_weights?.length);
         setIndexResult(result.result);
         if (setIndexRiskReturn) {
           const rr = result?.result?.risk_return;

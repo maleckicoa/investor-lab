@@ -36,4 +36,3 @@ __pycache__/
 Thumbs.db
 
 stock-service/src/utils/fields/*.csv
-stock-service/src/utils/fields/

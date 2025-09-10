@@ -26,6 +26,7 @@ interface IndexFields {
   sectors: string[];
   industries: Record<string, string[]>;
   kpis: Record<string, string[]>;
+  kpi_labels?: Record<string, string>; // added mapping for clean UI labels
   companies: Array<{company_name: string, symbol: string}>;
   benchmarks: Array<{name: string, symbol: string, type: string, date: string}>;
 }
@@ -40,6 +41,7 @@ export default function IndexMakerPage() {
   const [sectors, setSectors] = useState<string[]>(['Technology']);
   const [industries, setIndustries] = useState<Record<string, string[]>>({});
   const [kpis, setKpis] = useState<Record<string, string[]>>({});
+  const [kpiLabels, setKpiLabels] = useState<Record<string, string>>({});
   const [selectedCountries, setSelectedCountries] = useState<string[]>(['US']);
   const [selectedSectors, setSelectedSectors] = useState<string[]>(['Technology']);
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
@@ -48,7 +50,7 @@ export default function IndexMakerPage() {
   const [selectedStocks, setSelectedStocks] = useState<string[]>([]);
   const [benchmarks, setBenchmarks] = useState<Array<{name: string, symbol: string, type: string, date: string}>>([]);
   const [selectedBenchmarks, setSelectedBenchmarks] = useState<string[]>(['SPY', 'SMH', '^NDX', '^GDAXI']);
-  const [indexSize, setIndexSize] = useState<number>(100);
+  const [indexSize, setIndexSize] = useState<number>(50);
   const [indexCurrency, setIndexCurrency] = useState<'USD' | 'EUR'>('USD');
   const [indexStartAmount, setIndexStartAmount] = useState<number>(1000);
   const [indexStartDate, setIndexStartDate] = useState<string>('2014-01-01');
@@ -174,6 +176,7 @@ export default function IndexMakerPage() {
         setSectors(data.sectors);
         setIndustries(data.industries);
         setKpis(data.kpis);
+        setKpiLabels(data.kpi_labels || {});
         setCompanies(data.companies || []);
         setBenchmarks(data.benchmarks || []);
         // fetch risk/return data in parallel route
@@ -378,10 +381,38 @@ export default function IndexMakerPage() {
               <UserInstructions />
             </div>
           </div>
-          <p style={{ color: '#6b7280', marginBottom: '20px', fontSize: '14px' }}>
+          <p style={{ color: '#6b7280', marginBottom: '8px', fontSize: '14px' }}>
             &nbsp;
             &nbsp;
           </p>
+          {/* Upper Make Index Button */}
+          <div style={{
+            marginBottom: '25px',
+            padding: '20px',
+            backgroundColor: '#f8fafc',
+            borderRadius: '8px',
+            border: '1px solid #e2e8f0'
+          }}>
+            <MakeIndexButton
+              indexSize={indexSize}
+              indexCurrency={indexCurrency}
+              indexStartAmount={indexStartAmount}
+              indexStartDate={indexStartDate}
+              indexEndDate={indexEndDate}
+              selectedCountries={selectedCountries}
+              selectedSectors={selectedSectors}
+              selectedIndustries={selectedIndustries}
+              selectedKPIs={selectedKPIs}
+              selectedStocks={selectedStocks}
+              weight={weight}
+              isCreatingIndex={isCreatingIndex}
+              creationSeconds={creationSeconds}
+              setIsCreatingIndex={setIsCreatingIndex}
+              setCreationSeconds={setCreationSeconds}
+              setIndexResult={setIndexResult}
+              setIndexRiskReturn={setIndexRiskReturn}
+            />
+          </div>
           
                     {/* Index Size Slider */}
           <IndexSizeSlider value={indexSize} onChange={setIndexSize} />
@@ -462,6 +493,7 @@ export default function IndexMakerPage() {
             kpiDropdownPosition={kpiDropdownPosition}
             setKpiDropdownPosition={setKpiDropdownPosition}
             getDropdownPosition={getDropdownPosition}
+            kpiLabels={kpiLabels}
           />
 
           {/* Stock Search */}
@@ -604,7 +636,7 @@ export default function IndexMakerPage() {
                       <path d="M9 12h6"/>
                       <path d="M9 16h6"/>
                     </svg>
-                    <p style={{ fontSize: '14px', margin: '0' }}>No data to display</p>
+                    <p style={{ fontSize: '14px', margin: '0' }}>Make Index to display data</p>
                   </div>
                 </div>
               )}
@@ -657,7 +689,7 @@ export default function IndexMakerPage() {
                       <path d="M9 12h6"/>
                       <path d="M9 16h6"/>
                     </svg>
-                    <p style={{ fontSize: '14px', margin: '0' }}>No data to display</p>
+                    <p style={{ fontSize: '14px', margin: '0' }}>Make Index to display data</p>
                   </div>
                 </div>
               )}

@@ -26,6 +26,18 @@ const RiskReturnSection: React.FC<RiskReturnSectionProps> = ({
     }
   }, [riskReturnData, indexCurrency]);
 
+  // Scroll to bottom when index gets created (indexRiskReturn becomes available)
+  useEffect(() => {
+    if (indexRiskReturn) {
+      const el = riskReturnContainerRef.current;
+      if (el) {
+        requestAnimationFrame(() => {
+          el.scrollTo({ top: el.scrollHeight, left: 0, behavior: 'auto' });
+        });
+      }
+    }
+  }, [indexRiskReturn]);
+
   return (
     <div style={{ 
       marginTop: '16px',
@@ -64,14 +76,36 @@ const RiskReturnSection: React.FC<RiskReturnSectionProps> = ({
           </button>
         </div>
         <div ref={riskReturnContainerRef} style={{ overflow: 'auto', width: '100%', height: '40vh', border: '1px solid #e5e7eb', borderRadius: '6px' }}>
-          <RiskReturn
-            data={riskReturnData as any}
-            currency={indexCurrency}
-            width={800}
-            height={5000}
-            zoom={riskReturnZoom}
-            indexPoint={indexRiskReturn ? { x: indexRiskReturn.risk, y: indexRiskReturn.return, name: 'Your Index', symbol: 'INDEX' } : undefined}
-          />
+          {indexRiskReturn ? (
+            <RiskReturn
+              data={riskReturnData as any}
+              currency={indexCurrency}
+              width={800}
+              height={5000}
+              zoom={riskReturnZoom}
+              indexPoint={{ x: indexRiskReturn.risk, y: indexRiskReturn.return, name: 'Your Index', symbol: 'INDEX' }}
+            />
+          ) : (
+            <div style={{ 
+              height: '100%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              border: '2px dashed #d1d5db',
+              borderRadius: '8px',
+              backgroundColor: '#f9fafb'
+            }}>
+              <div style={{ textAlign: 'center', color: '#6b7280' }}>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ marginBottom: '12px' }}>
+                  <path d="M3 3v18h18"/>
+                  <path d="m9 9 3 3 3-3"/>
+                  <path d="M9 12h6"/>
+                  <path d="M9 16h6"/>
+                </svg>
+                <p style={{ fontSize: '14px', margin: '0' }}>Make Index to display data</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

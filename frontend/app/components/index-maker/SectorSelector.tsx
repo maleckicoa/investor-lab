@@ -50,7 +50,7 @@ const SectorSelector: React.FC<SectorSelectorProps> = ({
             setShowSectorDropdown(newState);
           }}
           style={{
-            backgroundColor: '#0031dc',
+            backgroundColor: '#2563eb',
             color: 'white',
             border: 'none',
             padding: '10px 20px',
@@ -65,10 +65,10 @@ const SectorSelector: React.FC<SectorSelectorProps> = ({
             width: '100%'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#0027b0';
+            e.currentTarget.style.backgroundColor = '#1d4ed8';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#0031dc';
+            e.currentTarget.style.backgroundColor = '#2563eb';
           }}
         >
           SECTORS ({selectedSectors.length} selected)
@@ -98,8 +98,8 @@ const SectorSelector: React.FC<SectorSelectorProps> = ({
               top: sectorDropdownPosition.top,
               left: sectorDropdownPosition.left,
               width: '600px',
-              backgroundColor: '#f5f7ff',
-              border: '1px solid #0031dc',
+              backgroundColor: 'white',
+              border: '1px solid #e5e7eb',
               borderRadius: '6px',
               boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
               zIndex: 1000,
@@ -120,7 +120,7 @@ const SectorSelector: React.FC<SectorSelectorProps> = ({
                     width: '100%',
                     padding: '8px 12px',
                     border: 'none',
-                    backgroundColor: isSelected ? '#e6ecff' : 'transparent',
+                    backgroundColor: isSelected ? '#f0f9ff' : 'transparent',
                     textAlign: 'left',
                     fontSize: '13px',
                     color: '#111827',
@@ -133,7 +133,7 @@ const SectorSelector: React.FC<SectorSelectorProps> = ({
                   }}
                   onMouseEnter={(e) => {
                     if (!isSelected) {
-                      e.currentTarget.style.backgroundColor = '#f3f6ff';
+                      e.currentTarget.style.backgroundColor = '#f9fafb';
                     }
                   }}
                   onMouseLeave={(e) => {
@@ -147,7 +147,7 @@ const SectorSelector: React.FC<SectorSelectorProps> = ({
                     height: '14px', 
                     border: '2px solid #d1d5db',
                     borderRadius: '3px',
-                    backgroundColor: isSelected ? '#0031dc' : 'transparent',
+                    backgroundColor: isSelected ? '#2563eb' : 'transparent',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -162,13 +162,13 @@ const SectorSelector: React.FC<SectorSelectorProps> = ({
                       <div style={{ 
                         width: '6px', 
                         height: '2px', 
-                        backgroundColor: '#0031dc',
+                        backgroundColor: '#2563eb',
                         borderRadius: '1px'
                       }} />
                     )}
                   </div>
                   <span style={{ 
-                    color: isSelected ? '#0027b0' : '#111827',
+                    color: isSelected ? '#1d4ed8' : '#111827',
                     fontWeight: isSelected ? '600' : '400'
                   }}>
                     {sector}
@@ -194,8 +194,8 @@ const SectorSelector: React.FC<SectorSelectorProps> = ({
         <div style={{ 
           marginTop: '12px',
           padding: '8px 12px',
-          backgroundColor: '#f5f7ff',
-          border: '1px solid #0031dc',
+          backgroundColor: '#f0f9ff',
+          border: '1px solid #0ea5e9',
           borderRadius: '6px'
         }}>
           <div style={{ 
@@ -213,7 +213,7 @@ const SectorSelector: React.FC<SectorSelectorProps> = ({
                 <path d="M9 12l2 2 4-4"/>
                 <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
               </svg>
-              <span style={{ color: '#0027b0', fontWeight: '500', fontSize: '12px' }}>
+              <span style={{ color: '#0c4a6e', fontWeight: '500', fontSize: '12px' }}>
                 Selected Sectors ({selectedSectors.length})
               </span>
             </div>
@@ -224,8 +224,8 @@ const SectorSelector: React.FC<SectorSelectorProps> = ({
               }}
               style={{
                 background: 'none',
-                border: '1px solid #0031dc',
-                color: '#0031dc',
+                border: '1px solid #0ea5e9',
+                color: '#0ea5e9',
                 cursor: 'pointer',
                 fontSize: '10px',
                 fontWeight: '500',
@@ -234,12 +234,12 @@ const SectorSelector: React.FC<SectorSelectorProps> = ({
                 transition: 'all 0.2s'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#0031dc';
+                e.currentTarget.style.backgroundColor = '#0ea5e9';
                 e.currentTarget.style.color = 'white';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = '#0031dc';
+                e.currentTarget.style.color = '#0ea5e9';
               }}
               title="Remove all sectors and industries"
             >
@@ -251,7 +251,7 @@ const SectorSelector: React.FC<SectorSelectorProps> = ({
               <span
                 key={sector}
                 style={{
-                  backgroundColor: '#0031dc',
+                  backgroundColor: '#0ea5e9',
                   color: 'white',
                   padding: '2px 6px',
                   borderRadius: '4px',
