@@ -133,20 +133,20 @@ const MakeIndexButton: React.FC<MakeIndexButtonProps> = ({
       disabled={isCreatingIndex}
       style={{
         width: '100%',
-        padding: '16px 24px',
-        fontSize: '16px',
+        padding: 'clamp(0.75rem, 2vw, 1.5rem) clamp(1rem, 3vw, 1.5rem)',
+        fontSize: 'clamp(0.875rem, 1.5vw, 1rem)',
         fontWeight: '700',
         backgroundColor: isCreatingIndex ? '#6b7280' : '#059669',
         color: 'white',
         border: 'none',
-        borderRadius: '8px',
+        borderRadius: 'clamp(0.375rem, 1vw, 0.5rem)',
         cursor: isCreatingIndex ? 'not-allowed' : 'pointer',
         transition: 'all 0.2s',
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '12px'
+        gap: 'clamp(0.5rem, 1.5vw, 0.75rem)'
       }}
       onMouseEnter={(e) => {
         if (!isCreatingIndex) {
@@ -166,8 +166,8 @@ const MakeIndexButton: React.FC<MakeIndexButtonProps> = ({
       {isCreatingIndex ? (
         <>
           <svg 
-            width="20" 
-            height="20" 
+            width="clamp(1rem, 2.5vw, 1.25rem)" 
+            height="clamp(1rem, 2.5vw, 1.25rem)" 
             viewBox="0 0 24 24" 
             fill="none" 
             stroke="currentColor" 
@@ -181,8 +181,8 @@ const MakeIndexButton: React.FC<MakeIndexButtonProps> = ({
       ) : (
         <>
           <svg 
-            width="20" 
-            height="20" 
+            width="clamp(1rem, 2.5vw, 1.25rem)" 
+            height="clamp(1rem, 2.5vw, 1.25rem)" 
             viewBox="0 0 24 24" 
             fill="none" 
             stroke="currentColor" 

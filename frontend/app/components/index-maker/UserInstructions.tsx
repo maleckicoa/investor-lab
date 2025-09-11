@@ -14,10 +14,10 @@ export default function UserInstructions() {
           border: '1px solid #f59e0b',
           color: '#92400e',
           cursor: 'pointer',
-          fontSize: '12px',
+          fontSize: '0.75rem',
           fontWeight: '500',
-          padding: '4px 8px',
-          borderRadius: '4px',
+          padding: '0.25rem 0.5rem',
+          borderRadius: '0.25rem',
           transition: 'all 0.2s'
         }}
         onMouseEnter={(e) => {
@@ -53,9 +53,9 @@ export default function UserInstructions() {
             onClick={(e) => e.stopPropagation()}
             style={{
               backgroundColor: 'white',
-              borderRadius: '8px',
-              padding: '24px',
-              maxWidth: '640px',
+              borderRadius: '0.5rem',
+              padding: '1.5rem',
+              maxWidth: '40rem',
               width: '90%',
               maxHeight: '80vh',
               overflowY: 'auto',
@@ -67,11 +67,11 @@ export default function UserInstructions() {
               onClick={() => setOpen(false)}
               style={{
                 position: 'absolute',
-                top: '12px',
-                right: '12px',
+                top: '0.75rem',
+                right: '0.75rem',
                 background: 'none',
                 border: 'none',
-                fontSize: '20px',
+                fontSize: '1.25rem',
                 cursor: 'pointer',
                 color: '#6b7280'
               }}
@@ -79,14 +79,14 @@ export default function UserInstructions() {
             >
               ×
             </button>
-            <h2 style={{ fontSize: '22px', fontWeight: 'bold', color: '#111827', margin: '0 0 12px 0' }}>
+            <h2 style={{ fontSize: '1.375rem', fontWeight: 'bold', color: '#111827', margin: '0 0 0.75rem 0' }}>
               How to use Index Maker
             </h2>
-            <div style={{ fontSize: '14px', lineHeight: 1.6, color: '#374151' }}>
-              <p style={{ margin: '0 0 12px 0' }}>
+            <div style={{ fontSize: '0.875rem', lineHeight: 1.6, color: '#374151' }}>
+              <p style={{ margin: '0 0 0.75rem 0' }}>
                 Create a custom index by choosing size, dates, currency, regions, sectors, industries, KPIs, and optional specific stocks. Then generate and analyze performance versus benchmarks.
               </p>
-              <ol style={{ paddingLeft: '18px', margin: '0 0 12px 0' }}>
+              <ol style={{ paddingLeft: '1.125rem', margin: '0 0 0.75rem 0' }}>
                 <li>Configure index size, currency, start amount, and date range.</li>
                 <li>Select countries, sectors and industries; add KPI filters as needed.</li>
                 <li>Optionally add specific stocks.</li>

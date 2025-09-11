@@ -28,8 +28,8 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
   handleIndustryToggle
 }) => {
   return (
-    <div style={{ marginBottom: '20px' }}>
-      <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>
+    <div style={{ marginBottom: '1.25rem' }}>
+      <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#111827', marginBottom: '0.75rem' }}>
       </h3>
       <div style={{ position: 'relative' }}>
         <button
@@ -45,14 +45,14 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
             backgroundColor: '#2563eb',
             color: 'white',
             border: 'none',
-            padding: '10px 20px',
-            borderRadius: '6px',
-            fontSize: '14px',
+            padding: '0.625rem 1.25rem',
+            borderRadius: '0.375rem',
+            fontSize: '0.875rem',
             fontWeight: '600',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
+            gap: '0.5rem',
             transition: 'background-color 0.2s',
             width: '100%'
           }}
@@ -84,27 +84,27 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
         {/* Industry Dropdown */}
         {showIndustryDropdown && (
           <div 
-            className="dropdown-container"
+            className="dropdown-container dropdown-mobile"
             style={{
               position: 'fixed',
               top: industryDropdownPosition.top,
               left: industryDropdownPosition.left,
-              width: '600px',
+              width: 'min(37.5rem, 90vw)',
               backgroundColor: 'white',
               border: '1px solid #e5e7eb',
-              borderRadius: '6px',
+              borderRadius: '0.375rem',
               boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
               zIndex: 1000,
-              maxHeight: '300px',
+              maxHeight: '18.75rem', /* 300px */
               overflowY: 'auto'
             }}
           >
             {Object.entries(industries).map(([sector, industriesList]) => (
               <div key={sector}>
                 <div style={{
-                  padding: '6px 12px',
+                  padding: '0.375rem 0.75rem',
                   backgroundColor: '#f9fafb',
-                  fontSize: '11px',
+                  fontSize: '0.6875rem',
                   fontWeight: '600',
                   color: '#6b7280',
                   textTransform: 'uppercase',
@@ -121,18 +121,18 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
                       onClick={() => handleIndustryToggle(industry)}
                       style={{
                         width: '100%',
-                        padding: '6px 12px 6px 24px',
+                        padding: '0.375rem 0.75rem 0.375rem 1.5rem',
                         border: 'none',
                         backgroundColor: isSelected ? '#f0f9ff' : 'transparent',
                         textAlign: 'left',
-                        fontSize: '13px',
+                        fontSize: '0.8125rem',
                         color: '#111827',
                         cursor: 'pointer',
                         borderBottom: '1px solid #f3f4f6',
                         transition: 'background-color 0.2s',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px'
+                        gap: '0.5rem'
                       }}
                       onMouseEnter={(e) => {
                         if (!isSelected) {
@@ -146,10 +146,10 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
                       }}
                     >
                       <div style={{ 
-                        width: '12px', 
-                        height: '12px', 
+                        width: '0.75rem', 
+                        height: '0.75rem', 
                         border: '2px solid #d1d5db',
-                        borderRadius: '2px',
+                        borderRadius: '0.125rem',
                         backgroundColor: isSelected ? '#0ea5e9' : 'transparent',
                         display: 'flex',
                         alignItems: 'center',
@@ -179,28 +179,28 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
       {/* Selected Industries Display */}
       {selectedIndustries.length > 0 && (
         <div style={{ 
-          marginTop: '12px',
-          padding: '8px 12px',
+          marginTop: '0.75rem',
+          padding: '0.5rem 0.75rem',
           backgroundColor: '#f0f9ff',
           border: '1px solid #0ea5e9',
-          borderRadius: '6px'
+          borderRadius: '0.375rem'
         }}>
           <div style={{ 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'space-between',
-            marginBottom: '6px'
+            marginBottom: '0.375rem'
           }}>
             <div style={{ 
               display: 'flex', 
               alignItems: 'center', 
-              gap: '6px'
+              gap: '0.375rem'
             }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M9 12l2 2 4-4"/>
                 <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
               </svg>
-              <span style={{ color: '#0c4a6e', fontWeight: '500', fontSize: '12px' }}>
+              <span style={{ color: '#0c4a6e', fontWeight: '500', fontSize: '0.75rem' }}>
                 Selected Industries ({selectedIndustries.length})
               </span>
             </div>
@@ -214,10 +214,10 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
                 border: '1px solid #0ea5e9',
                 color: '#0ea5e9',
                 cursor: 'pointer',
-                fontSize: '10px',
+                fontSize: '0.625rem',
                 fontWeight: '500',
-                padding: '2px 6px',
-                borderRadius: '4px',
+                padding: '0.125rem 0.375rem',
+                borderRadius: '0.25rem',
                 transition: 'all 0.2s'
               }}
               onMouseEnter={(e) => {
@@ -233,20 +233,20 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
               Remove all
             </button>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', maxHeight: '15vh', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', maxHeight: '15vh', overflowY: 'auto' }}>
             {selectedIndustries.map((industry) => (
               <span
                 key={industry}
                 style={{
                   backgroundColor: '#0ea5e9',
                   color: 'white',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                  fontSize: '11px',
+                  padding: '0.125rem 0.375rem',
+                  borderRadius: '0.25rem',
+                  fontSize: '0.6875rem',
                   fontWeight: '500',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '4px'
+                  gap: '0.25rem'
                 }}
               >
                 {industry}
@@ -259,9 +259,9 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
                     border: 'none',
                     color: 'white',
                     cursor: 'pointer',
-                    fontSize: '12px',
+                    fontSize: '0.75rem',
                     padding: '0',
-                    marginLeft: '2px',
+                    marginLeft: '0.125rem',
                     display: 'flex',
                     alignItems: 'center'
                   }}

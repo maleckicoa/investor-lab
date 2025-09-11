@@ -24,8 +24,8 @@ const KPISelector: React.FC<KPISelectorProps> = ({
   kpiLabels = {}
 }) => {
   return (
-    <div style={{ marginBottom: '20px' }}>
-      <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>
+    <div style={{ marginBottom: '1.25rem' }}>
+      <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#111827', marginBottom: '0.75rem' }}>
       </h3>
       <div style={{ position: 'relative' }}>
         <button
@@ -41,14 +41,14 @@ const KPISelector: React.FC<KPISelectorProps> = ({
             backgroundColor: '#2563eb',
             color: 'white',
             border: 'none',
-            padding: '10px 20px',
-            borderRadius: '6px',
-            fontSize: '14px',
+            padding: '0.625rem 1.25rem',
+            borderRadius: '0.375rem',
+            fontSize: '0.875rem',
             fontWeight: '600',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
+            gap: '0.5rem',
             transition: 'background-color 0.2s',
             width: '100%'
           }}
@@ -80,18 +80,18 @@ const KPISelector: React.FC<KPISelectorProps> = ({
         {/* KPI Dropdown */}
         {showKPIDropdown && (
           <div 
-            className="dropdown-container"
+            className="dropdown-container dropdown-mobile"
             style={{
               position: 'fixed',
               top: kpiDropdownPosition.top,
               left: kpiDropdownPosition.left,
-              width: '600px',
+              width: '37.5rem', /* 600px */
               backgroundColor: 'white',
               border: '1px solid #e5e7eb',
-              borderRadius: '6px',
+              borderRadius: '0.375rem',
               boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
               zIndex: 1000,
-              maxHeight: '300px',
+              maxHeight: '18.75rem', /* 300px */
               overflowY: 'auto'
             }}
           >
@@ -102,7 +102,7 @@ const KPISelector: React.FC<KPISelectorProps> = ({
               
               return (
                 <div key={kpiName} style={{
-                  padding: '8px 12px',
+                  padding: '0.5rem 0.75rem',
                   borderBottom: '1px solid #f3f4f6',
                   backgroundColor: isSelected ? '#f0f9ff' : 'transparent'
                 }}>
@@ -110,10 +110,10 @@ const KPISelector: React.FC<KPISelectorProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    marginBottom: '6px'
+                    marginBottom: '0.375rem'
                   }}>
                     <span style={{
-                      fontSize: '13px',
+                      fontSize: '0.8125rem',
                       fontWeight: '600',
                       color: '#374151'
                     }}>
@@ -122,15 +122,15 @@ const KPISelector: React.FC<KPISelectorProps> = ({
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '6px'
+                      gap: '0.375rem'
                     }}>
                       {isSelected && (
                         <span style={{ 
-                          fontSize: '9px', 
+                          fontSize: '0.5625rem', 
                           color: '#6b7280',
                           backgroundColor: '#e5e7eb',
-                          padding: '1px 4px',
-                          borderRadius: '8px'
+                          padding: '0.0625rem 0.25rem',
+                          borderRadius: '0.5rem'
                         }}>
                           {selectedValues.length} selected
                         </span>
@@ -152,12 +152,12 @@ const KPISelector: React.FC<KPISelectorProps> = ({
                           }
                         }}
                         style={{
-                          padding: '2px 6px',
+                          padding: '0.125rem 0.375rem',
                           backgroundColor: isSelected ? '#fee2e2' : '#dbeafe',
                           border: '1px solid #d1d5db',
-                          borderRadius: '3px',
+                          borderRadius: '0.1875rem',
                           color: isSelected ? '#dc2626' : '#1e40af',
-                          fontSize: '9px',
+                          fontSize: '0.5625rem',
                           cursor: 'pointer',
                           fontWeight: '500'
                         }}
@@ -170,7 +170,7 @@ const KPISelector: React.FC<KPISelectorProps> = ({
                   <div style={{
                     display: 'flex',
                     flexWrap: 'wrap',
-                    gap: '4px'
+                    gap: '0.25rem'
                   }}>
                     {kpiValues.map((value) => {
                       const isValueSelected = selectedValues.includes(value);
@@ -200,17 +200,17 @@ const KPISelector: React.FC<KPISelectorProps> = ({
                             }
                           }}
                           style={{
-                            padding: '4px 8px',
+                            padding: '0.25rem 0.5rem',
                             border: '1px solid #d1d5db',
                             backgroundColor: isValueSelected ? '#dbeafe' : 'white',
                             color: isValueSelected ? '#1e40af' : '#374151',
-                            borderRadius: '4px',
-                            fontSize: '11px',
+                            borderRadius: '0.25rem',
+                            fontSize: '0.6875rem',
                             cursor: 'pointer',
                             transition: 'all 0.2s',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '4px',
+                            gap: '0.25rem',
                             fontWeight: isValueSelected ? '500' : '400'
                           }}
                           onMouseEnter={(e) => {
@@ -227,10 +227,10 @@ const KPISelector: React.FC<KPISelectorProps> = ({
                           }}
                         >
                           <div style={{ 
-                            width: '10px', 
-                            height: '10px', 
+                            width: '0.625rem', 
+                            height: '0.625rem', 
                             border: '2px solid #d1d5db',
-                            borderRadius: '2px',
+                            borderRadius: '0.125rem',
                             backgroundColor: isValueSelected ? '#2563eb' : 'transparent',
                             display: 'flex',
                             alignItems: 'center',
@@ -258,39 +258,39 @@ const KPISelector: React.FC<KPISelectorProps> = ({
       {/* Selected KPIs Display */}
       {Object.keys(selectedKPIs).length > 0 && (
         <div style={{ 
-          marginTop: '12px',
-          padding: '12px',
+          marginTop: '0.75rem',
+          padding: '0.75rem',
           backgroundColor: '#f0f9ff',
           border: '1px solid #0ea5e9',
-          borderRadius: '6px'
+          borderRadius: '0.375rem'
         }}>
           <div style={{ 
             display: 'flex', 
             alignItems: 'center', 
-            gap: '6px',
-            marginBottom: '8px'
+            gap: '0.375rem',
+            marginBottom: '0.5rem'
           }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M9 12l2 2 4-4"/>
               <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
             </svg>
-            <span style={{ color: '#0c4a6e', fontWeight: '500', fontSize: '12px' }}>
-              Selected KPIs ({Object.keys(selectedKPIs).length})
+            <span style={{ color: '#0c4a6e', fontWeight: '500', fontSize: '0.75rem' }}>
+              Selected Fundamentals ({Object.keys(selectedKPIs).length})
             </span>
           </div>
           
           {/* KPI Values Display */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {Object.entries(selectedKPIs).map(([kpiName, selectedValues]) => {
               const displayName = kpiLabels[kpiName] || kpiName;
               return (
               <div key={kpiName} style={{ 
                 display: 'flex', 
                 flexDirection: 'column',
-                gap: '6px',
-                padding: '8px',
+                gap: '0.375rem',
+                padding: '0.5rem',
                 backgroundColor: 'white',
-                borderRadius: '4px',
+                borderRadius: '0.25rem',
                 border: '1px solid #e5e7eb'
               }}>
                 <div style={{ 
@@ -299,7 +299,7 @@ const KPISelector: React.FC<KPISelectorProps> = ({
                   justifyContent: 'space-between'
                 }}>
                   <span style={{ 
-                    fontSize: '12px',
+                    fontSize: '0.75rem',
                     fontWeight: '500',
                     color: '#374151'
                   }}>
@@ -315,12 +315,12 @@ const KPISelector: React.FC<KPISelectorProps> = ({
                       });
                     }}
                     style={{
-                      padding: '2px 6px',
+                      padding: '0.125rem 0.375rem',
                       backgroundColor: 'transparent',
                       border: '1px solid #0ea5e9',
-                      borderRadius: '3px',
+                      borderRadius: '0.1875rem',
                       color: '#0ea5e9',
-                      fontSize: '9px',
+                      fontSize: '0.5625rem',
                       cursor: 'pointer',
                       transition: 'background-color 0.2s, color 0.2s'
                     }}
@@ -337,20 +337,20 @@ const KPISelector: React.FC<KPISelectorProps> = ({
                   </button>
                 </div>
                 
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.1875rem' }}>
                   {selectedValues.map((value) => (
                     <span
                       key={value}
                       style={{
-                        backgroundColor: '#e0e7ff',
-                        color: '#374151',
-                        padding: '2px 6px',
-                        borderRadius: '3px',
-                        fontSize: '10px',
+                        backgroundColor: '#0ea5e9',
+                        color: 'white',
+                        padding: '0.125rem 0.375rem',
+                        borderRadius: '0.1875rem',
+                        fontSize: '0.625rem',
                         fontWeight: '500',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '3px'
+                        gap: '0.1875rem'
                       }}
                     >
                       {value}
@@ -372,11 +372,11 @@ const KPISelector: React.FC<KPISelectorProps> = ({
                         style={{
                           background: 'none',
                           border: 'none',
-                          color: '#6b7280',
+                          color: 'white',
                           cursor: 'pointer',
-                          fontSize: '12px',
+                          fontSize: '0.75rem',
                           padding: '0',
-                          marginLeft: '2px',
+                          marginLeft: '0.125rem',
                           display: 'flex',
                           alignItems: 'center'
                         }}

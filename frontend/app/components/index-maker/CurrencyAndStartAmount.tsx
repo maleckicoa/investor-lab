@@ -14,28 +14,30 @@ const CurrencyAndStartAmount: React.FC<CurrencyAndStartAmountProps> = ({
   setIndexStartAmount
 }) => {
   return (
-    <div style={{ marginBottom: '20px' }}>
+    <div style={{ marginBottom: '1.25rem' }}>
       <div style={{ 
         display: 'flex', 
-        gap: '32px',
-        alignItems: 'flex-start'
+        gap: '1rem',
+        alignItems: 'flex-start',
+        flexWrap: 'wrap'
       }}>
         {/* Index Currency */}
-        <div>
-          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>
+        <div style={{ flex: '0 1 auto' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#111827', marginBottom: '0.75rem' }}>
             Index Currency
           </h3>
           <div style={{ 
             display: 'flex', 
-            gap: '8px'
+            gap: '0.5rem',
+            flexWrap: 'wrap'
           }}>
             <button
               onClick={() => setIndexCurrency('USD' as "USD" | "EUR")}
               style={{
-                padding: '8px 16px',
-                fontSize: '13px',
+                padding: '0.5rem 1rem',
+                fontSize: '0.8125rem',
                 fontWeight: '600',
-                borderRadius: '6px',
+                borderRadius: '0.375rem',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 backgroundColor: indexCurrency === 'USD' ? '#059669' : '#f3f4f6',
@@ -58,10 +60,10 @@ const CurrencyAndStartAmount: React.FC<CurrencyAndStartAmountProps> = ({
             <button
               onClick={() => setIndexCurrency('EUR' as "USD" | "EUR")}
               style={{
-                padding: '8px 16px',
-                fontSize: '13px',
+                padding: '0.5rem 1rem',
+                fontSize: '0.8125rem',
                 fontWeight: '600',
-                borderRadius: '6px',
+                borderRadius: '0.375rem',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 backgroundColor: indexCurrency === 'EUR' ? '#059669' : '#f3f4f6',
@@ -85,8 +87,8 @@ const CurrencyAndStartAmount: React.FC<CurrencyAndStartAmountProps> = ({
         </div>
 
         {/* Start Amount */}
-        <div>
-          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>
+        <div style={{ flex: '0 1 auto' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#111827', marginBottom: '0.75rem' }}>
             Start Amount
           </h3>
           <input
@@ -101,16 +103,16 @@ const CurrencyAndStartAmount: React.FC<CurrencyAndStartAmountProps> = ({
               setIndexStartAmount(nextValue);
             }}
             style={{
-              padding: '8px 16px',
-              fontSize: '13px',
+              padding: '0.5rem 1rem',
+              fontSize: '0.8125rem',
               fontWeight: '600',
               border: '1px solid #d1d5db',
-              borderRadius: '6px',
+              borderRadius: '0.375rem',
               backgroundColor: 'white',
               color: '#374151',
               cursor: 'pointer',
               transition: 'all 0.2s',
-              width: '120px'
+              width: '7.5rem'
             }}
           />
         </div>

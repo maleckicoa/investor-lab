@@ -14,23 +14,24 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   setIndexEndDate
 }) => {
   return (
-    <div style={{ marginBottom: '20px' }}>
-      <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>
+    <div style={{ marginBottom: '1.25rem' }}>
+      <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#111827', marginBottom: '0.75rem' }}>
         Index Date Range
       </h3>
-      <div style={{ 
+      <div className="dateRow" style={{ 
         display: 'flex', 
-        gap: '12px',
-        alignItems: 'center'
+        gap: '0.75rem',
+        flexWrap: 'wrap',
+        width: '100%'
       }}>
         {/* Start Date */}
-        <div style={{ flex: '1' }}>
+        <div className="dateField" style={{ flex: '1 1 0', minWidth: 0 }}>
           <label style={{ 
             display: 'block', 
-            fontSize: '12px', 
+            fontSize: '0.75rem', 
             fontWeight: '500', 
             color: '#6b7280', 
-            marginBottom: '4px' 
+            marginBottom: '0.25rem' 
           }}>
             Start Date
           </label>
@@ -48,10 +49,10 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             max={indexEndDate}
             style={{
               width: '100%',
-              padding: '8px 12px',
-              fontSize: '13px',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
+              padding: '0.5rem 0.75rem',
+              fontSize: '0.8125rem',
+              border: '0.0625rem solid #d1d5db',
+              borderRadius: '0.375rem',
               backgroundColor: 'white',
               color: '#111827',
               cursor: 'pointer'
@@ -60,13 +61,13 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
         </div>
 
         {/* End Date */}
-        <div style={{ flex: '1' }}>
+        <div className="dateField" style={{ flex: '1 1 0', minWidth: 0 }}>
           <label style={{ 
             display: 'block', 
-            fontSize: '12px', 
+            fontSize: '0.75rem', 
             fontWeight: '500', 
             color: '#6b7280', 
-            marginBottom: '4px' 
+            marginBottom: '0.25rem' 
           }}>
             End Date
           </label>
@@ -85,10 +86,10 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             max={new Date().toISOString().split('T')[0]}
             style={{
               width: '100%',
-              fontSize: '13px',
-              padding: '8px 12px',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
+              fontSize: '0.8125rem',
+              padding: '0.5rem 0.75rem',
+              border: '0.0625rem solid #d1d5db',
+              borderRadius: '0.375rem',
               backgroundColor: 'white',
               color: '#111827',
               cursor: 'pointer'
@@ -96,12 +97,18 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
           />
         </div>
       </div>
+      <style jsx>{`
+        @media (max-width: 48em) {
+          .dateRow { flex-wrap: wrap; }
+          .dateField { flex: 1 1 100%; min-width: 100%; }
+        }
+      `}</style>
       
       {/* Quick Date Presets */}
       <div style={{ 
-        marginTop: '12px',
+        marginTop: '0.75rem',
         display: 'flex', 
-        gap: '6px',
+        gap: '0.375rem',
         flexWrap: 'wrap'
       }}>
         <button
@@ -113,11 +120,11 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             setIndexEndDate(endDate.toISOString().split('T')[0]);
           }}
           style={{
-            padding: '4px 8px',
-            fontSize: '11px',
+            padding: '0.25rem 0.5rem',
+            fontSize: '0.6875rem',
             backgroundColor: '#f3f4f6',
-            border: '1px solid #d1d5db',
-            borderRadius: '4px',
+            border: '0.0625rem solid #d1d5db',
+            borderRadius: '0.25rem',
             cursor: 'pointer',
             color: '#374151'
           }}
@@ -134,11 +141,11 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             setIndexEndDate(endDate.toISOString().split('T')[0]);
           }}
           style={{
-            padding: '4px 8px',
-            fontSize: '11px',
+            padding: '0.25rem 0.5rem',
+            fontSize: '0.6875rem',
             backgroundColor: '#f3f4f6',
-            border: '1px solid #d1d5db',
-            borderRadius: '4px',
+            border: '0.0625rem solid #d1d5db',
+            borderRadius: '0.25rem',
             cursor: 'pointer',
             color: '#374151'
           }}
@@ -155,11 +162,11 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             setIndexEndDate(endDate.toISOString().split('T')[0]);
           }}
           style={{
-            padding: '4px 8px',
-            fontSize: '11px',
+            padding: '0.25rem 0.5rem',
+            fontSize: '0.6875rem',
             backgroundColor: '#f3f4f6',
-            border: '1px solid #d1d5db',
-            borderRadius: '4px',
+            border: '0.0625rem solid #d1d5db',
+            borderRadius: '0.25rem',
             cursor: 'pointer',
             color: '#374151'
           }}
@@ -176,11 +183,11 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             setIndexEndDate(endDate.toISOString().split('T')[0]);
           }}
           style={{
-            padding: '4px 8px',
-            fontSize: '11px',
+            padding: '0.25rem 0.5rem',
+            fontSize: '0.6875rem',
             backgroundColor: '#f3f4f6',
-            border: '1px solid #d1d5db',
-            borderRadius: '4px',
+            border: '0.0625rem solid #d1d5db',
+            borderRadius: '0.25rem',
             cursor: 'pointer',
             color: '#374151'
           }}
@@ -196,11 +203,11 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             setIndexEndDate(endDate.toISOString().split('T')[0]);
           }}
           style={{
-            padding: '4px 8px',
-            fontSize: '11px',
+            padding: '0.25rem 0.5rem',
+            fontSize: '0.6875rem',
             backgroundColor: '#f3f4f6',
-            border: '1px solid #d1d5db',
-            borderRadius: '4px',
+            border: '0.0625rem solid #d1d5db',
+            borderRadius: '0.25rem',
             cursor: 'pointer',
             color: '#374151'
           }}

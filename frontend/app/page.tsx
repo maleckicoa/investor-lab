@@ -13,17 +13,17 @@ export default function HomePage() {
     }}>
       <div style={{ 
         textAlign: 'left', 
-        maxWidth: '1200px',
+        maxWidth: '75rem',
         width: '100%',
         minHeight: '80vh',
         backgroundColor: 'white',
-        borderRadius: '8px',
-        padding: '80px 60px',
+        borderRadius: '0.5rem',
+        padding: '5rem 3.75rem',
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
         border: '1px solid #e5e7eb'
       }}>
         <p style={{ 
-          fontSize: '1.25rem', 
+          fontSize: 'clamp(1rem, 1.2vw + 0.75rem, 1.25rem)', 
           color: '#6b7280', 
           marginBottom: '3rem',
           lineHeight: '1.6',
@@ -38,7 +38,7 @@ export default function HomePage() {
           flexDirection: 'column', 
           gap: '1.5rem', 
           alignItems: 'center',
-          maxWidth: '300px',
+          maxWidth: '18.75rem',
           margin: '0 auto'
         }}>
           <Link href="/index-maker" style={{ textDecoration: 'none', width: '100%' }}>
@@ -46,7 +46,7 @@ export default function HomePage() {
               backgroundColor: '#2563eb',
               color: 'white',
               padding: '0.75rem 1.5rem',
-              borderRadius: '6px',
+              borderRadius: '0.375rem',
               fontSize: '1rem',
               fontWeight: '500',
               border: 'none',
@@ -72,7 +72,7 @@ export default function HomePage() {
               backgroundColor: '#6b7280',
               color: 'white',
               padding: '0.75rem 1.5rem',
-              borderRadius: '6px',
+              borderRadius: '0.375rem',
               fontSize: '1rem',
               fontWeight: '500',
               border: 'none',
@@ -101,8 +101,8 @@ export default function HomePage() {
           justifyContent: 'center'
         }}>
           <div style={{
-            width: '80px',
-            height: '80px',
+            width: '5rem',
+            height: '5rem',
             borderRadius: '50%',
             backgroundColor: '#e5e7eb',
             border: '2px solid #d1d5db',

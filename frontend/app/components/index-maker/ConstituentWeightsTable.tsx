@@ -46,7 +46,7 @@ const ConstituentWeightsTable: React.FC<ConstituentWeightsTableProps> = ({ weigh
     
     if (!weightRows || !Array.isArray(weightRows) || weightRows.length === 0) {
       return (
-        <div style={{ color: '#6b7280', fontSize: '12px' }}>No constituent weights available.</div>
+        <div style={{ color: '#6b7280', fontSize: '0.75rem' }}>No constituent weights available.</div>
       );
     }
 
@@ -74,9 +74,9 @@ const ConstituentWeightsTable: React.FC<ConstituentWeightsTableProps> = ({ weigh
       <div style={{ 
         display: 'flex', 
         flexDirection: 'row', 
-        gap: '16px',
+        gap: '1rem',
         overflowX: 'auto',
-        paddingBottom: '8px'
+        paddingBottom: '0.5rem'
       }}>
         {quarters.map((quarterKey, idx) => {
           const [year, quarter] = quarterKey.split('-');
@@ -85,20 +85,20 @@ const ConstituentWeightsTable: React.FC<ConstituentWeightsTableProps> = ({ weigh
           return (
             <div key={quarterKey} style={{ 
               border: '1px solid #e5e7eb', 
-              borderRadius: '8px', 
+              borderRadius: '0.5rem', 
               overflow: 'hidden',
               backgroundColor: 'white',
-              minWidth: '200px',
-              maxWidth: '250px',
+              minWidth: '12.5rem',
+              maxWidth: '15.625rem',
               flexShrink: 0
             }}>
               <div style={{ 
-                padding: '8px 12px', 
+                padding: '0.5rem 0.75rem', 
                 backgroundColor: '#f9fafb', 
                 borderBottom: '1px solid #e5e7eb',
                 fontWeight: '600',
                 color: '#374151',
-                fontSize: '12px'
+                fontSize: '0.75rem'
               }}>
                 {year} {quarter} ({companies.length})
               </div>
@@ -108,21 +108,21 @@ const ConstituentWeightsTable: React.FC<ConstituentWeightsTableProps> = ({ weigh
                     <tr>
                       <th style={{ 
                         textAlign: 'left', 
-                        padding: '6px 8px', 
+                        padding: '0.375rem 0.5rem', 
                         borderBottom: '1px solid #e5e7eb', 
                         color: '#374151', 
                         fontWeight: 600,
                         backgroundColor: '#f9fafb',
-                        fontSize: '11px'
+                        fontSize: '0.6875rem'
                       }}>Company</th>
                       <th style={{ 
                         textAlign: 'right', 
-                        padding: '6px 8px', 
+                        padding: '0.375rem 0.5rem', 
                         borderBottom: '1px solid #e5e7eb', 
                         color: '#374151', 
                         fontWeight: 600,
                         backgroundColor: '#f9fafb',
-                        fontSize: '11px'
+                        fontSize: '0.6875rem'
                       }}>Weight</th>
                     </tr>
                   </thead>
@@ -132,7 +132,7 @@ const ConstituentWeightsTable: React.FC<ConstituentWeightsTableProps> = ({ weigh
                         backgroundColor: r % 2 === 0 ? '#ffffff' : '#f9fafb' 
                       }}>
                         <td style={{ 
-                          padding: '6px 8px', 
+                          padding: '0.375rem 0.5rem', 
                           borderBottom: '1px solid #f3f4f6', 
                           color: '#111827',
                           wordWrap: 'break-word',
@@ -140,14 +140,14 @@ const ConstituentWeightsTable: React.FC<ConstituentWeightsTableProps> = ({ weigh
                         }}>
                           <div style={{ 
                             fontWeight: '600', 
-                            marginBottom: '2px',
-                            fontSize: '11px',
+                            marginBottom: '0.125rem',
+                            fontSize: '0.6875rem',
                             lineHeight: '1.2'
                           }}>
                             {company.company_name}
                           </div>
                           <div style={{ 
-                            fontSize: '9px', 
+                            fontSize: '0.5625rem', 
                             color: '#6b7280',
                             lineHeight: '1.1'
                           }}>
@@ -156,11 +156,11 @@ const ConstituentWeightsTable: React.FC<ConstituentWeightsTableProps> = ({ weigh
                         </td>
                         <td style={{ 
                           textAlign: 'right', 
-                          padding: '6px 8px', 
+                          padding: '0.375rem 0.5rem', 
                           borderBottom: '1px solid #f3f4f6', 
                           color: '#111827',
                           fontWeight: '500',
-                          fontSize: '10px',
+                          fontSize: '0.625rem',
                           whiteSpace: 'nowrap'
                         }}>
                           {(company.weight * 100).toFixed(1)}%
@@ -180,7 +180,7 @@ const ConstituentWeightsTable: React.FC<ConstituentWeightsTableProps> = ({ weigh
   // Handle old object format (fallback) or invalid data
   if (!weights) {
     return (
-      <div style={{ color: '#6b7280', fontSize: '12px' }}>No constituent weights available.</div>
+      <div style={{ color: '#6b7280', fontSize: '0.75rem' }}>No constituent weights available.</div>
     );
   }
   
@@ -188,7 +188,7 @@ const ConstituentWeightsTable: React.FC<ConstituentWeightsTableProps> = ({ weigh
   const periods = sortPeriods(typed);
   if (periods.length === 0) {
     return (
-      <div style={{ color: '#6b7280', fontSize: '12px' }}>No constituent weights available.</div>
+      <div style={{ color: '#6b7280', fontSize: '0.75rem' }}>No constituent weights available.</div>
     );
   }
 
@@ -213,15 +213,15 @@ const ConstituentWeightsTable: React.FC<ConstituentWeightsTableProps> = ({ weigh
 
   return (
     <div style={{ overflowX: 'auto' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '720px' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '45rem' }}>
         <thead>
           <tr>
             <th style={{
               position: 'sticky', left: 0, background: '#ffffff', zIndex: 1,
-              textAlign: 'left', padding: '8px 12px', borderBottom: '1px solid #e5e7eb', color: '#374151', fontWeight: 600
+              textAlign: 'left', padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb', color: '#374151', fontWeight: 600
             }}>Constituent</th>
             {periods.map(({ year, quarter }, idx) => (
-              <th key={idx} style={{ textAlign: 'right', padding: '8px 12px', borderBottom: '1px solid #e5e7eb', color: '#374151', fontWeight: 600 }}>
+              <th key={idx} style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderBottom: '1px solid #e5e7eb', color: '#374151', fontWeight: 600 }}>
                 {year} {quarter}
               </th>
             ))}
@@ -232,12 +232,12 @@ const ConstituentWeightsTable: React.FC<ConstituentWeightsTableProps> = ({ weigh
             <tr key={symbol} style={{ backgroundColor: r % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
               <td style={{
                 position: 'sticky', left: 0, background: r % 2 === 0 ? '#ffffff' : '#f9fafb', zIndex: 1,
-                padding: '8px 12px', borderBottom: '1px solid #f3f4f6', color: '#111827', fontWeight: 500
+                padding: '0.5rem 0.75rem', borderBottom: '1px solid #f3f4f6', color: '#111827', fontWeight: 500
               }}>{symbol}</td>
               {periods.map(({ year, quarter }, c) => {
                 const w = getWeight(symbol, year, quarter);
                 return (
-                  <td key={c} style={{ textAlign: 'right', padding: '8px 12px', borderBottom: '1px solid #f3f4f6', color: '#111827' }}>
+                  <td key={c} style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderBottom: '1px solid #f3f4f6', color: '#111827' }}>
                     {w !== null ? `${(w * 100).toFixed(2)}%` : '—'}
                   </td>
                 );

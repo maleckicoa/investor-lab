@@ -23,34 +23,28 @@ const IndexCreationSummary: React.FC<IndexCreationSummaryProps> = ({
 }) => {
   return (
     <div style={{ 
-      marginTop: '16px',
-      padding: '12px',
+      marginTop: '1rem',
+      padding: '0.75rem',
       backgroundColor: 'white',
-      borderRadius: '6px',
+      borderRadius: '0.375rem',
       border: '1px solid #e5e7eb'
     }}>
       <h4 style={{ 
-        fontSize: '14px', 
+        fontSize: '0.875rem', 
         fontWeight: '600', 
         color: '#374151', 
-        marginBottom: '8px' 
+        marginBottom: '0.5rem' 
       }}>
         Index Configuration Summary
       </h4>
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: '1fr 1fr', 
-        gap: '8px',
-        fontSize: '12px',
-        color: '#6b7280'
-      }}>
-        <div><strong>Size:</strong> {indexSize} stocks</div>
-        <div><strong>Currency:</strong> {indexCurrency}</div>
-        <div><strong>Start Amount:</strong> {indexStartAmount}</div>
-        <div><strong>Period:</strong> {indexStartDate} to {indexEndDate}</div>
-        <div><strong>Countries:</strong> {countriesCount}</div>
-        <div><strong>KPIs:</strong> {kpiCategoriesCount}</div>
-        <div><strong>Stocks:</strong> {stocksCount}</div>
+      <div className="summary-grid" style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+        <div className="summary-item"><strong>Size:</strong> {indexSize} stocks</div>
+        <div className="summary-item summary-currency"><strong>Currency:</strong> {indexCurrency}</div>
+        <div className="summary-item"><strong>Start Amount:</strong> {indexStartAmount}</div>
+        <div className="summary-item summary-period"><strong>Period:</strong> {indexStartDate} to {indexEndDate}</div>
+        <div className="summary-item"><strong>Countries:</strong> {countriesCount}</div>
+        <div className="summary-item summary-kpis"><strong>KPIs:</strong> {kpiCategoriesCount}</div>
+        <div className="summary-item"><strong>Stocks:</strong> {stocksCount}</div>
       </div>
     </div>
   );

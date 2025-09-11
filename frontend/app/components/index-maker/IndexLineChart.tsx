@@ -40,7 +40,7 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, benchmarkData, wi
   }
 
   if (!data || data.length === 0) {
-    return <div style={{ fontSize: '12px', color: '#6b7280' }}>No data to display</div>;
+    return <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>No data to display</div>;
   }
 
   // Parse main index data
@@ -64,7 +64,7 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, benchmarkData, wi
   const allData = [parsedIndex, ...Object.values(parsedBenchmarks)].flat();
   
   if (allData.length === 0) {
-    return <div style={{ fontSize: '12px', color: '#6b7280' }}>No data to display</div>;
+    return <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>No data to display</div>;
   }
 
   const padding = { top: 12, right: 60, bottom: 24, left: 40 };
@@ -243,7 +243,7 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, benchmarkData, wi
         return (
           <g key={i}>
             <line x1={padding.left - 4} y1={y} x2={padding.left + innerW} y2={y} stroke="#f3f4f6" />
-            <text x={padding.left - 8} y={y} textAnchor="end" alignmentBaseline="middle" fill="#6b7280" fontSize={10}>
+            <text x={padding.left - 8} y={y} textAnchor="end" alignmentBaseline="middle" fill="#6b7280" style={{ fontSize: '0.625rem' }}>
               {Math.round(tv).toLocaleString()}
             </text>
           </g>
@@ -261,7 +261,7 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, benchmarkData, wi
         return (
           <g key={i}>
             <line x1={x} y1={padding.top + innerH} x2={x} y2={padding.top + innerH + 4} stroke="#e5e7eb" />
-            <text x={x} y={padding.top + innerH + 16} textAnchor="middle" alignmentBaseline="hanging" fill="#6b7280" fontSize={10}>
+            <text x={x} y={padding.top + innerH + 16} textAnchor="middle" alignmentBaseline="hanging" fill="#6b7280" style={{ fontSize: '0.625rem' }}>
               {dateStr}
             </text>
           </g>
@@ -382,9 +382,9 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, benchmarkData, wi
           top: Math.max(8, hoveredPoint.y - 10),
           backgroundColor: 'rgba(0, 0, 0, 0.8)',
           color: 'white',
-          padding: '6px 8px',
-          borderRadius: '4px',
-          fontSize: '12px',
+          padding: '0.375rem 0.5rem',
+          borderRadius: '0.25rem',
+          fontSize: '0.75rem',
           pointerEvents: 'none',
           zIndex: 1000,
           whiteSpace: 'nowrap',

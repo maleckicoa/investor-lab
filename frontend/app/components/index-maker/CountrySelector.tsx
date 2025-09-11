@@ -29,8 +29,8 @@ const CountrySelector: React.FC<CountrySelectorProps> = ({
   handleCountryToggle
 }) => {
   return (
-    <div style={{ marginBottom: '20px' }}>
-      <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>
+    <div style={{ marginBottom: '1.25rem' }}>
+      <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#111827', marginBottom: '0.75rem' }}>
       </h3>
       <div style={{ position: 'relative' }}>
         <button
@@ -46,14 +46,14 @@ const CountrySelector: React.FC<CountrySelectorProps> = ({
             backgroundColor: '#2563eb',
             color: 'white',
             border: 'none',
-            padding: '10px 20px',
-            borderRadius: '6px',
-            fontSize: '14px',
+            padding: '0.625rem 1.25rem',
+            borderRadius: '0.375rem',
+            fontSize: '0.875rem',
             fontWeight: '600',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
+            gap: '0.5rem',
             transition: 'background-color 0.2s',
             width: '100%'
           }}
@@ -85,23 +85,23 @@ const CountrySelector: React.FC<CountrySelectorProps> = ({
         {/* Country Dropdown */}
         {showCountryDropdown && (
           <div 
-            className="dropdown-container"
+            className="dropdown-container dropdown-mobile"
             style={{
               position: 'fixed',
               top: countryDropdownPosition.top,
               left: countryDropdownPosition.left,
-              width: '600px',
+              width: 'min(37.5rem, 90vw)', /* responsive width */
               backgroundColor: 'white',
               border: '1px solid #e5e7eb',
-              borderRadius: '6px',
+              borderRadius: '0.375rem',
               boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
               zIndex: 1000,
-              maxHeight: '300px',
+              maxHeight: '18.75rem', /* 300px */
               overflowY: 'auto'
             }}
           >
             {countries.length === 0 ? (
-              <div style={{ padding: '16px', textAlign: 'center', color: '#6b7280' }}>
+              <div style={{ padding: '1rem', textAlign: 'center', color: '#6b7280' }}>
                 Loading countries... ({countries.length} loaded)
               </div>
             ) : (
@@ -113,18 +113,18 @@ const CountrySelector: React.FC<CountrySelectorProps> = ({
                   onClick={() => handleCountryToggle(country.country_code)}
                   style={{
                     width: '100%',
-                    padding: '8px 12px',
+                    padding: '0.5rem 0.75rem',
                     border: 'none',
                     backgroundColor: isSelected ? '#dbeafe' : 'transparent',
                     textAlign: 'left',
-                    fontSize: '13px',
+                    fontSize: '0.8125rem',
                     color: '#111827',
                     cursor: 'pointer',
                     borderBottom: '1px solid #f3f4f6',
                     transition: 'background-color 0.2s',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px'
+                    gap: '0.5rem'
                   }}
                   onMouseEnter={(e) => {
                     if (!isSelected) {
@@ -138,10 +138,10 @@ const CountrySelector: React.FC<CountrySelectorProps> = ({
                   }}
                 >
                   <div style={{ 
-                    width: '14px', 
-                    height: '14px', 
+                    width: '0.875rem', 
+                    height: '0.875rem', 
                     border: '2px solid #d1d5db',
-                    borderRadius: '3px',
+                    borderRadius: '0.1875rem',
                     backgroundColor: isSelected ? '#2563eb' : 'transparent',
                     display: 'flex',
                     alignItems: 'center',
@@ -171,28 +171,28 @@ const CountrySelector: React.FC<CountrySelectorProps> = ({
       {/* Selected Countries Display */}
       {selectedCountries.length > 0 && (
         <div style={{ 
-          marginTop: '12px',
-          padding: '8px 12px',
+          marginTop: '0.75rem',
+          padding: '0.5rem 0.75rem',
           backgroundColor: '#f0f9ff',
           border: '1px solid #0ea5e9',
-          borderRadius: '6px'
+          borderRadius: '0.375rem'
         }}>
           <div style={{ 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'space-between',
-            marginBottom: '6px'
+            marginBottom: '0.375rem'
           }}>
             <div style={{ 
               display: 'flex', 
               alignItems: 'center', 
-              gap: '6px'
+              gap: '0.375rem'
             }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M9 12l2 2 4-4"/>
                 <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
               </svg>
-              <span style={{ color: '#0c4a6e', fontWeight: '500', fontSize: '12px' }}>
+              <span style={{ color: '#0c4a6e', fontWeight: '500', fontSize: '0.75rem' }}>
                 Selected Countries ({selectedCountries.length})
               </span>
             </div>
@@ -203,10 +203,10 @@ const CountrySelector: React.FC<CountrySelectorProps> = ({
                 border: '1px solid #0ea5e9',
                 color: '#0ea5e9',
                 cursor: 'pointer',
-                fontSize: '10px',
+                fontSize: '0.625rem',
                 fontWeight: '500',
-                padding: '2px 6px',
-                borderRadius: '4px',
+                padding: '0.125rem 0.375rem',
+                borderRadius: '0.25rem',
                 transition: 'all 0.2s'
               }}
               onMouseEnter={(e) => {
@@ -222,7 +222,7 @@ const CountrySelector: React.FC<CountrySelectorProps> = ({
               Remove all
             </button>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
             {selectedCountries.map((countryCode) => {
               const country = countries.find(c => c.country_code === countryCode);
               return (
@@ -231,13 +231,13 @@ const CountrySelector: React.FC<CountrySelectorProps> = ({
                   style={{
                     backgroundColor: '#0ea5e9',
                     color: 'white',
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                    fontSize: '11px',
+                    padding: '0.125rem 0.375rem',
+                    borderRadius: '0.25rem',
+                    fontSize: '0.6875rem',
                     fontWeight: '500',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '4px'
+                    gap: '0.25rem'
                   }}
                 >
                   {country?.country_name || countryCode}
@@ -250,9 +250,9 @@ const CountrySelector: React.FC<CountrySelectorProps> = ({
                       border: 'none',
                       color: 'white',
                       cursor: 'pointer',
-                      fontSize: '12px',
+                      fontSize: '0.75rem',
                       padding: '0',
-                      marginLeft: '2px',
+                      marginLeft: '0.125rem',
                       display: 'flex',
                       alignItems: 'center'
                     }}

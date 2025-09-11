@@ -368,29 +368,28 @@ export default function IndexMakerPage() {
   }
 
   return (
-    <div className="page-container" style={{ display: 'flex', width: '100%', height: '100vh', justifyContent: 'center', padding: '0 10vw' }}>
-      <div style={{ display: 'flex', width: '100%', height: '100vh' }}>
+    <div className="page-container">
       {/* Left Panel - Index Maker Content */}
-      <div className="left-pane" style={{ width: '30%', padding: '24px', overflowY: 'auto', borderRight: '1px solid #e5e7eb', position: 'relative' }}>
-        <div style={{ backgroundColor: 'white', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', borderRadius: '8px', padding: '20px', width: '100%',  }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', margin: 0 }}>
+      <div className="left-pane" style={{ width: '30%', padding: '1.5rem', borderRight: '1px solid #e5e7eb', position: 'relative' }}>
+        <div style={{ backgroundColor: 'white', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', borderRadius: '0.5rem', padding: '1.25rem', width: '100%',  }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#111827', margin: 0 }}>
               Index Maker
             </h2>
             <div style={{ marginLeft: 'auto' }}>
               <UserInstructions />
             </div>
           </div>
-          <p style={{ color: '#6b7280', marginBottom: '8px', fontSize: '14px' }}>
+          <p style={{ color: '#6b7280', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
             &nbsp;
             &nbsp;
           </p>
           {/* Upper Make Index Button */}
           <div style={{
-            marginBottom: '25px',
-            padding: '20px',
+            marginBottom: '1.5625rem', /* 25px */
+            padding: '1.25rem',
             backgroundColor: '#f8fafc',
-            borderRadius: '8px',
+            borderRadius: '0.5rem',
             border: '1px solid #e2e8f0'
           }}>
             <MakeIndexButton
@@ -513,7 +512,7 @@ export default function IndexMakerPage() {
           />
 
           {/* Benchmarks */}
-          <div style={{ marginTop: '12px' }}>
+          <div style={{ marginTop: '0.75rem' }}>
             <BenchmarkSelector
               benchmarks={benchmarks}
               selectedBenchmarks={selectedBenchmarks}
@@ -531,10 +530,10 @@ export default function IndexMakerPage() {
 
           {/* Make Index Button */}
                         <div style={{
-            marginTop: '24px',
-            padding: '20px',
+            marginTop: '1.5rem',
+            padding: '1.25rem',
             backgroundColor: '#f8fafc',
-            borderRadius: '8px',
+            borderRadius: '0.5rem',
             border: '1px solid #e2e8f0'
           }}>
             <MakeIndexButton
@@ -569,21 +568,14 @@ export default function IndexMakerPage() {
             />
                         </div>
                         
-          {/* Empty Spacing Block */}
-                        <div style={{
-            height: '200px',
-            backgroundColor: 'transparent'
-          }}></div>
                                 </div>
             </div>
             
       {/* Right Panel - Graph Area */}
       <div className="right-pane" style={{ 
         width: '70%',
-        padding: '24px',
-        backgroundColor: '#f8fafc',
-        overflowY: 'auto',
-        height: '100vh'
+        padding: '1.5rem',
+        backgroundColor: '#f8fafc'
       }}>
         <div style={{ width: '100%' }}>
           <IndexResults indexResult={indexResult} indexRiskReturn={indexRiskReturn} onClear={() => { setIndexResult(null); setIndexRiskReturn(null); }} />
@@ -591,23 +583,23 @@ export default function IndexMakerPage() {
           {/* Index Data Display */}
           <div style={{ 
             backgroundColor: 'white',
-            borderRadius: '8px',
+            borderRadius: '0.5rem',
             border: '1px solid #e5e7eb',
             boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
             overflow: 'hidden'
           }}>
             <div style={{ 
-              padding: '16px 20px',
+              padding: '1rem 1.25rem',
               borderBottom: '1px solid #e5e7eb',
               backgroundColor: '#f9fafb'
             }}>
-              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#374151', margin: '0' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#374151', margin: '0' }}>
                 Index & Benchmark Chart
               </h3>
             </div>
 
             <div className="chart-container" style={{ 
-              padding: '20px 20px 20px 20px',
+              padding: '1.25rem',
               overflowX: 'auto',
               overflowY: 'hidden'
             }}>
@@ -621,22 +613,22 @@ export default function IndexMakerPage() {
                 />
               ) : (
                 <div style={{ 
-                  height: '320px', 
+                  height: '20rem', 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center',
                   border: '2px dashed #d1d5db',
-                  borderRadius: '8px',
+                  borderRadius: '0.5rem',
                   backgroundColor: '#f9fafb'
                 }}>
                   <div style={{ textAlign: 'center', color: '#6b7280' }}>
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ marginBottom: '12px' }}>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ marginBottom: '0.75rem' }}>
                       <path d="M3 3v18h18"/>
                       <path d="m9 9 3 3 3-3"/>
                       <path d="M9 12h6"/>
                       <path d="M9 16h6"/>
                     </svg>
-                    <p style={{ fontSize: '14px', margin: '0' }}>Make Index to display data</p>
+                    <p style={{ fontSize: '0.875rem', margin: '0' }}>Make Index to display data</p>
                   </div>
                 </div>
               )}
@@ -654,42 +646,42 @@ export default function IndexMakerPage() {
 
           {/* Constituent Weights Table */}
           <div style={{ 
-            marginTop: '16px',
+            marginTop: '1rem',
             backgroundColor: 'white',
-            borderRadius: '8px',
+            borderRadius: '0.5rem',
             border: '1px solid #e5e7eb',
             boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
           }}>
             <div style={{ 
-              padding: '16px 20px',
+              padding: '1rem 1.25rem',
               borderBottom: '1px solid #e5e7eb',
               backgroundColor: '#f9fafb'
             }}>
-              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#374151', margin: '0' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#374151', margin: '0' }}>
                 Constituent Weights by Quarter
               </h3>
             </div>
-            <div style={{ padding: '12px 20px' }}>
+            <div style={{ padding: '0.75rem 1.25rem' }}>
               {indexResult ? (
                 <ConstituentWeightsTable weights={indexResult?.constituent_weights || []} />
               ) : (
                 <div style={{ 
-                  height: '200px', 
+                  height: '12.5rem', 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center',
                   border: '2px dashed #d1d5db',
-                  borderRadius: '8px',
+                  borderRadius: '0.5rem',
                   backgroundColor: '#f9fafb'
                 }}>
                   <div style={{ textAlign: 'center', color: '#6b7280' }}>
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ marginBottom: '8px' }}>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ marginBottom: '0.5rem' }}>
                       <path d="M3 3v18h18"/>
                       <path d="m9 9 3 3 3-3"/>
                       <path d="M9 12h6"/>
                       <path d="M9 16h6"/>
                     </svg>
-                    <p style={{ fontSize: '14px', margin: '0' }}>Make Index to display data</p>
+                    <p style={{ fontSize: '0.875rem', margin: '0' }}>Make Index to display data</p>
                   </div>
                 </div>
               )}
@@ -697,75 +689,9 @@ export default function IndexMakerPage() {
           </div>
         </div>
       </div>
-      </div>
       
-      <style jsx>{`
-        @media (max-width: 768px) {
-          .page-container {
-            flex-direction: column;
-            height: auto;
-          }
-          .left-pane {
-            width: 100% !important;
-            border-right: none !important;
-            border-bottom: 1px solid #e5e7eb;
-            max-height: 33vh;
-            overflow-y: auto;
-          }
-          .right-pane {
-            width: 100% !important;
-            border-left: none !important;
-            border-right: none !important;
-            border-bottom: 1px solid #e5e7eb;
-            min-height: 33vh;
-          }
-          
-          .chart-container {
-            padding: 10px !important;
-          }
-          
-          .chart-container svg {
-            max-width: 100% !important;
-            height: auto !important;
-          }
-          
-          .chart-container {
-            overflow-x: auto !important;
-            overflow-y: hidden !important;
-          }
-          
-          .chart-container::-webkit-scrollbar {
-            height: 8px;
-          }
-          
-          .chart-container::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-          }
-          
-          .chart-container::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 4px;
-          }
-          
-          .chart-container::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8;
-          }
-        }
-        
-        @media (max-width: 1024px) {
-          .chart-container {
-            padding: 15px !important;
-          }
-        }
-        
-        @media (max-width: 768px) {
-          .chart-container {
-            padding: 10px !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }
+
 

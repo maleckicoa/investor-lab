@@ -24,42 +24,50 @@ export default function RootLayout({
             borderBottom: '1px solid #e5e7eb' 
           }}>
             <div style={{ 
-              maxWidth: '1280px', 
+              maxWidth: '80rem', /* 1280px */
               margin: '0 auto', 
-              padding: '0 1rem' 
+              padding: '0 var(--space-4)'
             }}>
               <div style={{ 
                 display: 'flex', 
                 justifyContent: 'space-between', 
                 alignItems: 'center', 
-                padding: '1.5rem 0' 
+                padding: 'clamp(0.75rem, 2vw, 1.5rem) 0',
+                gap: 'clamp(0.5rem, 3vw, 1rem)',
+                flexWrap: 'wrap'
               }}>
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 'clamp(0.5rem, 2vw, 0.75rem)', minWidth: 0 }}>
                   <img 
                     src="/site-logo/site-logo.png" 
                     alt="Index Advisor" 
                     style={{ 
-                      height: '60px',
+                      height: 'clamp(2rem, 8vw, 3.75rem)',
                       width: 'auto'
                     }}
                   />
                   <h1 style={{ 
-                    fontSize: '1.5rem', 
+                    fontSize: 'clamp(1rem, 1.2vw + 0.6rem, 1.5rem)', 
                     fontWeight: 'bold', 
                     color: '#111827',
                     margin: 0,
-                    paddingBottom: '4px'
+                    paddingBottom: '0.25rem'
                   }}>
                     Investor Lab
                   </h1>
                 </div>
-                <nav style={{ display: 'flex', gap: '2rem' }}>
+                <nav style={{ 
+                  display: 'flex', 
+                  gap: 'clamp(0.75rem, 4vw, 2rem)', 
+                  flexWrap: 'wrap', 
+                  alignSelf: 'flex-end',
+                  marginTop: 'clamp(0.25rem, 1vw, 0.75rem)'
+                }}>
                   <a href="/" style={{ 
                     color: '#111827', 
                     textDecoration: 'none',
-                    padding: '0.5rem 0.75rem',
+                    padding: 'clamp(0.25rem, 1.5vw, 0.5rem) clamp(0.5rem, 2vw, 0.75rem)',
                     borderRadius: '0.375rem',
-                    fontSize: '0.875rem',
+                    fontSize: 'clamp(0.75rem, 1.2vw, 0.875rem)',
                     fontWeight: '500'
                   }}>
                     Home
@@ -67,9 +75,9 @@ export default function RootLayout({
                   <a href="/index-maker" style={{ 
                     color: '#111827', 
                     textDecoration: 'none',
-                    padding: '0.5rem 0.75rem',
+                    padding: 'clamp(0.25rem, 1.5vw, 0.5rem) clamp(0.5rem, 2vw, 0.75rem)',
                     borderRadius: '0.375rem',
-                    fontSize: '0.875rem',
+                    fontSize: 'clamp(0.75rem, 1.2vw, 0.875rem)',
                     fontWeight: '500'
                   }}>
                     Index Maker
@@ -77,9 +85,9 @@ export default function RootLayout({
                   <a href="/etl-summary" style={{ 
                     color: '#111827', 
                     textDecoration: 'none',
-                    padding: '0.5rem 0.75rem',
+                    padding: 'clamp(0.25rem, 1.5vw, 0.5rem) clamp(0.5rem, 2vw, 0.75rem)',
                     borderRadius: '0.375rem',
-                    fontSize: '0.875rem',
+                    fontSize: 'clamp(0.75rem, 1.2vw, 0.875rem)',
                     fontWeight: '500'
                   }}>
                     ETL Summary
@@ -89,11 +97,13 @@ export default function RootLayout({
             </div>
           </header>
           <main style={{ 
-            maxWidth: '1600px', 
+            maxWidth: '100rem', /* 1600px */
             margin: '0 auto', 
             padding: '1rem 0.5rem' 
           }}>
-            {children}
+            <div className="app-scale">
+              {children}
+            </div>
           </main>
         </div>
       </body>
