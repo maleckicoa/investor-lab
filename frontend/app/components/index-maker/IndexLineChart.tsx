@@ -67,7 +67,8 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, benchmarkData, wi
     return <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>No data to display</div>;
   }
 
-  const padding = { top: 12, right: 60, bottom: 24, left: 40 };
+  // Increase bottom padding to ensure x-axis labels are fully visible
+  const padding = { top: 12, right: 60, bottom: 36, left: 40 };
   const w = Math.max(200, width);
   const h = Math.max(160, height);
   const innerW = w - padding.left - padding.right;
@@ -170,6 +171,60 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, benchmarkData, wi
     setHoveredPoint(null);
   };
 
+  // Touch support: mirror mouse move behavior for mobile
+  const handleTouchMove = (event: React.TouchEvent<SVGSVGElement>) => {
+    if (!svgRef.current) return;
+    if (event.touches.length === 0) return;
+    const touch = event.touches[0];
+    const rect = svgRef.current.getBoundingClientRect();
+    const touchX = touch.clientX - rect.left;
+    const touchY = touch.clientY - rect.top;
+
+    const t = minX + ((touchX - padding.left) / (innerW)) * (maxX - minX);
+    const cursorValue = minY + ((padding.top + innerH - touchY) / innerH) * (maxY - minY);
+
+    let closestPoint: { t: number; v: number; type: string } | null = null;
+    let minDistance = Infinity;
+    for (const point of parsedIndex) {
+      const distance = Math.abs(point.t - t);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestPoint = point;
+      }
+    }
+    Object.values(parsedBenchmarks).forEach(points => {
+      for (const point of points) {
+        const distance = Math.abs(point.t - t);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestPoint = point;
+        }
+      }
+    });
+
+    if (closestPoint) {
+      const px = xScale(closestPoint.t);
+      const py = yScale(cursorValue);
+      setHoveredPoint({
+        x: touchX,
+        y: touchY,
+        px,
+        py,
+        date: new Date(closestPoint.t).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        }),
+        value: cursorValue,
+        type: closestPoint.type
+      });
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setHoveredPoint(null);
+  };
+
   // Build y-axis ticks as nice rounded values and always include startValue if given
   const desiredTicks = 4;
   const span = maxY - minY;
@@ -228,14 +283,17 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, benchmarkData, wi
         viewBox={`0 0 ${w} ${h}`}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
-        style={{ cursor: 'crosshair' }}
+        onTouchStart={handleTouchMove}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{ cursor: 'crosshair', touchAction: 'none' }}
       >
         {/* Background */}
         <rect x={0} y={0} width={w} height={h} fill="#ffffff" />
 
       {/* Axes */}
       <line x1={padding.left} y1={padding.top} x2={padding.left} y2={padding.top + innerH} stroke="#e5e7eb" />
-      <line x1={padding.left} y1={padding.top + innerH} x2={padding.left + innerW} y2={padding.top + innerH} stroke="#e5e7eb" />
+      {/* Removed the bottom horizontal axis line to avoid overlapping the x-axis labels */}
 
       {/* Y ticks and labels */}
       {yTicks.map((tv, i) => {
@@ -261,7 +319,7 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, benchmarkData, wi
         return (
           <g key={i}>
             <line x1={x} y1={padding.top + innerH} x2={x} y2={padding.top + innerH + 4} stroke="#e5e7eb" />
-            <text x={x} y={padding.top + innerH + 16} textAnchor="middle" alignmentBaseline="hanging" fill="#6b7280" style={{ fontSize: '0.625rem' }}>
+            <text x={x} y={padding.top + innerH + 22} textAnchor="middle" alignmentBaseline="hanging" fill="#6b7280" style={{ fontSize: '0.625rem' }}>
               {dateStr}
             </text>
           </g>
@@ -269,8 +327,8 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, benchmarkData, wi
       })}
 
       {/* Lines */}
-      {/* Main index line */}
-      <path d={indexPath} fill="none" stroke="#2563eb" strokeWidth={2} />
+      {/* Main index line - blue and thicker */}
+      <path d={indexPath} fill="none" stroke="#2563eb" strokeWidth={3} />
       
       {/* Benchmark lines */}
       {benchmarkPaths.map(({ symbol, path }, index) => {
@@ -282,8 +340,7 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, benchmarkData, wi
             d={path} 
             fill="none" 
             stroke={color} 
-            strokeWidth={2} 
-            strokeDasharray={index > 0 ? "5,5" : "none"}
+            strokeWidth={1.5}
           />
         );
       })}

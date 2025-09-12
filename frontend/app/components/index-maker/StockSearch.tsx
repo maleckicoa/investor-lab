@@ -93,10 +93,10 @@ const StockSearch: React.FC<StockSearchProps> = ({
           <div 
             className="dropdown-container dropdown-mobile"
             style={{
-              position: 'fixed',
-              top: stockSearchPosition.top,
-              left: stockSearchPosition.left,
-              width: '37.5rem', /* 600px */
+              position: 'absolute',
+              top: 'calc(100% + 0.5rem)',
+              left: 0,
+              width: 'min(100%, 37.5rem)',
               backgroundColor: 'white',
               border: '1px solid #e5e7eb',
               borderRadius: '0.375rem',
@@ -110,7 +110,7 @@ const StockSearch: React.FC<StockSearchProps> = ({
             <div style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb' }}>
               <input
                 type="text"
-                placeholder="Search by company name or symbol..."
+                placeholder="Search company or symbol..."
                 value={stockSearchQuery}
                 onChange={(e) => {
                   const query = e.target.value;
@@ -129,10 +129,11 @@ const StockSearch: React.FC<StockSearchProps> = ({
                 }}
                 style={{
                   width: '100%',
-                  padding: '0.75rem',
+                  padding: 'clamp(0.5rem, 1.5vw, 0.75rem)',
                   border: '1px solid #d1d5db',
                   borderRadius: '0.375rem',
-                  fontSize: '0.875rem',
+                  fontSize: 'clamp(0.6875rem, 1.2vw, 0.8125rem)',
+                  lineHeight: 1.2,
                   outline: 'none'
                 }}
                 onFocus={() => setStockSearchResults([])}

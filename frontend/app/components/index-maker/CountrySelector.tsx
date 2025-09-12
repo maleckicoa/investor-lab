@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface Country {
   country_code: string;
@@ -28,6 +28,14 @@ const CountrySelector: React.FC<CountrySelectorProps> = ({
   getDropdownPosition,
   handleCountryToggle
 }) => {
+  const [countrySearch, setCountrySearch] = useState('');
+  const normalizedQuery = countrySearch.trim().toLowerCase();
+  const filteredCountries = normalizedQuery
+    ? countries.filter(c =>
+        c.country_name.toLowerCase().includes(normalizedQuery) ||
+        c.country_code.toLowerCase().includes(normalizedQuery)
+      )
+    : countries;
   return (
     <div style={{ marginBottom: '1.25rem' }}>
       <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#111827', marginBottom: '0.75rem' }}>
@@ -87,25 +95,42 @@ const CountrySelector: React.FC<CountrySelectorProps> = ({
           <div 
             className="dropdown-container dropdown-mobile"
             style={{
-              position: 'fixed',
-              top: countryDropdownPosition.top,
-              left: countryDropdownPosition.left,
-              width: 'min(37.5rem, 90vw)', /* responsive width */
+              position: 'absolute',
+              top: 'calc(100% + 0.5rem)',
+              left: 0,
+              width: 'min(100%, 37.5rem)',
               backgroundColor: 'white',
               border: '1px solid #e5e7eb',
               borderRadius: '0.375rem',
               boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
               zIndex: 1000,
-              maxHeight: '18.75rem', /* 300px */
+              maxHeight: '18.75rem',
               overflowY: 'auto'
             }}
           >
-            {countries.length === 0 ? (
+            {/* Search input */}
+            <div style={{ padding: '0.75rem', borderBottom: '1px solid #e5e7eb', position: 'sticky', top: 0, background: 'white', zIndex: 1 }}>
+              <input
+                type="text"
+                value={countrySearch}
+                onChange={(e) => setCountrySearch(e.target.value)}
+                placeholder="Search country or code..."
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 0.75rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '0.375rem',
+                  fontSize: 'clamp(0.75rem, 1.5vw, 0.875rem)',
+                  outline: 'none'
+                }}
+              />
+            </div>
+            {filteredCountries.length === 0 ? (
               <div style={{ padding: '1rem', textAlign: 'center', color: '#6b7280' }}>
-                Loading countries... ({countries.length} loaded)
+                No countries match "{countrySearch}"
               </div>
             ) : (
-              countries.map((country) => {
+              filteredCountries.map((country) => {
                 const isSelected = selectedCountries.includes(country.country_code);
                 return (
                 <button

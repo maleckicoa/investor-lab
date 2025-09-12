@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface KPISelectorProps {
   kpis: Record<string, string[]>;
@@ -23,6 +23,7 @@ const KPISelector: React.FC<KPISelectorProps> = ({
   getDropdownPosition,
   kpiLabels = {}
 }) => {
+  const [kpiSearch, setKpiSearch] = useState('');
   return (
     <div style={{ marginBottom: '1.25rem' }}>
       <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#111827', marginBottom: '0.75rem' }}>
@@ -82,10 +83,10 @@ const KPISelector: React.FC<KPISelectorProps> = ({
           <div 
             className="dropdown-container dropdown-mobile"
             style={{
-              position: 'fixed',
-              top: kpiDropdownPosition.top,
-              left: kpiDropdownPosition.left,
-              width: '37.5rem', /* 600px */
+              position: 'absolute',
+              top: 'calc(100% + 0.5rem)',
+              left: 0,
+              width: 'min(100%, 37.5rem)',
               backgroundColor: 'white',
               border: '1px solid #e5e7eb',
               borderRadius: '0.375rem',
@@ -95,7 +96,30 @@ const KPISelector: React.FC<KPISelectorProps> = ({
               overflowY: 'auto'
             }}
           >
-            {Object.entries(kpis).map(([kpiName, kpiValues]) => {
+            {/* Search input */}
+            <div style={{ padding: '0.75rem', borderBottom: '1px solid #e5e7eb', position: 'sticky', top: 0, background: 'white', zIndex: 1 }}>
+              <input
+                type="text"
+                value={kpiSearch}
+                onChange={(e) => setKpiSearch(e.target.value)}
+                placeholder="Search fundamentals..."
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 0.75rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '0.375rem',
+                  fontSize: 'clamp(0.75rem, 1.5vw, 0.875rem)',
+                  outline: 'none'
+                }}
+              />
+            </div>
+            {Object.entries(kpis)
+              .filter(([kpiName]) => {
+                const displayName = (kpiLabels[kpiName] || kpiName).toLowerCase();
+                const q = kpiSearch.trim().toLowerCase();
+                return q.length === 0 || displayName.includes(q) || kpiName.toLowerCase().includes(q);
+              })
+              .map(([kpiName, kpiValues]) => {
               const isSelected = !!selectedKPIs[kpiName];
               const selectedValues = selectedKPIs[kpiName] || [];
               const displayName = kpiLabels[kpiName] || kpiName;
@@ -169,7 +193,7 @@ const KPISelector: React.FC<KPISelectorProps> = ({
                   
                   <div style={{
                     display: 'flex',
-                    flexWrap: 'wrap',
+                    flexDirection: 'column',
                     gap: '0.25rem'
                   }}>
                     {kpiValues.map((value) => {

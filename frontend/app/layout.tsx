@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import PrefetchIndexMaker from './PrefetchIndexMaker'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -101,6 +102,7 @@ export default function RootLayout({
             margin: '0 auto', 
             padding: '1rem 0.5rem' 
           }}>
+            <PrefetchIndexMaker />
             <div className="app-scale">
               {children}
             </div>

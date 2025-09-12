@@ -58,7 +58,7 @@ def get_kpis():
     return kpi_df
 
 def get_companies():
-    company_query = "select distinct company_name, symbol from raw.stock_info WHERE relevant = true"
+    company_query = "select distinct company_name, symbol, country from raw.stock_info WHERE relevant = true"
     company_df = run_query(company_query)
     
     # Clean up company names by removing quotes and commas

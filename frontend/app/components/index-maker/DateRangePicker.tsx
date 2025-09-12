@@ -20,7 +20,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
       </h3>
       <div className="dateRow" style={{ 
         display: 'flex', 
-        gap: '0.75rem',
+        gap: '8px',
         flexWrap: 'wrap',
         width: '100%'
       }}>

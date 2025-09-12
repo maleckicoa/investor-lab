@@ -5,6 +5,7 @@ type WeightRow = {
   quarter: string;
   symbol: string;
   company_name: string;
+  country: string;
   weight: number;
 };
 
@@ -149,9 +150,17 @@ const ConstituentWeightsTable: React.FC<ConstituentWeightsTableProps> = ({ weigh
                           <div style={{ 
                             fontSize: '0.5625rem', 
                             color: '#6b7280',
-                            lineHeight: '1.1'
+                            lineHeight: '1.1',
+                            marginBottom: '0.0625rem'
                           }}>
                             {company.symbol}
+                          </div>
+                          <div style={{ 
+                            fontSize: '0.5rem', 
+                            color: '#9ca3af',
+                            lineHeight: '1.1'
+                          }}>
+                            {company.country}
                           </div>
                         </td>
                         <td style={{ 

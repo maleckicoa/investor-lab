@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface Benchmark {
   name: string;
@@ -30,6 +30,14 @@ const BenchmarkSelector: React.FC<BenchmarkSelectorProps> = ({
   getDropdownPosition,
   handleBenchmarkToggle
 }) => {
+  const [benchmarkSearch, setBenchmarkSearch] = useState('');
+  const normalizedQuery = benchmarkSearch.trim().toLowerCase();
+  const filteredBenchmarks = normalizedQuery
+    ? benchmarks.filter(b =>
+        b.name.toLowerCase().includes(normalizedQuery) ||
+        b.symbol.toLowerCase().includes(normalizedQuery)
+      )
+    : benchmarks;
   return (
     <div style={{ marginBottom: '1.25rem' }}>
       <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#111827', marginBottom: '0.75rem' }}>
@@ -89,10 +97,10 @@ const BenchmarkSelector: React.FC<BenchmarkSelectorProps> = ({
           <div 
             className="dropdown-container dropdown-mobile"
             style={{
-              position: 'fixed',
-              top: benchmarkDropdownPosition.top,
-              left: benchmarkDropdownPosition.left,
-              width: 'min(37.5rem, 90vw)',
+              position: 'absolute',
+              top: 'calc(100% + 0.5rem)',
+              left: 0,
+              width: 'min(100%, 37.5rem)',
               backgroundColor: 'white',
               border: '1px solid #e5e7eb',
               borderRadius: '0.375rem',
@@ -102,12 +110,29 @@ const BenchmarkSelector: React.FC<BenchmarkSelectorProps> = ({
               overflowY: 'auto'
             }}
           >
-            {benchmarks.length === 0 ? (
+            {/* Search input */}
+            <div style={{ padding: '0.75rem', borderBottom: '1px solid #e5e7eb', position: 'sticky', top: 0, background: 'white', zIndex: 1 }}>
+              <input
+                type="text"
+                value={benchmarkSearch}
+                onChange={(e) => setBenchmarkSearch(e.target.value)}
+                placeholder="Search benchmark or symbol..."
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 0.75rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '0.375rem',
+                  fontSize: 'clamp(0.75rem, 1.5vw, 0.875rem)',
+                  outline: 'none'
+                }}
+              />
+            </div>
+            {filteredBenchmarks.length === 0 ? (
               <div style={{ padding: '1rem', textAlign: 'center', color: '#6b7280' }}>
-                Loading benchmarks... ({benchmarks.length} loaded)
+                No benchmarks match "{benchmarkSearch}"
               </div>
             ) : (
-              benchmarks.map((benchmark) => {
+              filteredBenchmarks.map((benchmark) => {
                 const isSelected = selectedBenchmarks.includes(benchmark.symbol);
                 return (
                 <button

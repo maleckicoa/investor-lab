@@ -398,14 +398,14 @@ def make_constituent_weights(df: pl.DataFrame, index_currency: str = "EUR", weig
               ])
               .filter(pl.col("weight") > 0)  # Only include companies with weight > 0
               .join(
-                  companies_df.select(["symbol", "company_name"]),
+                  companies_df.select(["symbol", "company_name", "country"]),
                   on="symbol",
                   how="left"
               )
               .with_columns([
                   pl.col("company_name").fill_null(pl.col("symbol"))  # Use symbol as fallback if name not found
               ])
-              .select(["year", "quarter", "symbol", "company_name", "weight"])
+              .select(["year", "quarter", "symbol", "company_name", "country", "weight"])
               .sort(["year", "quarter", "weight"], descending=[True, True, True])
         )
     elif weight == "equal":
@@ -428,14 +428,14 @@ def make_constituent_weights(df: pl.DataFrame, index_currency: str = "EUR", weig
                   (1.0 / pl.col("stock_count")).alias("weight")
               ])
               .join(
-                  companies_df.select(["symbol", "company_name"]),
+                  companies_df.select(["symbol", "company_name", "country"]),
                   on="symbol",
                   how="left"
               )
               .with_columns([
                   pl.col("company_name").fill_null(pl.col("symbol"))  # Use symbol as fallback if name not found
               ])
-              .select(["year", "quarter", "symbol", "company_name", "weight"])
+              .select(["year", "quarter", "symbol", "company_name", "country", "weight"])
               .sort(["year", "quarter", "weight"], descending=[True, True, True])
         )
     else:

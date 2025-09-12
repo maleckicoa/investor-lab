@@ -1,20 +1,17 @@
 import { NextResponse } from 'next/server';
-import { unstable_noStore as noStore } from 'next/cache';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-export const fetchCache = 'force-no-store';
+// Cache frontend-proxied index fields for 1 hour and revalidate in background
+export const revalidate = 3600; // seconds
 
 export async function GET() {
-  noStore();
 
   try {
     const response = await fetch('http://localhost:8000/api/index-fields', {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' },
+      // Allow Next to cache this response at the app layer
+      // Use Next's ISR-style metadata so prefetch warms cache
+      next: { revalidate: 3600 }
     });
 
     if (!response.ok) {
@@ -22,7 +19,12 @@ export async function GET() {
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: {
+        // Help browsers/CDN cache where applicable; Next will also cache via revalidate
+        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400'
+      }
+    });
   } catch (error: any) {
     console.error('Error fetching index fields:', error);
     return NextResponse.json(

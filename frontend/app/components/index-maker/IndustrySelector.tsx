@@ -86,10 +86,10 @@ const IndustrySelector: React.FC<IndustrySelectorProps> = ({
           <div 
             className="dropdown-container dropdown-mobile"
             style={{
-              position: 'fixed',
-              top: industryDropdownPosition.top,
-              left: industryDropdownPosition.left,
-              width: 'min(37.5rem, 90vw)',
+              position: 'absolute',
+              top: 'calc(100% + 0.5rem)',
+              left: 0,
+              width: 'min(100%, 37.5rem)',
               backgroundColor: 'white',
               border: '1px solid #e5e7eb',
               borderRadius: '0.375rem',

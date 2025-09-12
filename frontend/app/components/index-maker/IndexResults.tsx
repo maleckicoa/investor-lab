@@ -51,7 +51,7 @@ export default function IndexResults({ indexResult, indexRiskReturn, onClear }: 
         fontSize: '0.875rem'
       }}>
         <div style={{ padding: '0.75rem', backgroundColor: '#f0f9ff', borderRadius: '0.375rem', border: '1px solid #0ea5e9' }}>
-          <div style={{ minHeight: '2.75rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+          <div style={{ minHeight: '2.75rem', display: 'flex', alignItems: 'center', gap: '0.75rem', rowGap: '0.25rem', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
               <span style={{ fontSize: '0.8125rem', color: '#0c4a6e' }}>Annual Return:</span>
               <span style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#0ea5e9' }}>
