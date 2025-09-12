@@ -69,7 +69,8 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, benchmarkData, wi
 
   // Increase bottom padding to ensure x-axis labels are fully visible
   const padding = { top: 12, right: 60, bottom: 36, left: 40 };
-  const w = Math.max(200, width);
+  // Ensure chart is wide enough for horizontal scrolling - use a minimum width that's wider than most mobile screens
+  const w = Math.max(200, width || 1000);
   const h = Math.max(160, height);
   const innerW = w - padding.left - padding.right;
   const innerH = h - padding.top - padding.bottom;
@@ -286,7 +287,7 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, benchmarkData, wi
         onTouchStart={handleTouchMove}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        style={{ cursor: 'crosshair', touchAction: 'none' }}
+        style={{ cursor: 'crosshair', touchAction: 'pan-x' }}
       >
         {/* Background */}
         <rect x={0} y={0} width={w} height={h} fill="#ffffff" />

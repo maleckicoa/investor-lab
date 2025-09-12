@@ -43,7 +43,7 @@ const IndexCreationSummary: React.FC<IndexCreationSummaryProps> = ({
         <div className="summary-item"><strong>Start Amount:</strong> {indexStartAmount}</div>
         <div className="summary-item summary-period"><strong>Period:</strong> {indexStartDate} to {indexEndDate}</div>
         <div className="summary-item"><strong>Countries:</strong> {countriesCount}</div>
-        <div className="summary-item summary-kpis"><strong>KPIs:</strong> {kpiCategoriesCount}</div>
+        <div className="summary-item summary-kpis"><strong>Fundamentals:</strong> {kpiCategoriesCount}</div>
         <div className="summary-item"><strong>Stocks:</strong> {stocksCount}</div>
       </div>
     </div>

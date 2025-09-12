@@ -97,12 +97,6 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
           />
         </div>
       </div>
-      <style jsx>{`
-        @media (max-width: 48em) {
-          .dateRow { flex-wrap: wrap; }
-          .dateField { flex: 1 1 100%; min-width: 100%; }
-        }
-      `}</style>
       
       {/* Quick Date Presets */}
       <div style={{ 

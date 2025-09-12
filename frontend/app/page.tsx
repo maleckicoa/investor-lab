@@ -1,122 +1,77 @@
 'use client';
 
-import Link from 'next/link';
+import Image from 'next/image';
 
 export default function HomePage() {
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '2rem'
-    }}>
-      <div style={{ 
-        textAlign: 'left', 
-        maxWidth: '75rem',
-        width: '100%',
-        minHeight: '80vh',
-        backgroundColor: 'white',
-        borderRadius: '0.5rem',
-        padding: '5rem 3.75rem',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-        border: '1px solid #e5e7eb'
-      }}>
-        <p style={{ 
-          fontSize: 'clamp(1rem, 1.2vw + 0.75rem, 1.25rem)', 
-          color: '#6b7280', 
-          marginBottom: '3rem',
-          lineHeight: '1.6',
-          fontWeight: '400',
-          textAlign: 'justify'
-        }}>
-          Welcome to maleckicoa - Investor Lab a page designed to help you in making your investment decisions.
-        </p>
-        
-        <div style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          gap: '1.5rem', 
-          alignItems: 'center',
-          maxWidth: '18.75rem',
-          margin: '0 auto'
-        }}>
-          <Link href="/index-maker" style={{ textDecoration: 'none', width: '100%' }}>
-            <button style={{
-              backgroundColor: '#2563eb',
-              color: 'white',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '0.375rem',
-              fontSize: '1rem',
-              fontWeight: '500',
-              border: 'none',
-              cursor: 'pointer',
-              width: '100%',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
-            }}
-            onMouseOver={(e) => {
-              const target = e.target as HTMLButtonElement;
-              target.style.backgroundColor = '#1d4ed8';
-            }}
-            onMouseOut={(e) => {
-              const target = e.target as HTMLButtonElement;
-              target.style.backgroundColor = '#2563eb';
-            }}>
-              Index Maker
-            </button>
-          </Link>
-          
-          <Link href="/etl-summary" style={{ textDecoration: 'none', width: '100%' }}>
-            <button style={{
-              backgroundColor: '#6b7280',
-              color: 'white',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '0.375rem',
-              fontSize: '1rem',
-              fontWeight: '500',
-              border: 'none',
-              cursor: 'pointer',
-              width: '100%',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
-            }}
-            onMouseOver={(e) => {
-              const target = e.target as HTMLButtonElement;
-              target.style.backgroundColor = '#4b5563';
-            }}
-            onMouseOut={(e) => {
-              const target = e.target as HTMLButtonElement;
-              target.style.backgroundColor = '#6b7280';
-            }}>
-              ETL Summary Dashboard
-            </button>
-          </Link>
-        </div>
-        
-        {/* Profile Photo Placeholder */}
-        <div style={{ 
-          marginTop: '3rem',
-          display: 'flex',
-          justifyContent: 'center'
-        }}>
-          <div style={{
-            width: '5rem',
-            height: '5rem',
-            borderRadius: '50%',
-            backgroundColor: '#e5e7eb',
-            border: '2px solid #d1d5db',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#9ca3af',
-            fontSize: '0.875rem',
-            fontWeight: '500'
-          }}>
-            Profile
+    <div className="home-container">
+        <div className="home-panel">
+          <div className="text-content">
+            <p style={{ marginBottom: '2rem' }}>
+              Welcome to maleckicoa - Investor Lab, a comprehensive collection of tools designed to 
+              help investors make better investment decisions. 
+              Our platform provides sophisticated analytical tools that empower both novice and experienced 
+              investors to build robust, data-driven investment strategies. 
+              The Investor Lab is built on the principle that successful investing requires not just intuition, 
+              but rigorous analysis of market data, company fundamentals, and risk-return relationships.
+            </p>
+            
+            <p style={{ marginBottom: '2rem' }}>
+              Currently, we offer the Index Maker tool, which allows you to create custom stock indices based 
+              on your specific investment criteria, including geographic regions, sectors, industries, and fundamental metrics. 
+              The Index Maker enables you to backtest your investment strategies, analyze risk-return profiles, 
+              and compare your custom indices against traditional benchmarks to validate your investment thesis. 
+              Soon, we will be adding a Momentum Analyzer tool that will help you identify stocks with strong price 
+              momentum and analyze trend patterns to optimize your entry and exit timing.
+            </p>
+            
+            <p style={{ marginBottom: '2rem' }}>
+              Our tools are designed to handle large datasets efficiently, processing thousands of stocks across 
+              multiple markets and timeframes to provide you with comprehensive insights. 
+              Whether you're building a diversified portfolio, testing a sector rotation strategy, or analyzing 
+              specific market segments, our platform provides the analytical depth you need to make informed decisions. 
+              All tools are built with institutional-grade data quality and real-time processing capabilities, 
+              ensuring that your analysis is based on accurate, up-to-date market information.
+            </p>
+            
+            <p style={{ marginBottom: '2rem' }}>
+              We believe that democratizing access to sophisticated investment analysis tools will help level the 
+              playing field for individual investors and improve overall market efficiency. 
+              The platform is continuously evolving, with new features and analytical capabilities being added 
+              regularly based on user feedback and market needs. 
+              Our mission is to provide you with the tools and insights necessary to build wealth through intelligent, 
+              data-driven investment decisions.
+            </p>
+            
+            {/* Profile Photo and Name - Now positioned relative to text block */}
+            <div className="profile-section">
+              {/* Text */}
+              <div className="profile-text">
+                <div className="profile-name">
+                  Aleksa Mihajlovic
+                </div>
+                <div className="profile-title">
+                  Investor Lab author
+                </div>
+              </div>
+              
+              {/* Photo */}
+              <div className="profile-photo">
+                <Image
+                  src="/site-logo/004.jpg"
+                  alt="Profile Photo"
+                  width={160}
+                  height={160}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
   );
-} 
+}

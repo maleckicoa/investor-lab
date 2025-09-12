@@ -601,7 +601,9 @@ export default function IndexMakerPage() {
             <div className="chart-container" style={{ 
               padding: '1.25rem',
               overflowX: 'auto',
-              overflowY: 'hidden'
+              overflowY: 'hidden',
+              WebkitOverflowScrolling: 'touch',
+              touchAction: 'pan-x'
             }}>
               {indexResult ? (
                 <IndexLineChart

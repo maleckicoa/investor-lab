@@ -20,8 +20,8 @@ body {
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-start-rgb));
+  color: #111827;
+  background: #ffffff;
 }
 
 a {
@@ -168,6 +168,7 @@ p, li, a, span, button, input, label { font-size: clamp(0.875rem, 0.4vw + 0.75re
   font-size: 0.7rem !important;
 }
 
+
 @media (max-width: 64em) {
   .summary-grid {
     display: grid !important;
@@ -175,6 +176,7 @@ p, li, a, span, button, input, label { font-size: clamp(0.875rem, 0.4vw + 0.75re
   }
 }
 
+/* Mobile styling for small screens */
 @media (max-width: 48em) {
   .summary-grid {
     display: grid !important;
@@ -184,4 +186,139 @@ p, li, a, span, button, input, label { font-size: clamp(0.875rem, 0.4vw + 0.75re
   .summary-currency { order: 3; }
   .summary-period { order: 4; }
   .summary-kpis { order: 5; }
+  
+  /* Date Range Picker mobile styling */
+  .dateRow {
+    flex-wrap: wrap !important;
+  }
+  
+  .dateField {
+    flex: 1 1 100% !important;
+    min-width: 100% !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .dateField:last-child {
+    margin-bottom: 0 !important;
+  }
+}
+
+/* Home Page Styles */
+.home-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.home-panel {
+  text-align: left;
+  max-width: 75rem;
+  width: 100%;
+  min-height: 80vh;
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 5rem 3.75rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  position: relative;
+}
+
+.text-content {
+  font-size: clamp(1rem, 1.2vw + 0.75rem, 1.25rem);
+  color: #111827;
+  margin-bottom: 3rem;
+  margin-left: clamp(2rem, 8vw, 10rem);
+  margin-right: clamp(2rem, 8vw, 10rem);
+  line-height: 1.6;
+  font-weight: 400;
+  text-align: justify;
+  position: relative;
+  padding-bottom: 12rem;
+}
+
+.profile-section {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5rem;
+}
+
+.profile-text {
+  text-align: right;
+  line-height: 1.2;
+}
+
+.profile-name {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.25rem;
+}
+
+.profile-title {
+  font-size: 1rem;
+  font-weight: 400;
+  color: #6b7280;
+}
+
+.profile-photo {
+  width: 10rem;
+  height: 10rem;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #e5e7eb;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .home-container {
+    padding: 0.5rem;
+    align-items: flex-start;
+    padding-top: 1rem;
+  }
+  
+  .home-panel {
+    padding: 1.5rem 1rem;
+    min-height: auto;
+    margin: 0;
+  }
+  
+  .text-content {
+    margin-left: 0;
+    margin-right: 0;
+    padding-bottom: 2rem;
+    font-size: 0.9rem;
+    text-align: justify;
+  }
+  
+  .profile-section {
+    position: static;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .profile-text {
+    text-align: center;
+    order: 2;
+  }
+  
+  .profile-photo {
+    width: 6rem;
+    height: 6rem;
+    order: 1;
+  }
+  
+  .profile-name {
+    font-size: 1.1rem;
+  }
+  
+  .profile-title {
+    font-size: 0.8rem;
+  }
 }
