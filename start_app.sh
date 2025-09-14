@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Starting Stock Index Advisor Application..."
+echo "🚀 Starting Investor Lab Application..."
 echo ""
 
 # Function to cleanup background processes on exit

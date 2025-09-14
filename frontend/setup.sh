@@ -44,8 +44,8 @@ fi
 if [ "$MODE" = "production" ]; then
     echo "🏗️ Building production frontend..."
     npm run build
-    pm2 delete next-frontend || true      # 👈 NEW
-    pm2 start npm --name next-frontend -- run start   # 👈 NEW
+    pm2 delete next-frontend || true 
+    pm2 start npm --name next-frontend -- run start
     echo "✅ Production setup complete"
 
 else

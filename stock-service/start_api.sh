@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Run FastAPI server using Poetry
-echo "🚀 Starting Stock Index Advisor API server..."
+echo "🚀 Starting Stock Service API server..."
 echo "📍 Server will be available at: http://localhost:8000"
 echo "📚 API documentation at: http://localhost:8000/docs"
 echo ""

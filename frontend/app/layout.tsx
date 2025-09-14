@@ -3,8 +3,8 @@ import PrefetchIndexMaker from './PrefetchIndexMaker'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Index Advisor',
-  description: 'Financial Data Analysis and Index Creation Platform',
+  title: 'Investor Lab',
+  description: 'Financial Data Analysis Platform',
   icons: {
     icon: '/site-logo/site-logo.png'
   }
@@ -40,7 +40,7 @@ export default function RootLayout({
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: 'clamp(0.5rem, 2vw, 0.75rem)', minWidth: 0 }}>
                   <img 
                     src="/site-logo/site-logo.png" 
-                    alt="Index Advisor" 
+                    alt="Investor Lab" 
                     style={{ 
                       height: 'clamp(2rem, 8vw, 3.75rem)',
                       width: 'auto'

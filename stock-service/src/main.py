@@ -15,7 +15,7 @@ import os
 import pandas as pd
 
 app = FastAPI(
-    title="Stock Index Advisor API",
+    title="Stock Service API",
     description="API for creating custom stock indices and fetching market data",
     version="1.0.0"
 )
@@ -52,7 +52,7 @@ class IndexCreationResponse(BaseModel):
 @app.get("/")
 async def root():
     """Root endpoint to check if API is running"""
-    return {"message": "Stock Index Advisor API is running!", "version": "1.0.0"}
+    return {"message": "Stock Service API is running!", "version": "1.0.0"}
 
 @app.get("/health")
 async def health_check():

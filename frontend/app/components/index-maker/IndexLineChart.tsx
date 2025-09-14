@@ -378,58 +378,68 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, benchmarkData, wi
         }
         return null;
       })}
-    </svg>
-
-    {/* Legend */}
-    <div
-      style={{
-        position: 'absolute',
-        top: '0.5rem',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        backgroundColor: 'transparent',
-        padding: '0',
-        fontSize: '0.75rem',
-        zIndex: 100,
-        display: 'flex',
-        flexDirection: 'row',
-        gap: '1rem',
-        alignItems: 'center'
-      }}
-    >
-      {/* Index line */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-        <div
-          style={{
-            width: '1rem',
-            height: '0.125rem',
-            backgroundColor: '#2563eb',
-            borderRadius: '0.0625rem'
-          }}
-        />
-        <span style={{ color: '#6b7280' }}>Index</span>
-      </div>
       
-      {/* Benchmark lines */}
-      {benchmarkPaths.map(({ symbol }, index) => {
-        const colors = ['#dc2626', '#059669', '#7c3aed', '#ea580c', '#0891b2', '#be123c'];
-        const color = colors[index % colors.length];
-        return (
-          <div key={`legend-${symbol}`} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-            <div
-              style={{
-                width: '1rem',
-                height: '0.125rem',
-                backgroundColor: color,
-                borderRadius: '0.0625rem',
-                backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 0.125rem, rgba(255,255,255,0.3) 0.125rem, rgba(255,255,255,0.3) 0.25rem)'
-              }}
-            />
-            <span style={{ color: '#6b7280' }}>{symbol}</span>
-          </div>
-        );
-      })}
-    </div>
+      {/* Legend inside SVG */}
+      <g>
+        {/* Calculate total legend width to center it */}
+        {(() => {
+          const totalItems = 1 + benchmarkPaths.length; // Index + benchmarks
+          const itemWidth = 80; // Width per item
+          const totalWidth = totalItems * itemWidth;
+          const startX = w/2 - totalWidth/2;
+          
+          return (
+            <>
+              {/* Index line legend */}
+              <line
+                x1={startX}
+                y1={padding.top + 20}
+                x2={startX + 20}
+                y2={padding.top + 20}
+                stroke="#2563eb"
+                strokeWidth="3"
+              />
+              <text
+                x={startX + 25}
+                y={padding.top + 25}
+                fontSize="12"
+                fill="#6b7280"
+              >
+                Index
+              </text>
+              
+              {/* Benchmark lines legend */}
+              {benchmarkPaths.map(({ symbol }, index) => {
+                const colors = ['#dc2626', '#059669', '#7c3aed', '#ea580c', '#0891b2', '#be123c'];
+                const color = colors[index % colors.length];
+                const legendX = startX + 80 + (index * 80);
+                
+                return (
+                  <g key={`legend-${symbol}`}>
+                    <line
+                      x1={legendX}
+                      y1={padding.top + 20}
+                      x2={legendX + 15}
+                      y2={padding.top + 20}
+                      stroke={color}
+                      strokeWidth="2"
+                    />
+                    <text
+                      x={legendX + 20}
+                      y={padding.top + 25}
+                      fontSize="12"
+                      fill="#6b7280"
+                    >
+                      {symbol}
+                    </text>
+                  </g>
+                );
+              })}
+            </>
+          );
+        })()}
+      </g>
+    </svg>
 
     {/* Tooltip */}
     {hoveredPoint && (

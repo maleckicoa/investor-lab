@@ -1,4 +1,4 @@
-# Stock Index Advisor - FastAPI Backend
+# Stock Service - FastAPI Backend
 
 ## 🚀 Quick Start
 

@@ -1,5 +1,5 @@
 """
-Index Advisor ETL Service
+Investor Lab ETL Service
 """
 
 from .fmp_api import FMPAPI

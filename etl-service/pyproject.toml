@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "naro-index-advisor-etl"
 version = "0.1.0"
-description = "ETL service for Naro Index Advisor"
+description = "ETL service for Investor Lab"
 authors = ["Your Name <your.email@example.com>"]
 packages = [
     { include = "src" }

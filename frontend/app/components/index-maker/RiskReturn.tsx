@@ -174,9 +174,9 @@ const RiskReturn: React.FC<RiskReturnProps> = ({ data, currency, width = 320, he
         const fontSize = 9;
         const approxCharWidth = 5.5; // px per char at fontSize 9
         const lineH = 11;
-        const boxW = 200; // fixed tooltip width for predictable wrapping
+        const boxW = 140; // smaller fixed tooltip width
 
-        const maxCharsPerLine = Math.max(8, Math.floor((boxW - 12) / approxCharWidth));
+        const maxCharsPerLine = Math.max(8, Math.floor((boxW - 16) / approxCharWidth));
         const wrapText = (text: string): string[] => {
           const words = (text || '').split(' ');
           const linesArr: string[] = [];
@@ -219,7 +219,7 @@ const RiskReturn: React.FC<RiskReturnProps> = ({ data, currency, width = 320, he
           }
         }
         const lines = [...nameLines, '', ...symbolLines, ...detailLines];
-        const boxH = lines.length * lineH + 8;
+        const boxH = lines.length * lineH + 12; // increased padding
 
         let tx = px + 8;
         let ty = py - boxH - 8;
@@ -229,9 +229,9 @@ const RiskReturn: React.FC<RiskReturnProps> = ({ data, currency, width = 320, he
         return (
           <g>
             <rect x={tx} y={ty} width={boxW} height={boxH} rx={4} ry={4} fill="#111827" opacity={0.9} />
-            <text x={tx + 6} y={ty + 6 + lineH * 0.75} fontSize={fontSize} fill="#ffffff">
+            <text x={tx + 8} y={ty + 8 + lineH * 0.75} fontSize={fontSize} fill="#ffffff">
               {lines.map((l, idx) => (
-                <tspan key={idx} x={tx + 6} y={ty + 6 + lineH * (idx + 0.75)}>
+                <tspan key={idx} x={tx + 8} y={ty + 8 + lineH * (idx + 0.75)}>
                   {l}
                 </tspan>
               ))}

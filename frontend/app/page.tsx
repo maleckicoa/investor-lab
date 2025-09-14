@@ -8,40 +8,27 @@ export default function HomePage() {
         <div className="home-panel">
           <div className="text-content">
             <p style={{ marginBottom: '2rem' }}>
-              Welcome to maleckicoa - Investor Lab, a comprehensive collection of tools designed to 
-              help investors make better investment decisions. 
-              Our platform provides sophisticated analytical tools that empower both novice and experienced 
-              investors to build robust, data-driven investment strategies. 
-              The Investor Lab is built on the principle that successful investing requires not just intuition, 
-              but rigorous analysis of market data, company fundamentals, and risk-return relationships.
+            Welcome to <strong>Investor Lab</strong> — a toolkit that help investors make sharper, more informed decisions.  
+            This space is built on a simple belief: successful investing isn’t guesswork — 
+            it’s about carefully analyzing market behavior, company fundamentals, and the relationship between risk and return.
+
             </p>
             
             <p style={{ marginBottom: '2rem' }}>
-              Currently, we offer the Index Maker tool, which allows you to create custom stock indices based 
-              on your specific investment criteria, including geographic regions, sectors, industries, and fundamental metrics. 
-              The Index Maker enables you to backtest your investment strategies, analyze risk-return profiles, 
-              and compare your custom indices against traditional benchmarks to validate your investment thesis. 
-              Soon, we will be adding a Momentum Analyzer tool that will help you identify stocks with strong price 
-              momentum and analyze trend patterns to optimize your entry and exit timing.
+            Right now, you can explore the <strong>Index Maker</strong> — a tool that lets you build your own stock indices 
+            based on your exact criteria: countries, sectors, industries, and fundamental filters.  
+            You can test your strategies, understand their risk and return characteristics, and benchmark them against traditional indices.  
+            And this is just the beginning — I’m currently working on the <strong>Momentum Analyzer</strong>, a tool 
+            that spots strong price trends and helps you time your moves with precision.
+            </p>
+
+            <p style={{ marginBottom: '2rem' }}>
+            A bit about me: I’m a senior data scientist and ex-quant, with years of experience building analytical 
+            tools for top-tier investment banks.  
+            Investor Lab is the product of that experience — and I hope it becomes a tool you return to often.
+
             </p>
             
-            <p style={{ marginBottom: '2rem' }}>
-              Our tools are designed to handle large datasets efficiently, processing thousands of stocks across 
-              multiple markets and timeframes to provide you with comprehensive insights. 
-              Whether you're building a diversified portfolio, testing a sector rotation strategy, or analyzing 
-              specific market segments, our platform provides the analytical depth you need to make informed decisions. 
-              All tools are built with institutional-grade data quality and real-time processing capabilities, 
-              ensuring that your analysis is based on accurate, up-to-date market information.
-            </p>
-            
-            <p style={{ marginBottom: '2rem' }}>
-              We believe that democratizing access to sophisticated investment analysis tools will help level the 
-              playing field for individual investors and improve overall market efficiency. 
-              The platform is continuously evolving, with new features and analytical capabilities being added 
-              regularly based on user feedback and market needs. 
-              Our mission is to provide you with the tools and insights necessary to build wealth through intelligent, 
-              data-driven investment decisions.
-            </p>
             
             {/* Profile Photo and Name - Now positioned relative to text block */}
             <div className="profile-section">

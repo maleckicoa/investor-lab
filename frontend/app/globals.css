@@ -322,3 +322,25 @@ p, li, a, span, button, input, label { font-size: clamp(0.875rem, 0.4vw + 0.75re
     font-size: 0.8rem;
   }
 }
+
+/* Chart Legend Mobile Fix */
+@media (max-width: 768px) {
+  .chart-legend {
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    position: absolute !important;
+  }
+}
+
+/* Fix form elements on mobile - ensure white backgrounds */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="search"],
+  input[type="radio"],
+  input[type="checkbox"],
+  select,
+  textarea {
+    background-color: white !important;
+    color: #111827 !important;
+  }
+}
