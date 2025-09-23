@@ -3,7 +3,7 @@ version: '3.8'
 services:
   postgres:
     image: postgres:16
-    container_name: naro-index-advisor-postgres
+    container_name: investor-lab-postgres
     env_file:
       - .env
     ports:
@@ -18,4 +18,4 @@ services:
 
 volumes:
   postgres_data:
-    name: naro-index-advisor-postgres-data 
+    name: investor-lab-postgres-data 

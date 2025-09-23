@@ -13,7 +13,7 @@ A Next.js frontend application for visualizing ETL summary data from the financi
 ## Prerequisites
 
 - Node.js 18+ 
-- PostgreSQL database running with the `naro_index_advisor` database
+- PostgreSQL database running with the `investor_lab_db` database
 - ETL service running and populating the `raw.etl_summary` table
 
 ## Setup
@@ -33,7 +33,7 @@ A Next.js frontend application for visualizing ETL summary data from the financi
    ```
    DB_HOST=localhost
    DB_PORT=5432
-   DB_NAME=naro_index_advisor
+   DB_NAME=investor_lab_db
    DB_USER=your_username
    DB_PASSWORD=your_password
    ```

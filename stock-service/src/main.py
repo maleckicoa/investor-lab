@@ -11,7 +11,6 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from index_maker import create_custom_index
 from utils.csv_reader import read_index_fields_from_csv
 from utils.benchmark_utils import get_benchmark_historical_data
-import os
 import pandas as pd
 
 app = FastAPI(

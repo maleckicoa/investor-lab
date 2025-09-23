@@ -29,6 +29,7 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, benchmarkData, wi
   const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number; px: number; py: number; date: string; value: number; type: string } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
+  /*
   // Debug logging
   console.log('🔍 IndexLineChart received data:', data);
   console.log('🔍 Benchmark data:', benchmarkData);
@@ -38,7 +39,8 @@ const IndexLineChart: React.FC<IndexLineChartProps> = ({ data, benchmarkData, wi
     console.log('🔍 First data point:', data[0]);
     console.log('🔍 Sample data points:', data.slice(0, 3));
   }
-
+  */
+ 
   if (!data || data.length === 0) {
     return <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>No data to display</div>;
   }

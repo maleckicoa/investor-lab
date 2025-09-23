@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 load_dotenv()
 
 class HistoricalPriceVolumeManager:
-    def __init__(self, start_date: str = "2013-12-01", max_symbols: int = 50000):
+    def __init__(self, start_date: str = "2013-12-01", max_symbols: int = 2000):
         self.database_url = get_database_url()
         self.engine = create_engine(self.database_url)
         self.fmp = FMPAPI()
