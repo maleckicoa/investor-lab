@@ -2,7 +2,7 @@ import time
 import polars as pl
 from datetime import datetime, date
 from typing import Union, Dict
-from utils.utils import run_query, run_query_to_polars_simple, run_query_debug, run_query_to_polars_simple1, run_query_to_polars_simple2
+from src.utils.utils import run_query, run_query_to_polars_simple, run_query_debug, run_query_to_polars_simple1, run_query_to_polars_simple2
 pl.Config.set_tbl_rows(-1)
 pl.Config.set_tbl_cols(-1) 
 pl.Config.set_tbl_rows(None)

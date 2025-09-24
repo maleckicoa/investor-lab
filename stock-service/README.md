@@ -2,14 +2,8 @@
 
 ## 🚀 Quick Start
 
-### Option 1: Start Both Services (Recommended)
-```bash
-./start_app.sh
-```
 
-This will start both the FastAPI server and Next.js frontend simultaneously.
-
-### Option 2: Start Services Separately
+### Option 1: Start Services Separately
 
 #### Start FastAPI Server
 ```bash

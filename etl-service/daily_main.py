@@ -19,23 +19,23 @@ async def run_etl_job():
         logger.info(f"🚀 Starting daily ETL process at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
         
-        # forex_manager = DailyForexManager() # Update Forex data
-        # await forex_manager.refresh_last_7_days()
+        forex_manager = DailyForexManager() # Update Forex data
+        await forex_manager.refresh_last_7_days()
 
-        # full_forex_manager = FullForexManager() # Clean and fill gaps for forex data
-        # await full_forex_manager.run()
+        full_forex_manager = FullForexManager() # Clean and fill gaps for forex data
+        await full_forex_manager.run()
 
-        # price_manager = DailyPriceVolumeManager()  # Update Price and Volume data
-        # await price_manager.run_daily_update()
+        price_manager = DailyPriceVolumeManager()  # Update Price and Volume data
+        await price_manager.run_daily_update()
 
-        # price_volume_fx_converter = DailyPriceVolumeFxConverter() # Convert Prices and Volumes to EUR and USD
-        # await price_volume_fx_converter.run_daily_fx_conversion()
+        price_volume_fx_converter = DailyPriceVolumeFxConverter() # Convert Prices and Volumes to EUR and USD
+        await price_volume_fx_converter.run_daily_fx_conversion()
 
-        # mcap_manager = DailyMcapManager() # Update Market Cap data
-        # await mcap_manager.run_daily_update()
+        mcap_manager = DailyMcapManager() # Update Market Cap data
+        await mcap_manager.run_daily_update()
 
-        # mcap_fx_converter = DailyMcapFxConverter() # Convert Market Cap to EUR and USD
-        # await mcap_fx_converter.run_daily_fx_conversion()
+        mcap_fx_converter = DailyMcapFxConverter() # Convert Market Cap to EUR and USD
+        await mcap_fx_converter.run_daily_fx_conversion()
 
         benchmark_manager = BenchmarkManager() # Get and store benchmark data
         await benchmark_manager.run()

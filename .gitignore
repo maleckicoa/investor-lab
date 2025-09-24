@@ -37,3 +37,5 @@ Thumbs.db
 
 stock-service/src/utils/fields/*.csv
 etl-service/query_scripts/
+
+**/test.ipynb
