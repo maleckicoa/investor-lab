@@ -1,7 +1,12 @@
+import type { Metadata } from 'next'
 import './globals.css';
 
-export const metadata = {
+export const metadata: Metadata = {
     title: "Demo Projects Portal",
+    description: "AI/ML Demo Applications",
+    icons: {
+      icon: '/site-logo/site-logo.png'
+    }
   };
   
   export default function DemoProjectsLayout({

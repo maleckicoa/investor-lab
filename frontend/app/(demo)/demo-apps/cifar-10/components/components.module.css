@@ -15,7 +15,15 @@
 }
 
 .fileInputWrapper {
+  margin-bottom: 0;
+}
+
+.buttonRow {
+  display: flex;
+  gap: 1rem;
   margin-bottom: 1rem;
+  align-items: center;
+  justify-content: center;
 }
 
 .hiddenFileInput {
@@ -37,6 +45,22 @@
 }
 
 .customFileButton:hover {
+  transform: scale(1.05);
+}
+
+.downloadButton {
+  background: linear-gradient(135deg, #58a6ff, #f85149);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.downloadButton:hover {
   transform: scale(1.05);
 }
 

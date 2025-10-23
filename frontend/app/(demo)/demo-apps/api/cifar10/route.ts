@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { readdirSync, readFileSync } from 'fs';
+import { join } from 'path';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,5 +25,41 @@ export async function POST(request: NextRequest) {
     
   } catch (error) {
     return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const action = searchParams.get('action');
+    
+    if (action === 'download-test-images') {
+      const { exec } = require('child_process');
+      const { promisify } = require('util');
+      const execAsync = promisify(exec);
+      
+      try {
+        // Create zip file
+        await execAsync(`cd /Users/aleksamihajlovic/Documents/investor-lab/demo-service/cifar10/test_images && zip -r /tmp/test-images.zip .`);
+        
+        const zipBuffer = readFileSync('/tmp/test-images.zip');
+        await execAsync(`rm /tmp/test-images.zip`);
+        
+        return new NextResponse(zipBuffer, {
+          headers: {
+            'Content-Type': 'application/zip',
+            'Content-Disposition': 'attachment; filename="test-images.zip"',
+          },
+        });
+      } catch (error) {
+        return NextResponse.json({ error: 'Failed to create zip' }, { status: 500 });
+      }
+    }
+    
+    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+    
+  } catch (error) {
+    console.error('Error reading test images:', error);
+    return NextResponse.json({ error: 'Failed to read test images' }, { status: 500 });
   }
 }
