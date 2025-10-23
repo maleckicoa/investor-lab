@@ -27,19 +27,30 @@ export default function CIFAR10Demo() {
       alert('Please upload an image first!');
       return;
     }
-
+  
     setIsLoading(true);
     
-    // Simulate model prediction (replace with actual API call)
-    setTimeout(() => {
-      const categories = [
-        'airplane', 'automobile', 'bird', 'cat', 'deer',
-        'dog', 'frog', 'horse', 'ship', 'truck'
-      ];
-      const randomPrediction = categories[Math.floor(Math.random() * categories.length)];
-      setPrediction(randomPrediction);
+    const formData = new FormData();
+    formData.append('file', selectedImage);
+    
+    try {
+      const response = await fetch('/demo-apps/api/cifar10', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const result = await response.json();
+      if (result.status === 'success') {
+        setPrediction(`${result.prediction} (${(result.confidence * 100).toFixed(1)}%)`);
+      } else {
+        setPrediction('Error processing image');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setPrediction('Error processing image');
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   return (

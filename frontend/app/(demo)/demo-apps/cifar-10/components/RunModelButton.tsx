@@ -14,7 +14,7 @@ export default function RunModelButton({ hasImage, isLoading, onRunModel }: RunM
         disabled={!hasImage || isLoading}
         className={styles.runButton}
       >
-        {isLoading ? '🔄 Running Model...' : '🚀 Run Model'}
+        {isLoading ? '🔄 Running Model...' : 'Run Model'}
       </button>
     </div>
   );

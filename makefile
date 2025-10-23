@@ -41,8 +41,11 @@ fields:
 benchmarks:
 	poetry run --directory etl-service python -m src.benchmarks.benchmarks
 
-uvicorn:
+uvistock:
 	poetry run --directory stock-service uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+
+uvidemo:
+	poetry run --directory demo-service uvicorn main:app --host 0.0.0.0 --port 8001 --reload
 
 
 

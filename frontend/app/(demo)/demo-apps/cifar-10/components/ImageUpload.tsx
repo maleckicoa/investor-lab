@@ -15,12 +15,18 @@ export default function ImageUpload({ onImageSelect }: ImageUploadProps) {
   return (
     <div className={styles.uploadSection}>
       <h2 className={styles.uploadTitle}>Upload Image</h2>
-      <input
-        type="file"
-        accept="image/*"
-        onChange={handleImageUpload}
-        className={styles.fileInput}
-      />
+      <div className={styles.fileInputWrapper}>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          className={styles.hiddenFileInput}
+          id="file-upload"
+        />
+        <label htmlFor="file-upload" className={styles.customFileButton}>
+          📁 Choose File
+        </label>
+      </div>
       <div className={styles.uploadText}>
         Supported formats: JPG, PNG, GIF
       </div>
