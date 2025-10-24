@@ -32,27 +32,30 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
+
     
     if (action === 'download-test-images') {
-      const { exec } = require('child_process');
-      const { promisify } = require('util');
-      const execAsync = promisify(exec);
+
+      const API_BASE = process.env.NODE_ENV === 'production'
+      ? 'https://maleckicoa.com/demo-api'
+      : 'http://localhost:8001';
+      console.log('API_BASE', process.env.NODE_ENV);
+
+      const response = await fetch(`${API_BASE}/download-test-images`);
+
+      // Forward to demo-service
+      //const response = await fetch('http://localhost:8001/download-test-images');
       
-      try {
-        // Create zip file
-        await execAsync(`cd /Users/aleksamihajlovic/Documents/investor-lab/demo-service/cifar10/test_images && zip -r /tmp/test-images.zip .`);
-        
-        const zipBuffer = readFileSync('/tmp/test-images.zip');
-        await execAsync(`rm /tmp/test-images.zip`);
-        
-        return new NextResponse(zipBuffer, {
+      if (response.ok) {
+        const buffer = await response.arrayBuffer();
+        return new NextResponse(buffer, {
           headers: {
             'Content-Type': 'application/zip',
             'Content-Disposition': 'attachment; filename="test-images.zip"',
           },
         });
-      } catch (error) {
-        return NextResponse.json({ error: 'Failed to create zip' }, { status: 500 });
+      } else {
+        return NextResponse.json({ error: 'Failed to download from demo-service' }, { status: 500 });
       }
     }
     
