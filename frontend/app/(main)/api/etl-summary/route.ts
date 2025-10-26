@@ -1,49 +1,33 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
-import pool from '@/lib/db';
-import { ETLSummary } from '@/types/etl';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-export const fetchCache = 'force-no-store'; // <- disable fetch cache for this segment
+export const fetchCache = 'force-no-store';
 
-export async function GET() {
-  noStore(); // <- opt out of Next's caching for this request
+export async function GET(request: NextRequest) {
+  noStore();
 
   try {
-    const result = await pool.query(`
-      SELECT 
-        date, day,
-        fx_cnt, close_cnt, vol_cnt,
-        close_eur_cnt, close_usd_cnt,
-        vol_eur_cnt, vol_usd_cnt,
-        mcap_cnt, mcap_eur_cnt, mcap_usd_cnt,
-        created_at
-      FROM raw.etl_summary
-      ORDER BY date DESC
-    `);
+    const response = await fetch('http://localhost:8000/api/etl-summary', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
 
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
-
-    const data: ETLSummary[] = result.rows.map((row: any) => ({
-      ...row,
-      // Keep the date as-is from database to avoid timezone conversion issues
-      date: row.date,
-      created_at: new Date(row.created_at).toISOString(),
-    }));
-
+    const result = await response.json();
+    return NextResponse.json(result);
+  } catch (error: any) {
+    console.error('Error fetching ETL summary:', error);
     return NextResponse.json(
-      { data },
-      {
-        headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-          Pragma: 'no-cache',
-          Expires: '0',
-        },
-      }
+      { error: 'Failed to fetch ETL summary' },
+      { status: 500 }
     );
-  } catch (e: any) {
-    console.error('ETL Summary API Error:', e);
-    return NextResponse.json({ error: e?.message ?? 'error' }, { status: 500 });
   }
 }

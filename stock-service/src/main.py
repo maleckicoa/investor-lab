@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from src.index_maker.index_maker import create_custom_index
 from src.utils.csv_reader import read_index_fields_from_csv
 from src.utils.benchmark_utils import get_benchmark_historical_data
+from src.utils.utils import run_query
 
 
 app = FastAPI(
@@ -69,6 +70,44 @@ async def get_index_fields():
         return fields_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch index fields: {str(e)}")
+
+
+@app.get("/api/etl-summary")
+async def get_etl_summary():
+    """Get ETL summary data from database"""
+    try:
+        query = """
+            SELECT 
+                date, day,
+                fx_cnt, close_cnt, vol_cnt,
+                close_eur_cnt, close_usd_cnt,
+                vol_eur_cnt, vol_usd_cnt,
+                mcap_cnt, mcap_eur_cnt, mcap_usd_cnt,
+                created_at
+            FROM raw.etl_summary
+            ORDER BY date DESC
+        """
+        
+        df = run_query(query)
+        print(df.head())
+        
+        # Convert to dict first, then clean up problematic values
+        data = df.to_dict('records')
+        
+        # Clean up any problematic values (NaN, inf, -inf)
+        for record in data:
+            for key, value in record.items():
+                if pd.isna(value) or (isinstance(value, float) and (value == float('inf') or value == float('-inf'))):
+                    record[key] = None
+        
+        return {"data": data}
+        
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"ETL Summary Error: {str(e)}")
+        print(f"Full traceback: {error_details}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch ETL summary: {str(e)}")
 
 
 @app.get("/api/benchmark-data")

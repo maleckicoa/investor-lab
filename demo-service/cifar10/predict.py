@@ -23,7 +23,6 @@ def predict_image(image_bytes):
         img = tf.image.resize(img, (96, 96))
         img = img / 255.0
         img = tf.expand_dims(img, 0)  # shape: (1, 96, 96, 3)
-        print('HERE')
 
 
         pred = model.predict(img, verbose=2)
