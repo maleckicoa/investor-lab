@@ -3,6 +3,7 @@
 export default function DemoProjectsPage() {
     const projects = [
       { name: "CIFAR-10 - Convolutional Neural Network Project", link: "/demo-apps/cifar-10" },
+      { name: "Index Maker Rag", link: process.env.NEXT_PUBLIC_INDEX_MAKER_URL },
     ];
   
     return (
