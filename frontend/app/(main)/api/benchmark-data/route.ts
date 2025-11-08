@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { unstable_noStore as noStore } from 'next/cache';
 
+const baseUrl =
+  process.env.STOCK_SERVICE_BASE_URL?.replace(/\/$/, '') ?? 'http://localhost:8000';
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
@@ -34,7 +37,7 @@ export async function GET(request: Request) {
       ...(currency && { currency })
     });
 
-    const response = await fetch(`http://localhost:8000/api/benchmark-data?${queryParams}`, {
+    const response = await fetch(`${baseUrl}/api/benchmark-data?${queryParams}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

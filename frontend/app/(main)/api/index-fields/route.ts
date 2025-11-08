@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server';
 
+const baseUrl =
+  process.env.STOCK_SERVICE_BASE_URL?.replace(/\/$/, '') ?? 'http://localhost:8000';
+
 // Cache frontend-proxied index fields for 1 hour and revalidate in background
 export const revalidate = 3600; // seconds
 
 export async function GET() {
 
   try {
-    const response = await fetch('http://localhost:8000/api/index-fields', {
+    const response = await fetch(`${baseUrl}/api/index-fields`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       // Allow Next to cache this response at the app layer

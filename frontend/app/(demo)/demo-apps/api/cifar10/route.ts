@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 
+const baseUrl =
+  process.env.DEMO_SERVICE_BASE_URL?.replace(/\/$/, '') ?? 'http://localhost:8001';
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -13,14 +16,26 @@ export async function POST(request: NextRequest) {
 
     // Forward to FastAPI backend
     const backendFormData = new FormData();
-    backendFormData.append('file', file);
+    backendFormData.append('file', file, file.name);
+
+    const targetUrl = `${baseUrl}/demo-api/predict/`;
+    console.log('cifar10 proxy request', {
+      baseUrl,
+      requestUrl: request.url,
+      targetUrl,
+    });
     
-    const response = await fetch('http://localhost:8001/predict', {
+    const response = await fetch(targetUrl, {
       method: 'POST',
       body: backendFormData,
     });
     
     const result = await response.json();
+    console.log('cifar10 proxy response', {
+      status: response.status,
+      ok: response.ok,
+      result,
+    });
     return NextResponse.json(result);
     
   } catch (error) {
@@ -36,12 +51,7 @@ export async function GET(request: NextRequest) {
     
     if (action === 'download-test-images') {
 
-      const API_BASE = process.env.NODE_ENV === 'production'
-      ? 'https://maleckicoa.com/demo-api'
-      : 'http://localhost:8001';
-      console.log('API_BASE', process.env.NODE_ENV);
-
-      const response = await fetch(`${API_BASE}/download-test-images`);
+      const response = await fetch(`${baseUrl}/demo-api/download-test-images`);
 
       // Forward to demo-service
       //const response = await fetch('http://localhost:8001/download-test-images');

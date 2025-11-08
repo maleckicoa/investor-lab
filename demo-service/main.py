@@ -1,10 +1,10 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import BackgroundTasks, FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 import sys
 import os
-import subprocess
 import tempfile
+from zipfile import ZipFile, ZIP_DEFLATED
 
 # Add cifar10 to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'cifar10'))
@@ -29,7 +29,8 @@ app.add_middleware(
 async def root():
     return {"message": "Demo Service API is running"}
 
-@app.post("/predict")
+@app.post("/predict/")
+@app.post("/demo-api/predict/")
 async def predict(file: UploadFile = File(...)):
     
     if file.content_type not in ["image/png", "image/jpeg"]:
@@ -44,18 +45,25 @@ async def predict(file: UploadFile = File(...)):
 
 
 
-@app.get("/download-test-images")
-async def download_test_images():
+@app.get("/demo-api/download-test-images")
+async def download_test_images(background_tasks: BackgroundTasks):
     try:
         # Create temporary zip file
         with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as tmp_file:
             zip_path = tmp_file.name
-        
-        # Create zip file
+
         test_images_path = os.path.join(os.path.dirname(__file__), 'cifar10', 'test_images')
-        subprocess.run(['zip', '-r', zip_path, '.'], cwd=test_images_path, check=True)
-        
-        # Return the zip file
+
+        with ZipFile(zip_path, mode='w', compression=ZIP_DEFLATED) as zipf:
+            for root, _, files in os.walk(test_images_path):
+                for file_name in files:
+                    file_path = os.path.join(root, file_name)
+                    # Preserve relative structure inside the zip
+                    arcname = os.path.relpath(file_path, test_images_path)
+                    zipf.write(file_path, arcname=arcname)
+
+        background_tasks.add_task(os.unlink, zip_path)
+
         return FileResponse(
             path=zip_path,
             filename="test-images.zip",
