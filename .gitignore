@@ -6,6 +6,7 @@ frontend/out/
 # Environment files
 **/.env*
 
+**/.lock
 
 # Logs
 *.log
