@@ -1,3 +1,6 @@
 [submodule "demo-service/index-maker-rag"]
 	path = demo-service/index-maker-rag
 	url = https://github.com/maleckicoa/index-maker-rag.git
+[submodule "demo-service/you-tube-rag"]
+	path = demo-service/you-tube-rag
+	url = https://github.com/maleckicoa/you-tube-rag.git
