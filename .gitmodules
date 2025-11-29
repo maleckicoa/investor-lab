@@ -1,0 +1,3 @@
+[submodule "demo-service/index-maker-rag"]
+	path = demo-service/index-maker-rag
+	url = https://github.com/maleckicoa/index-maker-rag.git
