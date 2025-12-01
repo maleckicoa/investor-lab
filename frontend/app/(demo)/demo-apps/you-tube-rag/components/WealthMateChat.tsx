@@ -6,6 +6,7 @@ import styles from '../you-tube-rag.module.css';
 import ChatHeader from './ChatHeader';
 import ChatMessageList, { Message } from './ChatMessageList';
 import ChatInput from './ChatInput';
+import SourcesPanel from './SourcesPanel';
 
 export default function WealthMateChat() {
   const [messages, setMessages] = useState<Message[]>(() => [
@@ -40,6 +41,7 @@ export default function WealthMateChat() {
 
       let answer = '';
       let sources = [];
+      let history = [];
 
       if (response.ok) {
         
@@ -57,8 +59,14 @@ export default function WealthMateChat() {
         if (data?.result?.sources) {
           sources = data.result.sources;
         }
+
+        if (data?.result?.history) {
+          history = data.result.history;
+        }
+        
         console.log('answer', answer);
         console.log('sources', sources);
+        console.log('history', history);
 
 
       } else {
@@ -89,12 +97,24 @@ export default function WealthMateChat() {
 
   const chatTitle = useMemo(() => 'WealthMate', []);
   const chatSubtitle = useMemo(() => 'Beginner-friendly investing chat', []);
+  const currentSources = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      const m = messages[i];
+      if (m.role === 'assistant' && Array.isArray(m.sources) && m.sources.length > 0) {
+        return m.sources;
+      }
+    }
+    return [];
+  }, [messages]);
 
   return (
     <div className={styles.container}>
       <div className={styles.chatCard}>
         <ChatHeader title={chatTitle} subtitle={chatSubtitle} />
-        <ChatMessageList messages={messages} />
+        <div className={styles.mainContent}>
+          <ChatMessageList messages={messages} />
+          <SourcesPanel sources={currentSources} />
+        </div>
         <ChatInput onSend={onSend} />
       </div>
     </div>
