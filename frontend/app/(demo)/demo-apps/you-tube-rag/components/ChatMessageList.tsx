@@ -6,6 +6,7 @@ export type Message = {
   id: string;
   role: ChatRole;
   text: string;
+  sources: any[];
   timestamp?: string | number;
 };
 

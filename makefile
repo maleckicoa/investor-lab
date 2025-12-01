@@ -47,7 +47,8 @@ uvistock:
 uvidemo:
 	poetry run --directory demo-service uvicorn main:app --host 0.0.0.0 --port 8001 --reload
 
-
+uvi-yt-rag:
+	poetry run --directory demo-service/you-tube-rag uvicorn src.main:app --host 0.0.0.0 --port 8002 --reload
 
 # Frontend targets
 frontend-setup:

@@ -13,6 +13,7 @@ export default function WealthMateChat() {
       id: 'welcome',
       role: 'assistant',
       text: 'Hi, I’m WealthMate. I can help you learn investing basics. Ask me anything!',
+      sources: [],
       timestamp: Date.now(),
     },
   ]);
@@ -23,18 +24,67 @@ export default function WealthMateChat() {
       id,
       role: 'user',
       text,
+      sources: [],
       timestamp: Date.now(),
     };
     setMessages((prev) => [...prev, userMsg]);
 
-    // Mock assistant reply for now (UI only). Replace with API call when ready.
-    const reply: Message = {
-      id: `${id}-reply`,
-      role: 'assistant',
-      text: getMockAnswer(text),
-      timestamp: Date.now(),
-    };
-    setMessages((prev) => [...prev, reply]);
+    try {
+      const formData = new FormData();
+      formData.append('user_input', text);
+
+      const response = await fetch('/demo-apps/api/you-tube-rag', {
+        method: 'POST',
+        body: formData,
+      });
+
+      let answer = '';
+      let sources = [];
+
+      if (response.ok) {
+        
+        const data = await response.json();
+        
+        
+        if (typeof data?.result === 'string') {
+          answer = data.result;
+        } else if (data?.result?.answer) {
+          answer = data.result.answer;
+        } else {
+          answer = (data?.result && JSON.stringify(data.result)) || 'I could not find an answer.';
+        }
+
+        if (data?.result?.sources) {
+          sources = data.result.sources;
+        }
+        console.log('answer', answer);
+        console.log('sources', sources);
+
+
+      } else {
+        answer = 'Something went wrong';
+      }
+
+    
+
+      const reply: Message = {
+        id: `${id}-reply`,
+        role: 'assistant',
+        text: answer,
+        sources: sources,
+        timestamp: Date.now(),
+      };
+      setMessages((prev) => [...prev, reply]);
+    } catch {
+      const reply: Message = {
+        id: `${id}-reply`,
+        role: 'assistant',
+        text: 'Something went wrong',
+        sources: [],
+        timestamp: Date.now(),
+      };
+      setMessages((prev) => [...prev, reply]);
+    }
   };
 
   const chatTitle = useMemo(() => 'WealthMate', []);
@@ -49,23 +99,6 @@ export default function WealthMateChat() {
       </div>
     </div>
   );
-}
-
-function getMockAnswer(input: string): string {
-  const normalized = input.toLowerCase();
-  if (normalized.includes('etf')) {
-    return 'An ETF (Exchange-Traded Fund) is a basket of investments you can buy like a stock. ETFs offer instant diversification and usually have low fees.';
-  }
-  if (normalized.includes('start')) {
-    return 'Start by setting a goal, building an emergency fund, and investing consistently in a diversified, low-cost index fund or ETF.';
-  }
-  if (normalized.includes('diversification')) {
-    return 'Diversification means spreading your money across different assets so a single poor performer doesn’t hurt your entire portfolio.';
-  }
-  if (normalized.includes('much') || normalized.includes('monthly')) {
-    return 'A common approach is to invest a set amount monthly (dollar-cost averaging). Start small and increase as your budget allows.';
-  }
-  return 'Great question! For beginners, focus on clear goals, low-cost diversified funds, and consistent contributions. I can explain any of these further.';
 }
 
 

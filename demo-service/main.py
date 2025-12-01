@@ -6,10 +6,11 @@ import os
 import tempfile
 from zipfile import ZipFile, ZIP_DEFLATED
 
-# Add cifar10 to path
+# Add demo apps to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'cifar10'))
 
 from predict import predict_image
+
 
 app = FastAPI(title="Demo Service API")
 
@@ -29,7 +30,7 @@ app.add_middleware(
 async def root():
     return {"message": "Demo Service API is running"}
 
-@app.post("/predict/")
+#@app.post("/predict/")
 @app.post("/demo-api/predict/")
 async def predict(file: UploadFile = File(...)):
     
