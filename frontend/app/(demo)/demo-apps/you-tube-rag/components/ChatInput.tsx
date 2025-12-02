@@ -12,7 +12,7 @@ export default function ChatInput({
   suggestions = [
     'How do I start investing?',
     'What is an ETF?',
-    'How much should I invest monthly?',
+    'Tell me more about interest rates?',
     'What is diversification?',
   ],
   placeholder = 'Ask WealthMate anything about investing basics...',

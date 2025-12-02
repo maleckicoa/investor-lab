@@ -109,6 +109,11 @@ export default function WealthMateChat() {
 
   return (
     <div className={styles.container}>
+      <img
+        src="/site-logo/site-logo.png"
+        alt="WealthMate"
+        className={styles.containerLogo}
+      />
       <div className={styles.chatCard}>
         <ChatHeader title={chatTitle} subtitle={chatSubtitle} />
         <div className={styles.mainContent}>

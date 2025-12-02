@@ -30,7 +30,6 @@ app.add_middleware(
 async def root():
     return {"message": "Demo Service API is running"}
 
-#@app.post("/predict/")
 @app.post("/demo-api/predict/")
 async def predict(file: UploadFile = File(...)):
     

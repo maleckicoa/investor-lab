@@ -6,13 +6,15 @@
   padding: 24px;
   min-height: calc(100dvh - 24px);
   background: linear-gradient(180deg, #0b1220 0%, #0e172a 100%);
+  width: 60%;
+  position: relative;
 }
 
 .chatCard {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 1200px;
+  max-width: min(96vw, 1440px);
   height: 80dvh;
   background: #0f172a;
   border: 1px solid rgba(148, 163, 184, 0.15);
@@ -43,6 +45,25 @@
   font-weight: 800;
 }
 
+.headerLogo {
+  width: 36px;
+  height: 36px;
+  display: block;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.containerLogo {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 6px;
+  opacity: 0.95;
+}
+
 .headerText {
   display: flex;
   flex-direction: column;
@@ -50,14 +71,14 @@
 
 .title {
   color: #e2e8f0;
-  font-size: 16px;
+  font-size: 22px;
   font-weight: 700;
   letter-spacing: 0.2px;
 }
 
 .subtitle {
   color: #94a3b8;
-  font-size: 12px;
+  font-size: 16px;
 }
 
 /* Messages */
@@ -91,7 +112,7 @@
 
 .sourcesHeader {
   padding: 12px 14px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: #94a3b8;
   text-transform: uppercase;
@@ -156,7 +177,7 @@
 
 .sourceText {
   flex: 1;
-  font-size: 13px;
+  font-size: 14px;
   color: #e2e8f0;
   min-width: 0;
   white-space: normal;
@@ -222,12 +243,12 @@
 
 .messageText {
   white-space: pre-wrap;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .timestamp {
   margin-top: 6px;
-  font-size: 11px;
+  font-size: 12px;
   color: #94a3b8;
   opacity: 0.8;
 }
@@ -254,7 +275,7 @@
   color: #cbd5e1;
   padding: 6px 10px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 13px;
   transition: background 0.2s ease, border-color 0.2s ease, transform 0.05s ease;
 }
 
@@ -283,7 +304,7 @@
   border: none;
   outline: none;
   color: #e2e8f0;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .input::placeholder {
@@ -297,7 +318,7 @@
   border: none;
   padding: 8px 12px;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 15px;
   transition: filter 0.15s ease, transform 0.05s ease;
 }
 

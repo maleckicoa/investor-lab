@@ -9,7 +9,6 @@ type ChatHeaderProps = {
 export default function ChatHeader({ title = 'WealthMate', subtitle = 'Your beginner-friendly investing guide' }: ChatHeaderProps) {
   return (
     <header className={styles.header}>
-      <div className={styles.headerAvatar} aria-hidden="true">W</div>
       <div className={styles.headerText}>
         <h1 className={styles.title}>{title}</h1>
         <p className={styles.subtitle}>{subtitle}</p>
