@@ -4,7 +4,6 @@ const baseUrl =
   process.env.YT_RAG_SERVICE_BASE_URL?.replace(/\/$/, '') ?? 'http://localhost:8002';
 
   const targetUrl = `${baseUrl}/you-tube-rag`;
-  console.log('targetUrl', targetUrl);
 
 export async function POST(request: NextRequest) {
   try {

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import styles from '../you-tube-rag.module.css';
+import SpeakButton from './SpeakButton';
 
 export type ChatRole = 'user' | 'assistant';
 
@@ -43,6 +44,11 @@ export default function ChatMessage({ role, text, timestamp }: ChatMessageProps)
         {mounted && timestampLabel && (
           <div className={styles.timestamp} suppressHydrationWarning>
             {timestampLabel}
+          </div>
+        )}
+        {!isUser && (
+          <div className={styles.ttsControls}>
+            <SpeakButton text={text} />
           </div>
         )}
       </div>

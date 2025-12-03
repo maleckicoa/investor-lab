@@ -34,6 +34,28 @@ export default function WealthMateChat() {
       const formData = new FormData();
       formData.append('user_input', text);
 
+      // Add a temporary assistant message and start a small timer
+      const pendingId = `${id}-pending`;
+      let seconds = 0;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: pendingId,
+          role: 'assistant',
+          text: `Thinking… ${seconds}s`,
+          sources: [],
+          timestamp: Date.now(),
+        },
+      ]);
+      const timer = window.setInterval(() => {
+        seconds += 1;
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === pendingId ? { ...m, text: `Thinking… ${seconds}s` } : m
+          )
+        );
+      }, 1000);
+
       const response = await fetch('/demo-apps/api/you-tube-rag', {
         method: 'POST',
         body: formData,
@@ -68,30 +90,28 @@ export default function WealthMateChat() {
         console.log('sources', sources);
         console.log('history', history);
 
-
       } else {
         answer = 'Something went wrong';
       }
 
-    
-
-      const reply: Message = {
-        id: `${id}-reply`,
-        role: 'assistant',
-        text: answer,
-        sources: sources,
-        timestamp: Date.now(),
-      };
-      setMessages((prev) => [...prev, reply]);
+      // Stop timer and replace the pending assistant message with the final answer
+      window.clearInterval(timer);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === pendingId
+            ? { ...m, text: answer, sources: sources, timestamp: Date.now() }
+            : m
+        )
+      );
     } catch {
-      const reply: Message = {
-        id: `${id}-reply`,
-        role: 'assistant',
-        text: 'Something went wrong',
-        sources: [],
-        timestamp: Date.now(),
-      };
-      setMessages((prev) => [...prev, reply]);
+      // Replace the pending message with error text
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === `${id}-pending`
+            ? { ...m, text: 'Something went wrong', sources: [], timestamp: Date.now() }
+            : m
+        )
+      );
     }
   };
 
