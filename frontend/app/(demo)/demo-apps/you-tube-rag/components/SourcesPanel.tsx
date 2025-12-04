@@ -60,7 +60,7 @@ export default function SourcesPanel({ sources }: SourcesPanelProps) {
 
   return (
     <aside className={styles.sourcesPanel} aria-label="Answer sources">
-      <div className={styles.sourcesHeader}>Sources</div>
+      <div className={styles.sourcesHeader}>YouTube Sources</div>
       <div className={styles.sourcesList}>
         {items.map((item, idx) => (
           <a

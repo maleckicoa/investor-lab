@@ -13,7 +13,8 @@ export default function WealthMateChat() {
     {
       id: 'welcome',
       role: 'assistant',
-      text: 'Hi, I’m WealthMate. I can help you learn investing basics. Ask me anything!',
+      text: `Hi, I’m WealthMate. 
+I can help you understand investing by answering your questions in simple language and pulling insights from trusted YouTube sources. Ask me anything!`,
       sources: [],
       timestamp: Date.now(),
     },
@@ -86,9 +87,9 @@ export default function WealthMateChat() {
           history = data.result.history;
         }
         
-        console.log('answer', answer);
-        console.log('sources', sources);
-        console.log('history', history);
+        // console.log('answer', answer);
+        // console.log('sources', sources);
+        // console.log('history', history);
 
       } else {
         answer = 'Something went wrong';
@@ -116,7 +117,7 @@ export default function WealthMateChat() {
   };
 
   const chatTitle = useMemo(() => 'WealthMate', []);
-  const chatSubtitle = useMemo(() => 'Beginner-friendly investing chat', []);
+  const chatSubtitle = useMemo(() => `Your beginner-friendly investment buddy`,[]);
   const currentSources = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i -= 1) {
       const m = messages[i];

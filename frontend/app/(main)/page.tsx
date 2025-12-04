@@ -19,15 +19,33 @@ export default function HomePage() {
             based on your exact criteria: countries, sectors, industries, and fundamental filters.  
             You can test your strategies, understand their risk and return characteristics, and benchmark them against traditional indices.  
             And this is just the beginning — I’m currently working on the <strong>Momentum Analyzer</strong>, a tool 
-            that spots strong price trends and helps you time your moves with precision.
+            that spots strong price trends and helps you time your moves with precision. 
             </p>
 
             <p style={{ marginBottom: '2rem' }}>
-            A bit about me: I’m a senior data scientist and ex-quant, with years of experience building analytical 
-            tools for top-tier investment banks.  
-            Investor Lab is the product of that experience — and I hope it becomes a tool you return to often.
+            A bit about me: I’m a senior data scientist, ex-quant and a developer with years of experience 
+            building analytical tools for top-tier investment banks. Investor Lab is the product of that journey — 
+            and I hope it becomes a tool you return to often.
+            You can explore more of my work on
+            <a 
+              href="/demo-apps" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{ color: '#0070f3', textDecoration: 'underline', marginLeft: '4px' }}
+            >
+              Demo Apps page
+            </a>
+            {" "}and
+            <a 
+              href="https://github.com/maleckicoa" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{ color: '#0070f3', textDecoration: 'underline', marginLeft: '4px' }}
+            >
+              GitHub 
+            </a>
 
-            </p>
+          </p>
             
             
             {/* Profile Photo and Name - Now positioned relative to text block */}

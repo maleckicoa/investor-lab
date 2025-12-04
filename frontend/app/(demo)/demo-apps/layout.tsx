@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css';
 
 export const metadata: Metadata = {
-    title: "Demo Projects Portal",
+    title: "Demo Apps Portal",
     description: "AI/ML Demo Applications",
     icons: {
       icon: '/site-logo/site-logo.png'

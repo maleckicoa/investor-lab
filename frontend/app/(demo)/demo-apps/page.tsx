@@ -10,7 +10,7 @@ export default function DemoProjectsPage() {
   
     return (
       <main className="demo-container">
-        <h1 className="demo-title">Demo Projects Portal</h1>
+        <h1 className="demo-title">Demo Apps Portal</h1>
   
         <ul className="demo-project-list">
           {projects.map((p) => (
